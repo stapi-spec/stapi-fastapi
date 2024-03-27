@@ -1,0 +1,2 @@
+class StatSpecWarning(Warning):
+    pass
