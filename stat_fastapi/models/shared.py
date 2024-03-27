@@ -8,3 +8,7 @@ class Link(BaseModel):
     rel: str
     type: Optional[str] = None
     title: Optional[str] = None
+
+
+class HTTPException(BaseModel):
+    detail: str

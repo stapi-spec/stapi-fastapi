@@ -1,3 +1,4 @@
+from importlib import import_module
 from typing import Callable, Generator, TypeVar
 from urllib.parse import urljoin
 
@@ -25,6 +26,11 @@ def router_prefix(request) -> YieldFixture[str]:
 
 
 @fixture(scope="session")
+def product_id(request) -> YieldFixture[str]:
+    yield request.config.getoption("--stat-product-id")
+
+
+@fixture(scope="session")
 def url_for(base_url: str, router_prefix: str) -> YieldFixture[Callable[[str], str]]:
     def with_trailing_slash(value: str) -> str:
         return value if value.endswith("/") else f"{value}/"
@@ -39,9 +45,16 @@ def url_for(base_url: str, router_prefix: str) -> YieldFixture[Callable[[str], s
 
 
 @fixture(scope="module")
-def stat_client(base_url: str, router_prefix: str) -> YieldFixture[TestClient]:
+def stat_client(request, base_url: str, router_prefix: str) -> YieldFixture[TestClient]:
     app = FastAPI()
 
-    app.include_router(StatApiRouter().router, prefix=router_prefix)
+    module, backend = request.config.getoption("--stat-backend").split(":", 1)
+    module = import_module(module)
+    backend = getattr(module, backend)()
+
+    app.include_router(
+        StatApiRouter(backend=backend).router,
+        prefix=router_prefix,
+    )
 
     yield TestClient(app, base_url=f"{base_url}{router_prefix}")

@@ -20,6 +20,9 @@ pydantic-settings = "^2.2.1"
 httpx = "^0.27.0"
 pytest-coverage = "^0.0"
 
+[tool.poetry.scripts]
+dev = "stat_fastapi.__dev__:cli"
+
 [tool.ruff]
 extend-ignore = ["E501", "UP007", "UP034"]
 line-length = 88
@@ -43,6 +46,11 @@ omit = [
     "**/*_test.py",
     "**/conftest.py",
     "stat_fastapi/__dev__.py",
+]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:The 'app' shortcut is now deprecated.:DeprecationWarning",
 ]
 
 [build-system]

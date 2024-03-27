@@ -15,4 +15,4 @@ test:
 
 # Run dev server
 dev:
-    poetry run stat_fastapi/__dev__.py
+    poetry run dev
