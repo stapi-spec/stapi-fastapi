@@ -19,6 +19,7 @@ uvicorn = "^0.29.0"
 pydantic-settings = "^2.2.1"
 httpx = "^0.27.0"
 pytest-coverage = "^0.0"
+pyrfc3339 = "^1.1"
 
 [tool.poetry.scripts]
 dev = "stat_fastapi.__dev__:cli"
