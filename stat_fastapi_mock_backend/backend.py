@@ -1,7 +1,14 @@
 from fastapi import Request
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
+from stat_fastapi.exceptions import ConstraintsException
+from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
 from stat_fastapi.models.product import Product, Provider, ProviderRole
+from stat_fastapi_mock_backend.models import (
+    ValidatedOpportunitySearch,
+)
+from stat_fastapi_mock_backend.satellite import EarthObservationSatelliteModel
+from stat_fastapi_mock_backend.settings import Settings
 
 
 class OffNadirRange(BaseModel):
@@ -44,6 +51,12 @@ PRODUCTS = [
 
 
 class StatMockBackend:
+    satellite: EarthObservationSatelliteModel
+
+    def __init__(self):
+        settings = Settings.load()
+        self.satellite = EarthObservationSatelliteModel(settings.satellite)
+
     def products(self, request: Request) -> list[Product]:
         """
         Return a list of supported products.
@@ -56,3 +69,41 @@ class StatMockBackend:
         supported.
         """
         return next((product for product in PRODUCTS if product.id == product_id), None)
+
+    async def search_opportunities(
+        self, search: OpportunitySearch, request: Request
+    ) -> list[Opportunity]:
+        """
+        Search for ordering opportunities for the  given search parameters.
+        """
+        # Additional constraints validation according to this backend's constraints
+        try:
+            validated = ValidatedOpportunitySearch(**search.model_dump(by_alias=True))
+        except ValidationError as exc:
+            raise ConstraintsException(exc.errors()) from exc
+
+        try:
+            alt = validated.geometry.coordinates[2]
+        except IndexError:
+            alt = 0
+        passes = self.satellite.passes(
+            start=validated.properties.datetime[0],
+            end=validated.properties.datetime[1],
+            lon=validated.geometry.coordinates[0],
+            lat=validated.geometry.coordinates[1],
+            alt=alt,
+            off_nadir_range=(
+                validated.properties.off_nadir.minimum,
+                validated.properties.off_nadir.maximum,
+            ),
+        )
+
+        opportunities = [
+            Opportunity(
+                geometry=p.geometry,
+                constraints=search.properties,
+                properties=p.properties.model_dump(by_alias=True),
+            )
+            for p in passes
+        ]
+        return opportunities

@@ -1,6 +1,14 @@
 from fastapi import APIRouter, HTTPException, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 
 from stat_fastapi.backend import StatApiBackend
+from stat_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
+from stat_fastapi.exceptions import ConstraintsException
+from stat_fastapi.models.opportunity import (
+    OpportunityCollection,
+    OpportunitySearch,
+)
 from stat_fastapi.models.product import Product, ProductsCollection
 from stat_fastapi.models.root import RootResponse
 from stat_fastapi.models.shared import HTTPException as HTTPExceptionModel
@@ -56,18 +64,26 @@ class StatApiRouter:
             responses={status.HTTP_404_NOT_FOUND: {"model": HTTPExceptionModel}},
         )
 
+        self.router.add_api_route(
+            "/opportunities",
+            self.search_opportunities,
+            methods=["POST"],
+            name=f"{self.NAME_PREFIX}:search-opportunities",
+            tags=["Opportunities"],
+        )
+
     def root(self, request: Request) -> RootResponse:
         return RootResponse(
             links=[
                 Link(
                     href=str(request.url_for("stat:root")),
                     rel="self",
-                    type="application/json",
+                    type=TYPE_JSON,
                 ),
                 Link(
                     href=str(request.url_for(self.openapi_endpoint_name)),
                     rel="service-description",
-                    type="application/json",
+                    type=TYPE_JSON,
                 ),
                 Link(
                     href=str(request.url_for(self.docs_endpoint_name)),
@@ -86,7 +102,7 @@ class StatApiRouter:
                         request.url_for("stat:get-product", product_id=product.id)
                     ),
                     rel="self",
-                    type="application/json",
+                    type=TYPE_JSON,
                 )
             )
         return ProductsCollection(products=products)
@@ -99,7 +115,22 @@ class StatApiRouter:
             Link(
                 href=str(request.url_for("stat:get-product", product_id=product.id)),
                 rel="self",
-                type="application/json",
+                type=TYPE_JSON,
             )
         )
         return product
+
+    async def search_opportunities(
+        self, search: OpportunitySearch, request: Request
+    ) -> OpportunityCollection:
+        """
+        Explore the opportunities available for a particular set of constraints
+        """
+        try:
+            opportunities = await self.backend.search_opportunities(search, request)
+        except ConstraintsException as exc:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
+        return JSONResponse(
+            jsonable_encoder(OpportunityCollection(features=opportunities)),
+            media_type=TYPE_GEOJSON,
+        )
