@@ -1,9 +1,10 @@
 from enum import Enum
-from typing import Any, Literal, Mapping, Optional
+from typing import Literal, Optional
 
 from pydantic import AnyHttpUrl, AnyUrl, BaseModel
 
 from stat_fastapi.constants import STAT_VERSION
+from stat_fastapi.types.json_schema_model import JsonSchemaModel
 
 from .shared import Link
 
@@ -33,7 +34,7 @@ class Product(BaseModel):
     license: str
     providers: list[Provider]
     links: list[Link]
-    constraints: Optional[Mapping[str, Any]] = None  # TODO: Don't cheat
+    constraints: JsonSchemaModel
 
 
 class ProductsCollection(BaseModel):

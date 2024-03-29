@@ -98,6 +98,11 @@ class StatApiRouter:
                     type=TYPE_JSON,
                 ),
                 Link(
+                    href=str(request.url_for("stat:list-products")),
+                    rel="products",
+                    type=TYPE_JSON,
+                ),
+                Link(
                     href=str(request.url_for(self.openapi_endpoint_name)),
                     rel="service-description",
                     type=TYPE_JSON,

@@ -47,7 +47,7 @@ PRODUCTS = [
                 url="http://acme.example.com",
             )
         ],
-        constraints=Constraints.model_json_schema(),
+        constraints=Constraints,
         links=[],
     )
 ]
