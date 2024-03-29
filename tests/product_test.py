@@ -20,7 +20,7 @@ def test_products_response(stat_client: TestClient):
     assert isinstance(data["products"], list)
 
 
-@fixture(scope="module")
+@fixture
 def product_response(stat_client: TestClient, product_id: str):
     res = stat_client.get(f"/products/{product_id}")
 

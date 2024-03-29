@@ -4,11 +4,12 @@ from fastapi.responses import JSONResponse
 
 from stat_fastapi.backend import StatApiBackend
 from stat_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
-from stat_fastapi.exceptions import ConstraintsException
+from stat_fastapi.exceptions import ConstraintsException, NotFoundException
 from stat_fastapi.models.opportunity import (
     OpportunityCollection,
     OpportunitySearch,
 )
+from stat_fastapi.models.order import Order, OrderPayload
 from stat_fastapi.models.product import Product, ProductsCollection
 from stat_fastapi.models.root import RootResponse
 from stat_fastapi.models.shared import HTTPException as HTTPExceptionModel
@@ -72,6 +73,22 @@ class StatApiRouter:
             tags=["Opportunities"],
         )
 
+        self.router.add_api_route(
+            "/orders",
+            self.create_order,
+            methods=["POST"],
+            name=f"{self.NAME_PREFIX}:create-order",
+            tags=["Orders"],
+            response_model=Order,
+        )
+        self.router.add_api_route(
+            "/orders/{order_id}",
+            self.get_order,
+            methods=["GET"],
+            name=f"{self.NAME_PREFIX}:get-order",
+            tags=["Orders"],
+        )
+
     def root(self, request: Request) -> RootResponse:
         return RootResponse(
             links=[
@@ -108,9 +125,12 @@ class StatApiRouter:
         return ProductsCollection(products=products)
 
     def product(self, product_id: str, request: Request) -> Product:
-        product = self.backend.product(product_id, request)
-        if product is None:
-            raise StatApiException(status.HTTP_404_NOT_FOUND, "product not found")
+        try:
+            product = self.backend.product(product_id, request)
+        except NotFoundException as exc:
+            raise StatApiException(
+                status.HTTP_404_NOT_FOUND, "product not found"
+            ) from exc
         product.links.append(
             Link(
                 href=str(request.url_for("stat:get-product", product_id=product.id)),
@@ -132,5 +152,44 @@ class StatApiRouter:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
         return JSONResponse(
             jsonable_encoder(OpportunityCollection(features=opportunities)),
+            media_type=TYPE_GEOJSON,
+        )
+
+    async def create_order(
+        self, payload: OrderPayload, request: Request
+    ) -> JSONResponse:
+        """
+        Create a new order.
+        """
+        try:
+            order = await self.backend.create_order(payload, request)
+        except ConstraintsException as exc:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
+
+        location = str(
+            request.url_for(f"{self.NAME_PREFIX}:get-order", order_id=order.id)
+        )
+        order.links.append(Link(href=location, rel="self", type=TYPE_GEOJSON))
+        return JSONResponse(
+            jsonable_encoder(order, exclude_unset=True),
+            status.HTTP_201_CREATED,
+            {"Location": location},
+            TYPE_GEOJSON,
+        )
+
+    async def get_order(self, order_id: str, request: Request) -> Order:
+        """
+        Get details for order with `order_id`.
+        """
+        try:
+            order = await self.backend.get_order(order_id, request)
+        except NotFoundException as exc:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="not found") from exc
+
+        order.links.append(Link(href=str(request.url), rel="self", type=TYPE_GEOJSON))
+
+        return JSONResponse(
+            jsonable_encoder(order, exclude_unset=True),
+            status.HTTP_200_OK,
             media_type=TYPE_GEOJSON,
         )

@@ -7,7 +7,7 @@ from pytest import fixture
 from stat_fastapi.models.opportunity import OpportunityCollection
 
 
-@fixture(scope="module")
+@fixture
 def search_opportunities_response(stat_client: TestClient, product_id: str):
     now = datetime.now(UTC)
     start = now
@@ -32,7 +32,7 @@ def search_opportunities_response(stat_client: TestClient, product_id: str):
         },
     )
     assert res.status_code == status.HTTP_200_OK
-    assert res.headers["Content-Type"] == "application/json"
+    assert res.headers["Content-Type"] == "application/geo+json"
     yield OpportunityCollection(**res.json())
 
 

@@ -13,6 +13,10 @@ bootstrap:
 test:
     poetry run pytest {{ PYTEST_ADDOPTS }}
 
+# Run test suite, fail fast mode
+test-x:
+    poetry run pytest -x --ff {{ PYTEST_ADDOPTS }}
+
 # Run dev server
 dev:
     poetry run dev

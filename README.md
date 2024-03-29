@@ -15,6 +15,14 @@ STAT FastAPI provides an `fastapi.APIRouter` which must be included in
 It's 2024 and we still need to pick our poison for a 2024 dependency management
 solution. This project picks [poetry][poetry] for now.
 
+The mock backend uses SQLite/Spatialite as storage, therefore the
+`SPATIALITE_LIBRARY_PATH` env var must be set to load the spatialite extension:
+
+```bash
+export DATABASE=sqlite:///order.sqlite
+export SPATIALITE_LIBRARY_PATH=/path/to/mod_spatialite.dylib
+```
+
 ### Dev Setup
 
 Setup is managed with `poetry` and `pre-commit`, all of which can be initialised

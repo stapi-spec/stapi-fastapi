@@ -1,12 +1,15 @@
 from fastapi import Request
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
-from stat_fastapi.exceptions import ConstraintsException
+from stat_fastapi.exceptions import ConstraintsException, NotFoundException
 from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
+from stat_fastapi.models.order import Order, OrderPayload
 from stat_fastapi.models.product import Product, Provider, ProviderRole
 from stat_fastapi_mock_backend.models import (
     ValidatedOpportunitySearch,
+    ValidatedOrderPayload,
 )
+from stat_fastapi_mock_backend.repository import Repository
 from stat_fastapi_mock_backend.satellite import EarthObservationSatelliteModel
 from stat_fastapi_mock_backend.settings import Settings
 
@@ -51,10 +54,12 @@ PRODUCTS = [
 
 
 class StatMockBackend:
+    repository: Repository
     satellite: EarthObservationSatelliteModel
 
     def __init__(self):
         settings = Settings.load()
+        self.repository = Repository(settings.database)
         self.satellite = EarthObservationSatelliteModel(settings.satellite)
 
     def products(self, request: Request) -> list[Product]:
@@ -68,7 +73,10 @@ class StatMockBackend:
         Return the product identified by `product_id` or `None` if it isn't
         supported.
         """
-        return next((product for product in PRODUCTS if product.id == product_id), None)
+        try:
+            return next((product for product in PRODUCTS if product.id == product_id))
+        except StopIteration as exc:
+            raise NotFoundException() from exc
 
     async def search_opportunities(
         self, search: OpportunitySearch, request: Request
@@ -107,3 +115,23 @@ class StatMockBackend:
             for p in passes
         ]
         return opportunities
+
+    async def create_order(self, payload: OrderPayload, request: Request) -> Order:
+        """
+        Create a new order.
+        """
+        try:
+            validated = ValidatedOrderPayload(**payload.model_dump(by_alias=True))
+        except ValidationError as exc:
+            raise ConstraintsException(exc.errors()) from exc
+
+        return self.repository.add_order(validated)
+
+    async def get_order(self, order_id: str, request: Request):
+        """
+        Show details for order with `order_id`.
+        """
+        feature = self.repository.get_order(order_id)
+        if feature is None:
+            raise NotFoundException()
+        return feature

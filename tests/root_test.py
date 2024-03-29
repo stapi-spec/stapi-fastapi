@@ -8,7 +8,7 @@ from .utils import find_link
 from .warnings import StatSpecWarning
 
 
-@fixture(scope="module")
+@fixture
 def data(stat_client: TestClient):
     res = stat_client.get("/")
 
