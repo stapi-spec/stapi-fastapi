@@ -3,3 +3,9 @@ __pycache__
 /.coverage
 /.pytest_cache
 /.ruff_cache
+
+# python
+.python-version
+.venv
+__pycache__
+.env
