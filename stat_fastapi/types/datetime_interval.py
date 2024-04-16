@@ -27,6 +27,7 @@ def serialize(
     value: tuple[datetime, datetime],
     serializer: Callable[[tuple[datetime, datetime]], tuple[str, str]],
 ) -> str:
+    return f"{value[0].isoformat()}/{value[1].isoformat()}"
     serialized = serializer(value)
     return f"{serialized[0]}/{serialized[1]}"
 

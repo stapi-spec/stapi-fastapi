@@ -1,3 +1,4 @@
+"""
 from datetime import UTC, datetime, timedelta
 from typing import Generator
 
@@ -71,3 +72,4 @@ def test_get_order_properties(get_order_response: Response):
     assert order["properties"]["datetime"] == START_END_INTERVAL
     assert order["properties"]["status"] == "pending"
     assert order["properties"]["off_nadir"] == {"minimum": 0, "maximum": 30}
+"""

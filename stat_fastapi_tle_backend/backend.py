@@ -5,13 +5,13 @@ from stat_fastapi.exceptions import ConstraintsException, NotFoundException
 from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
 from stat_fastapi.models.order import Order, OrderPayload
 from stat_fastapi.models.product import Product, Provider, ProviderRole
-from stat_fastapi_mock_backend.models import (
+from stat_fastapi_tle_backend.models import (
     ValidatedOpportunitySearch,
     ValidatedOrderPayload,
 )
-from stat_fastapi_mock_backend.repository import Repository
-from stat_fastapi_mock_backend.satellite import EarthObservationSatelliteModel
-from stat_fastapi_mock_backend.settings import Settings
+from stat_fastapi_tle_backend.repository import Repository
+from stat_fastapi_tle_backend.satellite import EarthObservationSatelliteModel
+from stat_fastapi_tle_backend.settings import Settings
 
 
 class OffNadirRange(BaseModel):

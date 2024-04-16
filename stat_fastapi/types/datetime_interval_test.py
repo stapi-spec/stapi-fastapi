@@ -67,7 +67,7 @@ def test_serialize(tz):
     end = start + timedelta(hours=1)
     model = Model(datetime=(start, end))
 
-    format = "%Y-%m-%d %H:%M:%S.%f%z"
+    format = "%Y-%m-%dT%H:%M:%S.%f%z"
     expected = f"{rfc3339_strftime(start, format)}/{rfc3339_strftime(end, format)}"
 
     obj = model.model_dump()

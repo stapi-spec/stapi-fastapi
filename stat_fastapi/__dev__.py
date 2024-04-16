@@ -12,7 +12,7 @@ except ImportError:
     exit(1)
 
 from stat_fastapi.api import StatApiRouter
-from stat_fastapi_mock_backend import StatMockBackend
+from stat_fastapi_tle_backend import StatMockBackend
 
 
 class DevSettings(BaseSettings):

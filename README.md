@@ -37,14 +37,6 @@ additional pytest options in `PYTEST_ADDOPTS`:
 just PYTEST_ADDOPTS="-x --ff" test
 ```
 
-A number of STAT specific pytest options are available through the test suite:
-
-- `--stat-backend`: backend implementation to use in tests, defaults to
-  `stat_fastapi_mock_backend:StatMockBackend`
-- `--stat-prefix`: service URL prefix, defaults to `/prefix`
-- `--stat-product-id`: STAT product id to use in tests, defaults to
-  `mock:standard`
-
 ### Dev Server
 
 For dev purposes, [stat_fastapi.**dev**.py](./stat_fastapi/__dev__.py) shows
