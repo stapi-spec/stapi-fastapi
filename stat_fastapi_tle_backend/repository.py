@@ -10,7 +10,8 @@ from sqlalchemy.event import listen
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from stat_fastapi.models.order import Order, OrderProperties
+from stat_fastapi.models.constraints import Constraints
+from stat_fastapi.models.order import Order
 
 from .models import OffNadirRange, ValidatedOrderPayload
 
@@ -58,7 +59,7 @@ class OrderEntity(Base):
         # SQLite drops TZ, patching back with UTC ¯\_(ツ)_/¯
         return Order(
             geometry=to_shape(self.geom),
-            properties=OrderProperties(
+            properties=Constraints(
                 datetime=(
                     self.dt_start.replace(tzinfo=UTC),
                     self.dt_end.replace(tzinfo=UTC),

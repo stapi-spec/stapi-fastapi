@@ -2,13 +2,21 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import status
 from fastapi.testclient import TestClient
-from pytest import fixture
 
-from stat_fastapi.models.opportunity import OpportunityCollection
+from stat_fastapi.models.opportunity import Opportunity, OpportunityCollection
+from stat_fastapi.models.product import Product
+from stat_fastapi_test_backend.backend import TestBackend
 
 
-@fixture
-def search_opportunities_response(stat_client: TestClient, product_id: str):
+def test_search_opportunities_response(
+    products: list[Product],
+    opportunities: list[Opportunity],
+    stat_backend: TestBackend,
+    stat_client: TestClient,
+):
+    stat_backend._products = products
+    stat_backend._opportunities = opportunities
+
     now = datetime.now(UTC)
     start = now
     end = start + timedelta(days=5)
@@ -21,7 +29,7 @@ def search_opportunities_response(stat_client: TestClient, product_id: str):
                 "type": "Point",
                 "coordinates": [0, 0],
             },
-            "product_id": product_id,
+            "product_id": products[0].id,
             "properties": {
                 "datetime": f"{start.isoformat()}/{end.isoformat()}",
                 "off_nadir": {
@@ -33,11 +41,6 @@ def search_opportunities_response(stat_client: TestClient, product_id: str):
     )
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/geo+json"
-    yield OpportunityCollection(**res.json())
+    response = OpportunityCollection(**res.json())
 
-
-def test_search_opportunities_response(
-    search_opportunities_response: OpportunityCollection, product_id: str, url_for
-):
-    response = search_opportunities_response
     assert len(response.features) > 0

@@ -2,7 +2,9 @@ from warnings import warn
 
 from fastapi import status
 from fastapi.testclient import TestClient
-from pytest import fixture
+
+from stat_fastapi.models.product import Product
+from stat_fastapi_test_backend.backend import TestBackend
 
 from .utils import find_link
 from .warnings import StatSpecWarning
@@ -20,20 +22,20 @@ def test_products_response(stat_client: TestClient):
     assert isinstance(data["products"], list)
 
 
-@fixture
-def product_response(stat_client: TestClient, product_id: str):
-    res = stat_client.get(f"/products/{product_id}")
+def test_product_response_self_link(
+    products: list[Product], stat_backend: TestBackend, stat_client: TestClient, url_for
+):
+    stat_backend._products = products
+
+    res = stat_client.get("/products/mock:standard")
 
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
 
-    yield res.json()
-
-
-def test_product_response_self_link(product_response: dict, product_id: str, url_for):
-    link = find_link(product_response["links"], "self")
+    data = res.json()
+    link = find_link(data["links"], "self")
     if link is None:
         warn(StatSpecWarning("GET /products Link[rel=self] should exist"))
     else:
         assert link["type"] == "application/json"
-        assert link["href"] == url_for(f"/products/{product_id}")
+        assert link["href"] == url_for("/products/mock:standard")
