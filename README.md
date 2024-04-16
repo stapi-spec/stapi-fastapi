@@ -3,7 +3,7 @@
 WARNING: The whole STAT spec is very much work in progress, so things are
 guaranteed to be not correct. One way or the other.
 
-NOTE: This uses a [justfile][just]!
+NOTE: This uses [scripts to rule them all][https://github.com/github/scripts-to-rule-them-all]
 
 ## Usage
 
@@ -26,16 +26,12 @@ export SPATIALITE_LIBRARY_PATH=/path/to/mod_spatialite.dylib
 ### Dev Setup
 
 Setup is managed with `poetry` and `pre-commit`, all of which can be initialised
-by `just bootstrap`.
+by `./scripts/bootstrap`.
 
 ### Test Suite
 
-A `pytest` based test suite is provided. Run it as `just test` or with
-additional pytest options in `PYTEST_ADDOPTS`:
-
-```
-just PYTEST_ADDOPTS="-x --ff" test
-```
+A `pytest` based test suite is provided. Run it as `./scripts/test`. Any additional
+pytest flags are passed along
 
 A number of STAT specific pytest options are available through the test suite:
 
@@ -48,7 +44,7 @@ A number of STAT specific pytest options are available through the test suite:
 ### Dev Server
 
 For dev purposes, [stat_fastapi.**dev**.py](./stat_fastapi/__dev__.py) shows
-a minimal demo with `uvicorn` to run the full app. Start it with `just dev`.
+a minimal demo with `uvicorn` to run the full app. Start it with `./scripts/server`.
 
 ### Implementing a backend
 
@@ -56,4 +52,3 @@ a minimal demo with `uvicorn` to run the full app. Start it with `just dev`.
   required by the constructor.
 
 [poetry]: https://python-poetry.org/
-[just]: https://just.systems/
