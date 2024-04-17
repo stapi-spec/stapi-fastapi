@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from httpx import Response
 from pytest import fixture
 
-from stat_fastapi.models.order import OrderPayload
+from stat_fastapi.models.opportunity import OpportunitySearch
 from stat_fastapi_test_backend.backend import TestBackend
 
 from .utils import find_link
@@ -20,13 +20,13 @@ END = START + timedelta(days=5)
 def new_order_response(
     stat_backend: TestBackend,
     stat_client: TestClient,
-    allowed_order_payloads: list[OrderPayload],
+    allowed_payloads: list[OpportunitySearch],
 ) -> Generator[Response, None, None]:
-    stat_backend._allowed_order_payloads = allowed_order_payloads
+    stat_backend._allowed_payloads = allowed_payloads
 
     res = stat_client.post(
         "/orders",
-        json=allowed_order_payloads[0].model_dump(),
+        json=allowed_payloads[0].model_dump(),
     )
 
     assert res.status_code == status.HTTP_201_CREATED
@@ -48,21 +48,20 @@ def get_order_response(
     order_id = new_order_response.json()["id"]
 
     res = stat_client.get(f"/orders/{order_id}")
-    print(res.text)
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/geo+json"
     yield res
 
 
-def test_get_order_properties(get_order_response: Response, allowed_order_payloads):
+def test_get_order_properties(get_order_response: Response, allowed_payloads):
     order = get_order_response.json()
 
     assert order["geometry"] == {
         "type": "Point",
-        "coordinates": list(allowed_order_payloads[0].geometry.coordinates),
+        "coordinates": list(allowed_payloads[0].geometry.coordinates),
     }
 
     assert (
         order["properties"]["datetime"]
-        == allowed_order_payloads[0].properties.model_dump()["datetime"]
+        == allowed_payloads[0].model_dump()["datetime"]
     )

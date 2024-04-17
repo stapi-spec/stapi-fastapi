@@ -30,8 +30,8 @@ def test_search_opportunities_response(
                 "coordinates": [0, 0],
             },
             "product_id": products[0].id,
-            "properties": {
-                "datetime": f"{start.isoformat()}/{end.isoformat()}",
+            "datetime": f"{start.isoformat()}/{end.isoformat()}",
+            "constraints": {
                 "off_nadir": {
                     "minimum": 0,
                     "maximum": 45,

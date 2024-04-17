@@ -5,14 +5,14 @@ from fastapi import Request
 
 from stat_fastapi.exceptions import ConstraintsException, NotFoundException
 from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
-from stat_fastapi.models.order import Order, OrderPayload
+from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product
 
 
 class TestBackend:
     _products: list[Product] = []
     _opportunities: list[Opportunity] = []
-    _allowed_order_payloads: list[OrderPayload] = []
+    _allowed_payloads: list[OpportunitySearch] = []
     _orders: Mapping[str, Order] = {}
 
     def products(self, request: Request) -> list[Product]:
@@ -37,21 +37,24 @@ class TestBackend:
         self, search: OpportunitySearch, request: Request
     ) -> list[Opportunity]:
         return [
-            o.model_copy(update={"constraints": search.properties})
+            o.model_copy(update=search.model_dump())
             for o in self._opportunities
         ]
 
-    async def create_order(self, payload: OrderPayload, request: Request) -> Order:
+    async def create_order(self, payload: OpportunitySearch, request: Request) -> Order:
         """
         Create a new order.
         """
-        allowed = any(allowed == payload for allowed in self._allowed_order_payloads)
+        allowed = any(allowed == payload for allowed in self._allowed_payloads)
         if allowed:
             order = Order(
                 id=str(uuid4()),
                 geometry=payload.geometry,
-                properties=payload.properties,
-                product_id=payload.product_id,
+                properties={
+                    "constraints": payload.constraints,
+                    "datetime": payload.datetime,
+                    "product_id": payload.product_id,
+                },
                 links=[],
             )
             self._orders[order.id] = order

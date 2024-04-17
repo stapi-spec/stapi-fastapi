@@ -5,8 +5,7 @@ from pydantic import BaseModel
 from pytest import fixture
 
 from stat_fastapi.models.constraints import Constraints
-from stat_fastapi.models.opportunity import Opportunity
-from stat_fastapi.models.order import OrderPayload
+from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
 from stat_fastapi.models.product import Product, Provider, ProviderRole
 
 
@@ -39,23 +38,26 @@ def products():
 
 
 @fixture
-def opportunities():
+def opportunities(products: list[Product]):
     yield [
         Opportunity(
             geometry=Point(type="Point", coordinates=[13.4, 52.5]),
-            properties={},
-            constraints=Constraints(datetime=(datetime.now(UTC), datetime.now(UTC))),
+            properties={
+                "product_id": products[0].id,
+                "datetime": (datetime.now(UTC), datetime.now(UTC)),
+                "constraints": {},
+            },
         )
     ]
 
 
 @fixture
-def allowed_order_payloads(products: list[Product]):
+def allowed_payloads(products: list[Product]):
     yield [
-        OrderPayload(
-            type="Feature",
+        OpportunitySearch(
             geometry=Point(type="Point", coordinates=[13.4, 52.5]),
             product_id=products[0].id,
-            properties=Constraints(datetime=(datetime.now(UTC), datetime.now(UTC))),
+            datetime=(datetime.now(UTC), datetime.now(UTC)),
+            constraints=Constraints(),
         ),
     ]
