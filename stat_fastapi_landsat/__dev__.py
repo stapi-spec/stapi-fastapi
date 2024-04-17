@@ -26,4 +26,9 @@ app.include_router(StatApiRouter(backend=StatLandsatBackend()).router)
 
 def cli():
     settings = DevSettings()
-    run("stat_fastapi.__dev__:app", reload=True, host=settings.host, port=settings.port)
+    run(
+        "stat_fastapi_landsat.__dev__:app",
+        reload=True,
+        host=settings.host,
+        port=settings.port,
+    )
