@@ -40,4 +40,4 @@ jobs:
           push: true
           tags:  |
             ghcr.io/stat-utils/stat-fastapi:latest
-            ${{ variables.AWS_ECR_URI }}/stat-utils/stat-fastapi:latest
+            ${{ vars.AWS_ECR_URI }}/stat-utils/stat-fastapi:latest
