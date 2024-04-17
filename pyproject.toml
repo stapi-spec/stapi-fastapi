@@ -59,6 +59,7 @@ omit = [
 addopts="--cov=stat_fastapi"
 filterwarnings = [
     "ignore:The 'app' shortcut is now deprecated.:DeprecationWarning",
+    "ignore:Pydantic serializer warnings:UserWarning",
 ]
 
 [build-system]

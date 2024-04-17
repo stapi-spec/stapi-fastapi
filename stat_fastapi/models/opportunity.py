@@ -6,7 +6,7 @@ from geojson_pydantic.geometries import Geometry
 from pydantic import BaseModel
 
 from stat_fastapi.models.constraints import Constraints
-from stat_fastapi.types import DatetimeInterval
+from stat_fastapi.types.datetime_interval import DatetimeInterval
 
 # Copied and modified from stack_pydantic.item.ItemProperties
 class OpportunityProperties(BaseModel):
