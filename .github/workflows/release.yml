@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - v**
-  pull_request:
-    branches: ["main"]
 
 jobs:
   release:
@@ -27,12 +25,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-#      -
-#        name: Docker metadata
-#        id: meta
-#        uses: docker/metadata-action@v5
-#        with:
-#          images: name/app
       -
         name: Build and push
         uses: docker/build-push-action@v5
