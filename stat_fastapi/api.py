@@ -9,7 +9,7 @@ from stat_fastapi.models.opportunity import (
     OpportunityCollection,
     OpportunitySearch,
 )
-from stat_fastapi.models.order import Order, OrderPayload
+from stat_fastapi.models.order import Order 
 from stat_fastapi.models.product import Product, ProductsCollection
 from stat_fastapi.models.root import RootResponse
 from stat_fastapi.models.shared import HTTPException as HTTPExceptionModel
@@ -161,13 +161,13 @@ class StatApiRouter:
         )
 
     async def create_order(
-        self, payload: OrderPayload, request: Request
+        self, search: OpportunitySearch, request: Request
     ) -> JSONResponse:
         """
         Create a new order.
         """
         try:
-            order = await self.backend.create_order(payload, request)
+            order = await self.backend.create_order(search, request)
         except ConstraintsException as exc:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
 

@@ -7,10 +7,6 @@ from stat_fastapi.models.constraints import Constraints
 from stat_fastapi.models.shared import Link
 
 
-class OrderPayload(Feature[Geometry, Constraints]):
-    product_id: str
-
-
 class Order(Feature[Geometry, Constraints]):
     type: Literal["Feature"] = "Feature"
     product_id: str

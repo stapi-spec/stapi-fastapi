@@ -3,7 +3,7 @@ from typing import Protocol
 from fastapi import Request
 
 from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
-from stat_fastapi.models.order import Order, OrderPayload
+from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product
 
 
@@ -29,7 +29,7 @@ class StatApiBackend(Protocol):
         `stat_fastapi.backend.exceptions.ConstraintsException` if not valid.
         """
 
-    async def create_order(self, payload: OrderPayload, request: Request) -> Order:
+    async def create_order(self, search: OpportunitySearch, request: Request) -> Order:
         """
         Create a new order.
 
