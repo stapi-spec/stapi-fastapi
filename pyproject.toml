@@ -33,6 +33,7 @@ mangum  = "^0.17.0"
 
 [tool.poetry.scripts]
 dev = "stat_fastapi.__dev__:cli"
+landsat = "stat_fastapi_landsat.__dev__:cli"
 
 [tool.ruff]
 line-length = 88
