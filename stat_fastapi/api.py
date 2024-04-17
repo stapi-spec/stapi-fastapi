@@ -9,7 +9,7 @@ from stat_fastapi.models.opportunity import (
     OpportunityCollection,
     OpportunitySearch,
 )
-from stat_fastapi.models.order import Order 
+from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, ProductsCollection
 from stat_fastapi.models.root import RootResponse
 from stat_fastapi.models.shared import HTTPException as HTTPExceptionModel
