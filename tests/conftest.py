@@ -4,7 +4,6 @@ from geojson_pydantic import Point
 from pydantic import BaseModel
 from pytest import fixture
 
-from stat_fastapi.models.constraints import Constraints
 from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
 from stat_fastapi.models.product import Product, Provider, ProviderRole
 
@@ -45,7 +44,7 @@ def opportunities(products: list[Product]):
             properties={
                 "product_id": products[0].id,
                 "datetime": (datetime.now(UTC), datetime.now(UTC)),
-                "constraints": {},
+                "filter": {},
             },
         )
     ]
@@ -58,6 +57,6 @@ def allowed_payloads(products: list[Product]):
             geometry=Point(type="Point", coordinates=[13.4, 52.5]),
             product_id=products[0].id,
             datetime=(datetime.now(UTC), datetime.now(UTC)),
-            constraints=Constraints(),
+            filter={},
         ),
     ]

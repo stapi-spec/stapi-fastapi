@@ -106,8 +106,10 @@ class StatMockBackend:
         opportunities = [
             Opportunity(
                 geometry=p.geometry,
-                constraints=search.properties,
-                properties=p.properties.model_dump(by_alias=True),
+                properties={
+                    **p.properties.model_dump(by_alias=True),
+                    "filter": search.filter,
+                },
             )
             for p in passes
         ]

@@ -48,7 +48,7 @@ class TestBackend:
                 id=str(uuid4()),
                 geometry=payload.geometry,
                 properties={
-                    "constraints": payload.constraints,
+                    "filter": payload.filter,
                     "datetime": payload.datetime,
                     "product_id": payload.product_id,
                 },
