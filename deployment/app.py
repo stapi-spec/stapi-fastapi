@@ -13,7 +13,7 @@ class STATDeploy(Stack):
         id: str,
         memory: int = 1024,
         timeout: int = 30,
-        runtime: _lambda.Runtime = _lambda.Runtime.PYTHON_3_12,
+        runtime: _lambda.Runtime = _lambda.Runtime.PYTHON_3_11, #Set to 3.11 as the aws_cdk version does not have 3.12
         concurrent: Optional[int] = None,
         environment: Optional[Dict] = None,
         code_dir:str = "/",
@@ -35,7 +35,7 @@ class STATDeploy(Stack):
             reserved_concurrent_executions=concurrent,
             timeout=Duration.seconds(timeout),
             environment=environment,
-            log_retention=logs.RetentionDays.ONE_WEEK, #Honestly can be removed if required at this stage
+            log_retention=logs.RetentionDays.ONE_WEEK, #Honestly can be removed not sure if required at this stage
         )
 
         api = apigatewayv2.HttpApi(
