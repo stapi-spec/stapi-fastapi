@@ -56,6 +56,7 @@ omit = [
 ]
 
 [tool.pytest.ini_options]
+addopts="--cov=stat_fastapi"
 filterwarnings = [
     "ignore:The 'app' shortcut is now deprecated.:DeprecationWarning",
 ]

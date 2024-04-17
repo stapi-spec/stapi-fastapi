@@ -12,5 +12,5 @@ Start the application including the backend.
 if [ "${1:-}" = "--help" ]; then
     usage
 else
-    poetry run pytest --cov=stat_fastapi "$@"
+    poetry run pytest "$@"
 fi
