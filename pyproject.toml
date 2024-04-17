@@ -28,7 +28,7 @@ shapely = "^2.0.3"
 pre-commit = "^3.7.0"
 
 [tool.poetry.group.lambda.dependencies]
-mangum  = "^0.17.0"
+mangum = "^0.17.0"
 
 [tool.poetry.scripts]
 dev = "stat_fastapi.__dev__:cli"
@@ -38,30 +38,24 @@ line-length = 88
 
 [tool.ruff.lint]
 extend-ignore = ["E501", "UP007", "UP034"]
-select = [
-    "C9",
-    "E",
-    "F",
-    "I",
-    "W",
-    "UP"
-]
+select = ["C9", "E", "F", "I", "W", "UP"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 8
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+docstring-code-format = true
 
 [tool.coverage.report]
 show_missing = true
 skip_empty = true
 sort = "Cover"
-omit = [
-    "**/*_test.py",
-    "**/conftest.py",
-    "stat_fastapi/__dev__.py",
-]
+omit = ["**/*_test.py", "**/conftest.py", "stat_fastapi/__dev__.py"]
 
 [tool.pytest.ini_options]
-addopts="--cov=stat_fastapi"
+addopts = "--cov=stat_fastapi"
 filterwarnings = [
     "ignore:The 'app' shortcut is now deprecated.:DeprecationWarning",
     "ignore:Pydantic serializer warnings:UserWarning",
