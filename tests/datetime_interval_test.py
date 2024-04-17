@@ -6,7 +6,7 @@ from pyrfc3339.utils import timedelta_seconds, timezone
 from pytest import mark, raises
 from zoneinfo import ZoneInfo
 
-from .datetime_interval import DatetimeInterval
+from stat_fastapi.types.datetime_interval import DatetimeInterval
 
 EUROPE_BERLIN = ZoneInfo("Europe/Berlin")
 

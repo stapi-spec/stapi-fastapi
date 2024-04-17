@@ -11,6 +11,7 @@ python = ">=3.10"
 fastapi = "^0.110.0"
 pydantic = "^2.6.4"
 geojson-pydantic = "^1.0.2"
+pygeofilter = "^0.2.1"
 
 
 [tool.poetry.group.dev.dependencies]

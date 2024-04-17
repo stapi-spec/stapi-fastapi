@@ -31,11 +31,12 @@ def test_search_opportunities_response(
             },
             "product_id": products[0].id,
             "datetime": f"{start.isoformat()}/{end.isoformat()}",
-            "constraints": {
-                "off_nadir": {
-                    "minimum": 0,
-                    "maximum": 45,
-                },
+            "filter": {
+                "op": "and",
+                "args": [
+                    {"op": ">", "args": [{"property": "off_nadir"}, 0]},
+                    {"op": "<", "args": [{"property": "off_nadir"}, 45]},
+                ],
             },
         },
     )
