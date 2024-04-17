@@ -3,8 +3,9 @@ name: New release
 on:
   push:
     tags:
-#      - v**
-      - test**
+      - v**
+  pull_request:
+    branches: ["main"]
 
 jobs:
   release:
