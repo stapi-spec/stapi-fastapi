@@ -29,6 +29,7 @@ pre-commit = "^3.7.0"
 
 [tool.poetry.scripts]
 dev = "stat_fastapi.__dev__:cli"
+landsat = "stat_fastapi_landsat.__dev__:cli"
 
 [tool.ruff]
 extend-ignore = ["E501", "UP007", "UP034"]
