@@ -27,12 +27,17 @@ geoalchemy2 = "^0.14.6"
 shapely = "^2.0.3"
 pre-commit = "^3.7.0"
 
+[tool.poetry.group.lambda.dependencies]
+mangum  = "^0.17.0"
+
 [tool.poetry.scripts]
 dev = "stat_fastapi.__dev__:cli"
 
 [tool.ruff]
-extend-ignore = ["E501", "UP007", "UP034"]
 line-length = 88
+
+[tool.ruff.lint]
+extend-ignore = ["E501", "UP007", "UP034"]
 select = [
     "C9",
     "E",
@@ -42,7 +47,7 @@ select = [
     "UP"
 ]
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 8
 
 [tool.coverage.report]

@@ -58,7 +58,7 @@ class TestBackend:
             return order
         raise ConstraintsException("not allowed")
 
-    async def get_order(self, order_id: str, request: Request):
+    async def get_order(self, order_id: str, request: Request) -> Order:
         """
         Show details for order with `order_id`.
         """
