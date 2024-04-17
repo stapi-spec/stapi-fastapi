@@ -12,7 +12,6 @@ from pydantic import (
 
 from stat_fastapi.models.constraints import Constraints as BaseConstraints
 from stat_fastapi.models.opportunity import OpportunitySearch
-from stat_fastapi.models.order import OrderPayload
 
 
 class Satellite(BaseModel):
@@ -76,8 +75,4 @@ class Constraints(BaseConstraints):
 
 
 class ValidatedOpportunitySearch(OpportunitySearch):
-    properties: Constraints
-
-
-class ValidatedOrderPayload(OrderPayload):
     properties: Constraints

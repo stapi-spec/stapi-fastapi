@@ -3,16 +3,13 @@ from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from stat_fastapi.exceptions import ConstraintsException, NotFoundException
 from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
-from stat_fastapi.models.order import Order, OrderPayload
+from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, Provider, ProviderRole
-from stat_fastapi_tle_backend.models import (
-    ValidatedOpportunitySearch,
-    ValidatedOrderPayload,
-)
+
+from stat_fastapi_tle_backend.models import ValidatedOpportunitySearch
 from stat_fastapi_tle_backend.repository import Repository
 from stat_fastapi_tle_backend.satellite import EarthObservationSatelliteModel
 from stat_fastapi_tle_backend.settings import Settings
-
 
 class OffNadirRange(BaseModel):
     minimum: float = Field(ge=0.0, le=45)
@@ -116,12 +113,12 @@ class StatMockBackend:
         ]
         return opportunities
 
-    async def create_order(self, payload: OrderPayload, request: Request) -> Order:
+    async def create_order(self, search: OpportunitySearch, request: Request) -> Order:
         """
         Create a new order.
         """
         try:
-            validated = ValidatedOrderPayload(**payload.model_dump(by_alias=True))
+            validated = ValidatedOpportunitySearch(**search.model_dump(by_alias=True))
         except ValidationError as exc:
             raise ConstraintsException(exc.errors()) from exc
 
