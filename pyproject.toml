@@ -7,7 +7,7 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.10"
+python = "^3.10"
 fastapi = "^0.110.0"
 pydantic = "^2.6.4"
 geojson-pydantic = "^1.0.2"
@@ -31,6 +31,12 @@ pre-commit = "^3.7.0"
 [tool.poetry.group.lambda.dependencies]
 mangum  = "^0.17.0"
 awslambdaric = "^2.0.11"
+
+
+[tool.poetry.group.deploy-aws.dependencies]
+aws-cdk-lib = "^2.137.0"
+constructs = "^10.3.0"
+pydantic-settings = "^2.2.1"
 
 [tool.poetry.scripts]
 dev = "stat_fastapi.__dev__:cli"

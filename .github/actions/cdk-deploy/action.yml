@@ -1,0 +1,28 @@
+name: run cdk deploy
+description: deploy example to AWS using CDK
+inputs:
+  AWS_SECRET_ACCESS_KEY:
+    required: true
+  AWS_ACCESS_KEY_ID:
+    required: true
+  AWS_ECR_REPOSITORY_ARN:
+    required: true
+  IMAGE_TAG_OR_DIGEST:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+    - run: npm install -g aws-cdk
+      shell: bash
+    - run: poetry run cdk deploy --require-approval=never
+      shell: bash
+      working-directory: deployment
+      env:
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+        AWS_ACCESS_KEY_ID: ${{ inputs.AWS_ACCESS_KEY_ID }}
+        AWS_ECR_REPOSITORY_ARN: ${{ inputs.AWS_ECR_REPOSITORY_ARN }}
+        IMAGE_TAG_OR_DIGEST: ${{ inputs.IMAGE_TAG_OR_DIGEST }}

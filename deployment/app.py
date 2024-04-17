@@ -1,12 +1,52 @@
-import os
-from typing import Any, Dict, Optional
-
-import aws_cdk.aws_apigatewayv2_alpha as apigatewayv2
-import aws_cdk.aws_apigatewayv2_integrations_alpha as apigateway_integrations
+import aws_cdk.aws_apigatewayv2 as apigatewayv2
+import aws_cdk.aws_apigatewayv2_integrations as apigateway_integrations
 import aws_cdk.aws_lambda as _lambda
 from aws_cdk import App, CfnOutput, Duration, Stack
 from aws_cdk import aws_logs as logs
+from aws_cdk.aws_ecr import Repository
 from constructs import Construct
+
+from deployment.profile import DeploymentProfile
+
+
+class LambdaService(Construct):
+    function: _lambda.Function
+    gateway: apigatewayv2.HttpApi
+
+    def __init__(self, scope: Construct, id: str, profile: DeploymentProfile) -> None:
+        super().__init__(scope, id)
+
+        repository = Repository.from_repository_arn(
+            self, "Repository", profile.aws_ecr_repository_arn
+        )
+
+        self.function = _lambda.Function(
+            self,
+            "Lambda",
+            runtime=_lambda.Runtime.FROM_IMAGE,
+            handler=_lambda.Handler.FROM_IMAGE,
+            code=_lambda.Code.from_ecr_image(
+                repository=repository,
+                tag_or_digest=profile.image_tag_or_digest,
+                entrypoint=["poetry", "run", "python3", "-m", "awslambdaric"],
+                cmd=["lambda_handler.handler"],
+                working_directory="/app",
+            ),
+            memory_size=profile.memory,
+            timeout=Duration.seconds(profile.timeout),
+            environment={},
+            log_retention=logs.RetentionDays.ONE_WEEK,
+        )
+
+        repository.grant_pull(self.function)
+
+        self.api = apigatewayv2.HttpApi(
+            self,
+            "Gateway",
+            default_integration=apigateway_integrations.HttpLambdaIntegration(
+                "DefaultIntegration", handler=self.function
+            ),
+        )
 
 
 class STATDeploy(Stack):
@@ -14,45 +54,18 @@ class STATDeploy(Stack):
         self,
         scope: Construct,
         id: str,
-        memory: int = 1024,
-        timeout: int = 30,
-        runtime: _lambda.Runtime = _lambda.Runtime.PYTHON_3_11,  # Set to 3.11 as the aws_cdk version does not have 3.12
-        concurrent: Optional[int] = None,
-        environment: Optional[Dict] = None,
-        code_dir: str = "/",
-        **kwargs: Any,
+        profile: DeploymentProfile,
     ) -> None:
-        super().__init__(scope, id, **kwargs)
+        super().__init__(scope, id)
 
-        lambda_function = _lambda.Function(
-            self,
-            f"{id}-lambda",
-            runtime=runtime,
-            code=_lambda.Code.from_docker_build(
-                path=os.path.abspath(code_dir),
-                file="./Dockerfile",
-            ),
-            handler="handler.handler",
-            memory_size=memory,
-            reserved_concurrent_executions=concurrent,
-            timeout=Duration.seconds(timeout),
-            environment=environment,
-            log_retention=logs.RetentionDays.ONE_WEEK,  # Honestly can be removed not sure if required at this stage
-        )
-
-        api = apigatewayv2.HttpApi(
-            self,
-            f"{id}-endpoint",
-            default_integration=apigateway_integrations.HttpLambdaIntegration(
-                f"{id}-integration", handler=lambda_function
-            ),
-        )
-        CfnOutput(self, "Endpoint", value=api.url)
+        service = LambdaService(self, "Service", profile)
+        CfnOutput(self, "Endpoint", value=service.api.url)
 
 
 def main():
     app = App()
-    STATDeploy(app, "MyCdkProjectStack")
+    profile = DeploymentProfile()
+    STATDeploy(app, "StatExampleStack", profile)
     app.synth()
 
 
