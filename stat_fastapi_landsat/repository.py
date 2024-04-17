@@ -13,7 +13,7 @@ from sqlalchemy.pool import StaticPool
 from stat_fastapi.models.constraints import Constraints
 from stat_fastapi.models.order import Order
 
-from .models import OffNadirRange, ValidatedOrderPayload
+from .models import OffNadirRange, ValidatedOpportunitySearch
 
 logger = getLogger(__name__)
 
@@ -41,17 +41,17 @@ class OrderEntity(Base):
     )
 
     @classmethod
-    def from_payload(cls, payload: ValidatedOrderPayload) -> "OrderEntity":
+    def from_search(cls, search: ValidatedOpportunitySearch) -> "OrderEntity":
         order_id = str(uuid4())
-        geom = from_geojson(payload.geometry.model_dump_json(by_alias=True))
+        geom = from_geojson(search.geometry.model_dump_json(by_alias=True))
         return OrderEntity(
             id=order_id,
-            product_id=payload.product_id,
+            product_id=search.product_id,
             geom=f"SRID=4326;{to_wkt(geom)}",
-            dt_start=payload.properties.datetime[0],
-            dt_end=payload.properties.datetime[1],
-            off_nadir_min=payload.properties.off_nadir.minimum,
-            off_nadir_max=payload.properties.off_nadir.maximum,
+            dt_start=search.datetime[0],
+            dt_end=search.datetime[1],
+            off_nadir_min=search.constraints.off_nadir.minimum,
+            off_nadir_max=search.constraints.off_nadir.maximum,
             status="pending",
         )
 
@@ -107,8 +107,8 @@ class Repository:
     def __exit__(self, exception_type, exception_value, exception_traceback):
         self.session.close()
 
-    def add_order(self, payload: ValidatedOrderPayload) -> Order:
-        entity = OrderEntity.from_payload(payload)
+    def add_order(self, search: ValidatedOpportunitySearch) -> Order:
+        entity = OrderEntity.from_search(search)
         with self as session:
             session.add(entity)
             session.commit()

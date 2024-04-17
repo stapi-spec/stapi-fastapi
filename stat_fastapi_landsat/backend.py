@@ -3,10 +3,10 @@ from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from stat_fastapi.exceptions import ConstraintsException, NotFoundException
 from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
-from stat_fastapi.models.order import Order, OrderPayload
+from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, Provider, ProviderRole
 from stat_fastapi_landsat.models import (
-    ValidatedOrderPayload,
+    ValidatedOpportunitySearch,
 )
 from stat_fastapi_landsat.repository import Repository
 from stat_fastapi_landsat.settings import Settings
@@ -80,14 +80,16 @@ class StatLandsatBackend:
         """
         Search for ordering opportunities for the  given search parameters.
         """
+
+        # TODO: Put logic here to search for opportunities
         return []
 
-    async def create_order(self, payload: OrderPayload, request: Request) -> Order:
+    async def create_order(self, search: OpportunitySearch, request: Request) -> Order:
         """
         Create a new order.
         """
         try:
-            validated = ValidatedOrderPayload(**payload.model_dump(by_alias=True))
+            validated = ValidatedOpportunitySearch(**search.model_dump(by_alias=True))
         except ValidationError as exc:
             error_dict = {str(index): error for index, error in enumerate(exc.errors())}
             raise ConstraintsException(error_dict) from exc

@@ -7,7 +7,6 @@ from pydantic import (
 
 from stat_fastapi.models.constraints import Constraints as BaseConstraints
 from stat_fastapi.models.opportunity import OpportunitySearch
-from stat_fastapi.models.order import OrderPayload
 
 OFF_NADIR_RANGE = (0.0, 45.0)
 OFF_NADIR_DEFAULT_RANGE = (0.0, 30.0)
@@ -36,8 +35,4 @@ class Constraints(BaseConstraints):
 
 
 class ValidatedOpportunitySearch(OpportunitySearch):
-    properties: Constraints
-
-
-class ValidatedOrderPayload(OrderPayload):
     properties: Constraints
