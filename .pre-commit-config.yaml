@@ -1,14 +1,16 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.5.0
     hooks:
       - id: check-merge-conflict
       - id: end-of-file-fixer
+      - id: mixed-line-ending
       - id: check-toml
       - id: check-yaml
       - id: trailing-whitespace
+      - id: no-commit-to-branch
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.1.5"
+    rev: "v0.3.7"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
