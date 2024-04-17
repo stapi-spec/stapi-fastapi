@@ -26,9 +26,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       -
+        name: Login to ECR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ variables.AWS_ECR_URI }}
+          username: ${{ variables.AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      -
         name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags:  ghcr.io/stat-utils/stat-fastapi:latest
+          tags:  |
+            ghcr.io/stat-utils/stat-fastapi:latest
+            ${{ variables.AWS_ECR_URI }}/stat-utils/stat-fastapi:latest
