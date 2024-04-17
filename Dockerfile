@@ -1,7 +1,6 @@
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED 1
-ENV DEBIAN_FRONTEND=noninteractive
 
 RUN pip install --no-cache-dir --no-cache poetry
 
