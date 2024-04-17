@@ -5,11 +5,11 @@ from stat_fastapi.exceptions import ConstraintsException, NotFoundException
 from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
 from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, Provider, ProviderRole
-
 from stat_fastapi_tle_backend.models import ValidatedOpportunitySearch
 from stat_fastapi_tle_backend.repository import Repository
 from stat_fastapi_tle_backend.satellite import EarthObservationSatelliteModel
 from stat_fastapi_tle_backend.settings import Settings
+
 
 class OffNadirRange(BaseModel):
     minimum: float = Field(ge=0.0, le=45)

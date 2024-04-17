@@ -62,6 +62,5 @@ def test_get_order_properties(get_order_response: Response, allowed_payloads):
     }
 
     assert (
-        order["properties"]["datetime"]
-        == allowed_payloads[0].model_dump()["datetime"]
+        order["properties"]["datetime"] == allowed_payloads[0].model_dump()["datetime"]
     )

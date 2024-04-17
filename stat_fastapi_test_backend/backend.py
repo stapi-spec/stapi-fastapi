@@ -36,10 +36,7 @@ class TestBackend:
     async def search_opportunities(
         self, search: OpportunitySearch, request: Request
     ) -> list[Opportunity]:
-        return [
-            o.model_copy(update=search.model_dump())
-            for o in self._opportunities
-        ]
+        return [o.model_copy(update=search.model_dump()) for o in self._opportunities]
 
     async def create_order(self, payload: OpportunitySearch, request: Request) -> Order:
         """
