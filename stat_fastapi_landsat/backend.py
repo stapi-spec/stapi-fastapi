@@ -4,10 +4,6 @@ from typing import cast
 
 import pytz
 from fastapi import Request
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-)
 from shapely.geometry import shape
 
 from stat_fastapi.exceptions import NotFoundException
@@ -18,11 +14,7 @@ from stat_fastapi.models.opportunity import (
 )
 from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, Provider, ProviderRole
-
-
-class Constraints(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+from stat_fastapi_landsat.models import Constraints
 
 PRODUCTS = [
     Product(
@@ -139,7 +131,6 @@ class StatLandsatBackend:
                                     properties=OpportunityProperties(
                                         product_id=search.product_id,
                                         datetime=[current_date, current_date],
-                                        filter=search.filter,
                                     ),
                                 )
                             )
