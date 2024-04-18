@@ -18,3 +18,5 @@ RUN pip install \
     git+https://github.com/stat-utils/stat-fastapi-umbra.git@main
 
 COPY . /app
+
+RUN poetry run python -c "import compileall; compileall.compile_path(maxlevels=10)" && poetry run python -m compileall stat_fastapi
