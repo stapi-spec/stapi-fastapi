@@ -1,16 +1,14 @@
 """Umbra Backend Module"""
 
-from typing import Protocol
-
 from fastapi import HTTPException, Request
 
 from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
 from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product
-from stat_fastapi_umbra_backend.products import PRODUCTS
+from stat_fastapi_umbra.products import PRODUCTS
 
 
-class UmbraBackend(Protocol):
+class UmbraBackend:
     """Umbra STAT Backend"""
 
     def products(self, request: Request) -> list[Product]:
@@ -38,6 +36,7 @@ class UmbraBackend(Protocol):
         Backends must validate search constraints and raise
         `stat_fastapi.backend.exceptions.ConstraintsException` if not valid.
         """
+        raise HTTPException("Not Yet Implemented")
 
     async def create_order(self, search: OpportunitySearch, request: Request) -> Order:
         """
@@ -46,6 +45,7 @@ class UmbraBackend(Protocol):
         Backends must validate order payload and raise
         `stat_fastapi.backend.exceptions.ConstraintsException` if not valid.
         """
+        raise HTTPException("Not Yet Implemented")
 
     async def get_order(self, order_id: str, request: Request) -> Order:
         """
@@ -54,3 +54,4 @@ class UmbraBackend(Protocol):
         Backends must raise `stat_fastapi.backend.exceptions.NotFoundException`
         if not found or access denied.
         """
+        raise HTTPException("Not Yet Implemented")
