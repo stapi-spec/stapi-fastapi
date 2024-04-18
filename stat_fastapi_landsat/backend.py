@@ -4,10 +4,13 @@ from typing import cast
 
 import pytz
 from fastapi import Request
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+)
 from shapely.geometry import shape
 
-from stat_fastapi.exceptions import ConstraintsException, NotFoundException
+from stat_fastapi.exceptions import NotFoundException
 from stat_fastapi.models.opportunity import (
     Opportunity,
     OpportunityProperties,
@@ -15,27 +18,10 @@ from stat_fastapi.models.opportunity import (
 )
 from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, Provider, ProviderRole
-from stat_fastapi_landsat.models import (
-    ValidatedOpportunitySearch,
-)
-from stat_fastapi_landsat.repository import Repository
-from stat_fastapi_landsat.settings import Settings
-
-
-class OffNadirRange(BaseModel):
-    minimum: float = Field(ge=0.0, le=45)
-    maximum: float = Field(ge=0.0, le=45)
-
-    @model_validator(mode="after")
-    def validate(self) -> "OffNadirRange":
-        diff = self.maximum - self.minimum
-        if diff < 5.0:
-            raise ValueError("range must be at least 5°")
-        return self
 
 
 class Constraints(BaseModel):
-    off_nadir: OffNadirRange = OffNadirRange(minimum=0.0, maximum=30.0)
+    model_config = ConfigDict(extra="forbid")
 
 
 PRODUCTS = [
@@ -81,11 +67,7 @@ PRODUCTS = [
 
 
 class StatLandsatBackend:
-    repository: Repository
-
     def __init__(self):
-        settings = Settings.load()
-        self.repository = Repository(settings.database)
         self.wrs = {
             "ascending": self._load_json(
                 "stat_fastapi_landsat/files/wrs2ascending.geojson"
@@ -161,9 +143,6 @@ class StatLandsatBackend:
                                     ),
                                 )
                             )
-                            print(
-                                f"Satellite: {satellite_id}, Date: {current_date}, Path: {path_of_interest}, Row: {row}, Data: {self.satellite[satellite_id][date_str]}"
-                            )
 
         return opportunities
 
@@ -171,22 +150,13 @@ class StatLandsatBackend:
         """
         Create a new order.
         """
-        try:
-            validated = ValidatedOpportunitySearch(**search.model_dump(by_alias=True))
-        except ValidationError as exc:
-            error_dict = {str(index): error for index, error in enumerate(exc.errors())}
-            raise ConstraintsException(error_dict) from exc
-
-        return self.repository.add_order(validated)
+        raise NotImplementedError()
 
     async def get_order(self, order_id: str, request: Request):
         """
         Show details for order with `order_id`.
         """
-        feature = self.repository.get_order(order_id)
-        if feature is None:
-            raise NotFoundException()
-        return feature
+        raise NotImplementedError()
 
     def _load_json(self, file_path):
         with open(file_path) as f:
