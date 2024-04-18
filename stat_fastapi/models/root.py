@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from .shared import Link
+from stat_fastapi.models.shared import Link
 
 
 class RootResponse(BaseModel):
