@@ -1,9 +1,8 @@
 from enum import Enum
 from typing import Literal, Optional
 
-from pydantic import AnyHttpUrl, AnyUrl, BaseModel
+from pydantic import AnyHttpUrl, BaseModel
 
-from stat_fastapi.constants import STAT_VERSION
 from stat_fastapi.types.json_schema_model import JsonSchemaModel
 
 from .shared import Link
@@ -25,16 +24,15 @@ class Provider(BaseModel):
 
 class Product(BaseModel):
     type: Literal["Product"] = "Product"
-    stat_version: str = STAT_VERSION
-    stat_extensions: Optional[list[AnyUrl]] = None
+    conformsTo: list[str] = []
     id: str
-    title: Optional[str] = None
-    description: str
-    keywords: Optional[list[str]] = None
+    title: str = ""
+    description: str = ""
+    keywords: list[str] = []
     license: str
-    providers: list[Provider]
+    providers: list[Provider] = []
     links: list[Link]
-    constraints: JsonSchemaModel
+    parameters: JsonSchemaModel
 
 
 class ProductsCollection(BaseModel):

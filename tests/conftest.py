@@ -10,7 +10,7 @@ from stat_fastapi.models.product import Product, Provider, ProviderRole
 
 @fixture
 def products():
-    class Constraints(BaseModel):
+    class Parameters(BaseModel):
         pass
 
     yield [
@@ -30,7 +30,7 @@ def products():
                     url="http://acme.example.com",
                 )
             ],
-            constraints=Constraints,
+            parameters=Parameters,
             links=[],
         )
     ]

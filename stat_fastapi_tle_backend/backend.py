@@ -23,7 +23,7 @@ class OffNadirRange(BaseModel):
         return self
 
 
-class Constraints(BaseModel):
+class Parameters(BaseModel):
     off_nadir: OffNadirRange = OffNadirRange(minimum=0.0, maximum=30.0)
 
 
@@ -44,8 +44,8 @@ PRODUCTS = [
                 url="http://acme.example.com",
             )
         ],
-        constraints=Constraints,
         links=[],
+        parameters=Parameters,
     )
 ]
 
