@@ -70,13 +70,13 @@ class StatLandsatBackend:
         }
         self.satellite = self._load_json("stat_fastapi_landsat/files/satellites.json")
 
-    def products(self, request: Request) -> list[Product]:
+    async def get_products(self, request: Request) -> list[Product]:
         """
         Return a list of supported products.
         """
         return PRODUCTS
 
-    def product(self, product_id: str, request: Request) -> Product | None:
+    async def get_product(self, product_id: str, request: Request) -> Product | None:
         """
         Return the product identified by `product_id` or `None` if it isn't
         supported.
