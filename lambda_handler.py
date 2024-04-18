@@ -8,27 +8,30 @@ from stat_fastapi.backend import StatApiBackend
 
 
 def get_backend(name: str) -> StatApiBackend:
-    if name == "landsat":
-        from stat_fastapi_landsat import StatLandsatBackend
+    match name:
+        case "landsat":
+            from stat_fastapi_landsat import StatLandsatBackend
 
-        return StatLandsatBackend()
-    if name == "blacksky":
-        from stat_fastapi_blacksky import BlackskyBackend
+            return StatLandsatBackend()
+        case "blacksky":
+            from stat_fastapi_blacksky import BlackskyBackend
 
-        return BlackskyBackend()
-    if name == "up42":
-        from stat_fastapi_up42 import StatUp42Backend
+            return BlackskyBackend()
+        case "up42":
+            from stat_fastapi_up42 import StatUp42Backend
 
-        return StatUp42Backend()
-    if name == "umbra":
-        from stat_fastapi_umbra import UmbraBackend
+            return StatUp42Backend()
+        case "umbra":
+            from stat_fastapi_umbra import UmbraBackend
 
-        return UmbraBackend()
+            return UmbraBackend()
+        case _:
+            raise TypeError("not a supported backend")
 
 
 app = FastAPI()
 app.include_router(
-    StatApiRouter(backend=get_backend(os.environ.get("BACKEND_NAME"))).router
+    StatApiRouter(backend=get_backend(os.environ.get("BACKEND_NAME", "landsat"))).router
 )
 
 handler = Mangum(app, lifespan="off")
