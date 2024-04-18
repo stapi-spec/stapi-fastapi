@@ -15,7 +15,6 @@ class LogLevel(Enum):
 
 class Settings(BaseSettings):
     loglevel: LogLevel = LogLevel.INFO
-    database: str = "sqlite://"
 
     @classmethod
     def load(cls) -> "Settings":
