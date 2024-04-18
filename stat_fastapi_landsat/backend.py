@@ -139,7 +139,7 @@ class StatLandsatBackend:
                                     properties=OpportunityProperties(
                                         product_id=search.product_id,
                                         datetime=[current_date, current_date],
-                                        constraints=search.constraints,
+                                        filter=search.filter,
                                     ),
                                 )
                             )
