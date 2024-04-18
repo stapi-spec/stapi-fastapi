@@ -12,11 +12,11 @@ from stat_fastapi.types.filter import CQL2Filter
 class OpportunityProperties(BaseModel):
     datetime: DatetimeInterval
     product_id: str
-    filter: Optional[CQL2Filter] = None
 
 
-class OpportunitySearch(OpportunityProperties):
+class OpportunityRequest(OpportunityProperties):
     geometry: Geometry
+    filter: Optional[CQL2Filter] = None
 
 
 class Opportunity(Feature[Geometry, OpportunityProperties]):
