@@ -8,6 +8,11 @@ on:
         required: true
         default: latest
         type: string
+      backend_name:
+        description: backend to use (blacksky, umbra, up42 or landsat)
+        required: false
+        default: landsat
+        type: string
 
 jobs:
   deploy:
@@ -28,3 +33,4 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
           AWS_ECR_REPOSITORY_ARN: ${{ vars.AWS_ECR_REPOSITORY_ARN }}
           IMAGE_TAG_OR_DIGEST: ${{ inputs.image_tag_or_digest }}
+          BACKEND_NAME: ${{ inputs.backend_name }}
