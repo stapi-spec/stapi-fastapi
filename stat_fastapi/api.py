@@ -156,7 +156,19 @@ class StatApiRouter:
         except ConstraintsException as exc:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
         return JSONResponse(
-            jsonable_encoder(OpportunityCollection(features=opportunities)),
+            jsonable_encoder(
+                OpportunityCollection(
+                    features=opportunities,
+                    links=[
+                        Link(
+                            href=str(request.url_for("stat:create-order")),
+                            rel="create-order",
+                            method="POST",
+                            body=search.model_dump(),
+                        )
+                    ],
+                )
+            ),
             media_type=TYPE_GEOJSON,
         )
 
