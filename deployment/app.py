@@ -34,7 +34,7 @@ class LambdaService(Construct):
             ),
             memory_size=profile.memory,
             timeout=Duration.seconds(profile.timeout),
-            environment={},
+            environment={"BACKEND_NAME": profile.backend_name},
             log_retention=logs.RetentionDays.ONE_WEEK,
         )
 
@@ -65,7 +65,7 @@ class STATDeploy(Stack):
 def main():
     app = App()
     profile = DeploymentProfile()
-    STATDeploy(app, "StatExampleStack", profile)
+    STATDeploy(app, f"Stat{profile.backend_name.capitalize()}Backend", profile)
     app.synth()
 
 
