@@ -127,7 +127,7 @@ class StatApiRouter:
                     type=TYPE_JSON,
                 )
             )
-        product.links.append(
+        products.links.append(
             Link(
                 href=str(request.url_for("stat:list-products")),
                 rel="self",
