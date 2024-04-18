@@ -24,7 +24,6 @@ def test_search_opportunities_response(
     res = stat_client.post(
         "/opportunities",
         json={
-            "type": "Feature",
             "geometry": {
                 "type": "Point",
                 "coordinates": [0, 0],

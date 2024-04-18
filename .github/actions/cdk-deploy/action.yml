@@ -9,6 +9,8 @@ inputs:
     required: true
   IMAGE_TAG_OR_DIGEST:
     required: true
+  BACKEND_NAME:
+    required: true
 
 runs:
   using: "composite"
@@ -26,3 +28,4 @@ runs:
         AWS_ACCESS_KEY_ID: ${{ inputs.AWS_ACCESS_KEY_ID }}
         AWS_ECR_REPOSITORY_ARN: ${{ inputs.AWS_ECR_REPOSITORY_ARN }}
         IMAGE_TAG_OR_DIGEST: ${{ inputs.IMAGE_TAG_OR_DIGEST }}
+        BACKEND_NAME: ${{ inputs.BACKEND_NAME }}
