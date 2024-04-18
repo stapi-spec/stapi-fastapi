@@ -7,7 +7,7 @@ from stat_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stat_fastapi.exceptions import ConstraintsException, NotFoundException
 from stat_fastapi.models.opportunity import (
     OpportunityCollection,
-    OpportunitySearch,
+    OpportunityRequest,
 )
 from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, ProductsCollection
@@ -146,7 +146,7 @@ class StatApiRouter:
         return product
 
     async def search_opportunities(
-        self, search: OpportunitySearch, request: Request
+        self, search: OpportunityRequest, request: Request
     ) -> OpportunityCollection:
         """
         Explore the opportunities available for a particular set of constraints
@@ -161,7 +161,7 @@ class StatApiRouter:
         )
 
     async def create_order(
-        self, search: OpportunitySearch, request: Request
+        self, search: OpportunityRequest, request: Request
     ) -> JSONResponse:
         """
         Create a new order.

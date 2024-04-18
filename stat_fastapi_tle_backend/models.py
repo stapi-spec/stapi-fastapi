@@ -11,7 +11,7 @@ from pydantic import (
 )
 
 from stat_fastapi.models.constraints import Constraints as BaseConstraints
-from stat_fastapi.models.opportunity import OpportunitySearch
+from stat_fastapi.models.opportunity import OpportunityRequest
 
 
 class Satellite(BaseModel):
@@ -74,5 +74,5 @@ class Constraints(BaseConstraints):
     model_config = ConfigDict(extra="forbid")
 
 
-class ValidatedOpportunitySearch(OpportunitySearch):
+class ValidatedOpportunityRequest(OpportunityRequest):
     properties: Constraints

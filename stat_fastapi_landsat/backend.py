@@ -14,7 +14,7 @@ from stat_fastapi.exceptions import NotFoundException
 from stat_fastapi.models.opportunity import (
     Opportunity,
     OpportunityProperties,
-    OpportunitySearch,
+    OpportunityRequest,
 )
 from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, Provider, ProviderRole
@@ -95,7 +95,7 @@ class StatLandsatBackend:
             raise NotFoundException() from exc
 
     async def search_opportunities(
-        self, search: OpportunitySearch, request: Request
+        self, search: OpportunityRequest, request: Request
     ) -> list[Opportunity]:
         """
         Search for ordering opportunities for the given search parameters.
@@ -146,7 +146,7 @@ class StatLandsatBackend:
 
         return opportunities
 
-    async def create_order(self, search: OpportunitySearch, request: Request) -> Order:
+    async def create_order(self, search: OpportunityRequest, request: Request) -> Order:
         """
         Create a new order.
         """

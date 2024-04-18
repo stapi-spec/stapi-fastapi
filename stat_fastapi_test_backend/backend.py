@@ -4,7 +4,7 @@ from uuid import uuid4
 from fastapi import Request
 
 from stat_fastapi.exceptions import ConstraintsException, NotFoundException
-from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
+from stat_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product
 
@@ -12,7 +12,7 @@ from stat_fastapi.models.product import Product
 class TestBackend:
     _products: list[Product] = []
     _opportunities: list[Opportunity] = []
-    _allowed_payloads: list[OpportunitySearch] = []
+    _allowed_payloads: list[OpportunityRequest] = []
     _orders: Mapping[str, Order] = {}
 
     def products(self, request: Request) -> list[Product]:
@@ -34,11 +34,13 @@ class TestBackend:
             raise NotFoundException() from exc
 
     async def search_opportunities(
-        self, search: OpportunitySearch, request: Request
+        self, search: OpportunityRequest, request: Request
     ) -> list[Opportunity]:
         return [o.model_copy(update=search.model_dump()) for o in self._opportunities]
 
-    async def create_order(self, payload: OpportunitySearch, request: Request) -> Order:
+    async def create_order(
+        self, payload: OpportunityRequest, request: Request
+    ) -> Order:
         """
         Create a new order.
         """

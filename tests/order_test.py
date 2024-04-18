@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from httpx import Response
 from pytest import fixture
 
-from stat_fastapi.models.opportunity import OpportunitySearch
+from stat_fastapi.models.opportunity import OpportunityRequest
 from stat_fastapi_test_backend.backend import TestBackend
 
 from .utils import find_link
@@ -20,7 +20,7 @@ END = START + timedelta(days=5)
 def new_order_response(
     stat_backend: TestBackend,
     stat_client: TestClient,
-    allowed_payloads: list[OpportunitySearch],
+    allowed_payloads: list[OpportunityRequest],
 ) -> Generator[Response, None, None]:
     stat_backend._allowed_payloads = allowed_payloads
 

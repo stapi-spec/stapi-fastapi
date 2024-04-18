@@ -13,7 +13,7 @@ from sqlalchemy.pool import StaticPool
 from stat_fastapi.models.constraints import Constraints
 from stat_fastapi.models.order import Order
 
-from .models import OffNadirRange, ValidatedOpportunitySearch
+from .models import OffNadirRange, ValidatedOpportunityRequest
 
 logger = getLogger(__name__)
 
@@ -41,7 +41,7 @@ class OrderEntity(Base):
     )
 
     @classmethod
-    def from_search(cls, search: ValidatedOpportunitySearch) -> "OrderEntity":
+    def from_search(cls, search: ValidatedOpportunityRequest) -> "OrderEntity":
         order_id = str(uuid4())
         geom = from_geojson(search.geometry.model_dump_json(by_alias=True))
         return OrderEntity(
@@ -107,7 +107,7 @@ class Repository:
     def __exit__(self, exception_type, exception_value, exception_traceback):
         self.session.close()
 
-    def add_order(self, search: ValidatedOpportunitySearch) -> Order:
+    def add_order(self, search: ValidatedOpportunityRequest) -> Order:
         entity = OrderEntity.from_search(search)
         with self as session:
             session.add(entity)
