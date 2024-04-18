@@ -12,5 +12,9 @@ WORKDIR /app
 COPY poetry.lock pyproject.toml .
 
 RUN python3 -m venv /.venv && poetry install --no-cache --no-interaction --with lambda
+RUN pip install \
+    git+https://github.com/stat-utils/stat-fastapi-up42.git@main \
+    git+https://github.com/stat-utils/stat-fastapi-blacksky.git@main \
+    git+https://github.com/stat-utils/stat-fastapi-umbra.git@main
 
 COPY . /app
