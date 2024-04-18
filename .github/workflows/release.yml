@@ -28,7 +28,7 @@ jobs:
           registry: ${{ vars.AWS_ECR_URI }}
           username: ${{ vars.AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      - name: Set up docker metadata
+      - name: Set up Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
