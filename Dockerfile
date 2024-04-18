@@ -14,7 +14,7 @@ COPY poetry.lock pyproject.toml .
 
 RUN python3 -m venv /.venv && poetry install --no-cache --no-interaction --with lambda
 RUN apt-get -yq update && apt-get -yq install git && pip install \
-    git+https://github.com/stat-utils/stat-fastapi-up42.git@main \
+    # git+https://github.com/stat-utils/stat-fastapi-up42.git@main \
     git+https://github.com/stat-utils/stat-fastapi-blacksky.git@main \
     git+https://github.com/stat-utils/stat-fastapi-umbra.git@main \
     && rm -rf /var/lib/apt/lists/*
