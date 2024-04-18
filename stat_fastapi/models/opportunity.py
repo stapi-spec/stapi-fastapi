@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
@@ -12,7 +12,7 @@ from stat_fastapi.types.filter import CQL2Filter
 class OpportunityProperties(BaseModel):
     datetime: DatetimeInterval
     product_id: str
-    filter: CQL2Filter
+    filter: Optional[CQL2Filter] = None
 
 
 class OpportunitySearch(OpportunityProperties):
