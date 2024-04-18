@@ -4,9 +4,10 @@ from fastapi import FastAPI
 from mangum import Mangum
 
 from stat_fastapi.api import StatApiRouter
+from stat_fastapi.backend import StatApiBackend
 
 
-def get_backend(name: str):
+def get_backend(name: str) -> StatApiBackend:
     if name == "landsat":
         from stat_fastapi_landsat import StatLandsatBackend
 
@@ -22,7 +23,7 @@ def get_backend(name: str):
     if name == "umbra":
         from stat_fastapi_umbra import UmbraBackend
 
-        return UmbraBackend
+        return UmbraBackend()
 
 
 app = FastAPI()
