@@ -2,7 +2,7 @@ from typing import Literal, Optional
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from stat_fastapi.types.datetime_interval import DatetimeInterval
 from stat_fastapi.types.filter import CQL2Filter
@@ -12,6 +12,7 @@ from stat_fastapi.types.filter import CQL2Filter
 class OpportunityProperties(BaseModel):
     datetime: DatetimeInterval
     product_id: str
+    model_config = ConfigDict(extra="allow")
 
 
 class OpportunityRequest(OpportunityProperties):

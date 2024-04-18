@@ -1,6 +1,4 @@
-from pydantic import (
-    ConfigDict,
-)
+from pydantic import ConfigDict
 
 from stat_fastapi.models.constraints import Constraints as BaseConstraints
 from stat_fastapi.models.opportunity import OpportunityRequest
