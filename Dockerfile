@@ -1,8 +1,13 @@
 FROM python:3.12-slim
 
-ENV PYTHONUNBUFFERED 1
+ARG VENV=/.venv
 
-RUN pip install --no-cache-dir --no-cache poetry
+ENV PYTHONUNBUFFERED=1 \
+    VIRTUAL_ENV=$VENV \
+    POETRY_VIRTUALENVS_CREATE=0 \
+    PATH="/.venv/bin:$PATH"
+
+RUN python -m venv $VIRTUAL_ENV && pip install --no-cache-dir --no-cache poetry
 
 COPY poetry.lock pyproject.toml /
 
