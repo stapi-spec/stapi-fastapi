@@ -15,13 +15,13 @@ class TestBackend:
     _allowed_payloads: list[OpportunityRequest] = []
     _orders: Mapping[str, Order] = {}
 
-    def products(self, request: Request) -> list[Product]:
+    async def get_products(self, request: Request) -> list[Product]:
         """
         Return a list of supported products.
         """
         return self._products
 
-    def product(self, product_id: str, request: Request) -> Product | None:
+    async def get_product(self, product_id: str, request: Request) -> Product | None:
         """
         Return the product identified by `product_id` or `None` if it isn't
         supported.

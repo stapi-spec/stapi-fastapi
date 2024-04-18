@@ -8,12 +8,12 @@ from stat_fastapi.models.product import Product
 
 
 class StatApiBackend(Protocol):
-    def products(self, request: Request) -> list[Product]:
+    async def get_products(self, request: Request) -> list[Product]:
         """
         Return a list of supported products.
         """
 
-    def product(self, product_id: str, request: Request) -> Product | None:
+    async def get_product(self, product_id: str, request: Request) -> Product | None:
         """
         Return the product identified by `product_id` or `None` if it isn't
         supported.

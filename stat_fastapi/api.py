@@ -51,14 +51,14 @@ class StatApiRouter:
 
         self.router.add_api_route(
             "/products",
-            self.products,
+            self.get_products,
             methods=["GET"],
             name=f"{self.NAME_PREFIX}:list-products",
             tags=["Product"],
         )
         self.router.add_api_route(
             "/products/{product_id}",
-            self.product,
+            self.get_product,
             methods=["GET"],
             name=f"{self.NAME_PREFIX}:get-product",
             tags=["Product"],
@@ -115,8 +115,8 @@ class StatApiRouter:
             ]
         )
 
-    def products(self, request: Request) -> ProductsCollection:
-        products = self.backend.products(request)
+    async def get_products(self, request: Request) -> ProductsCollection:
+        products = await self.backend.get_products(request)
         for product in products:
             product.links.append(
                 Link(
@@ -138,9 +138,9 @@ class StatApiRouter:
             ],
         )
 
-    def product(self, product_id: str, request: Request) -> Product:
+    async def get_product(self, product_id: str, request: Request) -> Product:
         try:
-            product = self.backend.product(product_id, request)
+            product = await self.backend.get_product(product_id, request)
         except NotFoundException as exc:
             raise StatApiException(
                 status.HTTP_404_NOT_FOUND, "product not found"
