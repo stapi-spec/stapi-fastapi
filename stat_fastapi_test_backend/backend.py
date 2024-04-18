@@ -48,7 +48,7 @@ class TestBackend:
                 id=str(uuid4()),
                 geometry=payload.geometry,
                 properties={
-                    "constraints": payload.constraints,
+                    "filter": payload.filter,
                     "datetime": payload.datetime,
                     "product_id": payload.product_id,
                 },
@@ -58,7 +58,7 @@ class TestBackend:
             return order
         raise ConstraintsException("not allowed")
 
-    async def get_order(self, order_id: str, request: Request):
+    async def get_order(self, order_id: str, request: Request) -> Order:
         """
         Show details for order with `order_id`.
         """

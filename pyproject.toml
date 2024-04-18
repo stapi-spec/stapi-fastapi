@@ -7,10 +7,11 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.10"
 fastapi = "^0.110.0"
 pydantic = "^2.6.4"
 geojson-pydantic = "^1.0.2"
+pygeofilter = "^0.2.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -27,13 +28,18 @@ geoalchemy2 = "^0.14.6"
 shapely = "^2.0.3"
 pre-commit = "^3.7.0"
 
+[tool.poetry.group.lambda.dependencies]
+mangum  = "^0.17.0"
+
 [tool.poetry.scripts]
 dev = "stat_fastapi.__dev__:cli"
 landsat = "stat_fastapi_landsat.__dev__:cli"
 
 [tool.ruff]
-extend-ignore = ["E501", "UP007", "UP034"]
 line-length = 88
+
+[tool.ruff.lint]
+extend-ignore = ["E501", "UP007", "UP034"]
 select = [
     "C9",
     "E",
@@ -43,7 +49,7 @@ select = [
     "UP"
 ]
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 8
 
 [tool.coverage.report]
