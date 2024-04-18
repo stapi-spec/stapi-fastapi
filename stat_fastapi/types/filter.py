@@ -1,10 +1,10 @@
-from typing import Annotated, Any, TypeAliasType
+from typing import Annotated, TypeAliasType
 
 from pydantic import BeforeValidator
 from pygeofilter.parsers import cql2_json
 
 
-def validate(v: Any):
+def validate(v: dict):
     if v:
         try:
             cql2_json.parse({"filter": v})
