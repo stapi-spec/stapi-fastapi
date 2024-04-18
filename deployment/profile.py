@@ -7,3 +7,4 @@ class DeploymentProfile(BaseSettings):
     timeout: PositiveInt = 30
     aws_ecr_repository_arn: str
     image_tag_or_digest: str = "latest"
+    backend_name: str = "landsat"
