@@ -33,7 +33,7 @@ PRODUCTS = [
                 url="http://acme.example.com",
             )
         ],
-        constraints=Constraints,
+        parameters=Constraints,
         links=[],
     ),
     Product(
@@ -52,7 +52,7 @@ PRODUCTS = [
                 url="http://acme.example.com",
             )
         ],
-        constraints=Constraints,
+        parameters=Constraints,
         links=[],
     ),
 ]
