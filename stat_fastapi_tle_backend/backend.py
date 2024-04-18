@@ -2,10 +2,10 @@ from fastapi import Request
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from stat_fastapi.exceptions import ConstraintsException, NotFoundException
-from stat_fastapi.models.opportunity import Opportunity, OpportunitySearch
+from stat_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, Provider, ProviderRole
-from stat_fastapi_tle_backend.models import ValidatedOpportunitySearch
+from stat_fastapi_tle_backend.models import ValidatedOpportunityRequest
 from stat_fastapi_tle_backend.repository import Repository
 from stat_fastapi_tle_backend.satellite import EarthObservationSatelliteModel
 from stat_fastapi_tle_backend.settings import Settings
@@ -76,14 +76,14 @@ class StatMockBackend:
             raise NotFoundException() from exc
 
     async def search_opportunities(
-        self, search: OpportunitySearch, request: Request
+        self, search: OpportunityRequest, request: Request
     ) -> list[Opportunity]:
         """
         Search for ordering opportunities for the  given search parameters.
         """
         # Additional constraints validation according to this backend's constraints
         try:
-            validated = ValidatedOpportunitySearch(**search.model_dump(by_alias=True))
+            validated = ValidatedOpportunityRequest(**search.model_dump(by_alias=True))
         except ValidationError as exc:
             raise ConstraintsException(exc.errors()) from exc
 
@@ -115,12 +115,12 @@ class StatMockBackend:
         ]
         return opportunities
 
-    async def create_order(self, search: OpportunitySearch, request: Request) -> Order:
+    async def create_order(self, search: OpportunityRequest, request: Request) -> Order:
         """
         Create a new order.
         """
         try:
-            validated = ValidatedOpportunitySearch(**search.model_dump(by_alias=True))
+            validated = ValidatedOpportunityRequest(**search.model_dump(by_alias=True))
         except ValidationError as exc:
             raise ConstraintsException(exc.errors()) from exc
 
