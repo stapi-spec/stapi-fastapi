@@ -1,11 +1,10 @@
 from enum import Enum
 from typing import Literal, Optional
 
-from pydantic import AnyHttpUrl, BaseModel
+from pydantic import AnyHttpUrl, BaseModel, Field
 
+from stat_fastapi.models.shared import Link
 from stat_fastapi.types.json_schema_model import JsonSchemaModel
-
-from .shared import Link
 
 
 class ProviderRole(str, Enum):
@@ -24,17 +23,18 @@ class Provider(BaseModel):
 
 class Product(BaseModel):
     type: Literal["Product"] = "Product"
-    conformsTo: list[str] = []
+    conformsTo: list[str] = Field(default_factory=list)
     id: str
     title: str = ""
     description: str = ""
-    keywords: list[str] = []
+    keywords: list[str] = Field(default_factory=list)
     license: str
-    providers: list[Provider] = []
+    providers: list[Provider] = Field(default_factory=list)
     links: list[Link]
     parameters: JsonSchemaModel
 
 
 class ProductsCollection(BaseModel):
     type: Literal["ProductCollection"] = "ProductCollection"
+    links: list[Link] = Field(default_factory=list)
     products: list[Product]
