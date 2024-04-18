@@ -127,14 +127,16 @@ class StatApiRouter:
                     type=TYPE_JSON,
                 )
             )
-        products.links.append(
-            Link(
-                href=str(request.url_for("stat:list-products")),
-                rel="self",
-                type=TYPE_JSON,
-            )
+        return ProductsCollection(
+            products=products,
+            links=[
+                Link(
+                    href=str(request.url_for("stat:list-products")),
+                    rel="self",
+                    type=TYPE_JSON,
+                )
+            ],
         )
-        return ProductsCollection(products=products)
 
     def product(self, product_id: str, request: Request) -> Product:
         try:
