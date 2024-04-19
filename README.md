@@ -1,9 +1,9 @@
-# STAT FastAPI - Spatio Temporal Asset Tasking with FastAPI
+# STAT FastAPI - SpatioTemporal Asset Tasking with FastAPI
 
-WARNING: The whole STAT spec is very much work in progress, so things are
-guaranteed to be not correct. One way or the other.
+WARNING: The whole [STAT spec](https://github.com/Element84/stapi-spec) is very much work in progress, so things are
+guaranteed to be not correct.
 
-NOTE: This uses [scripts to rule them all][https://github.com/github/scripts-to-rule-them-all]
+NOTE: This repository uses [scripts to rule them all](https://github.com/github/scripts-to-rule-them-all)
 
 ## Usage
 
@@ -40,7 +40,7 @@ a minimal demo with `uvicorn` to run the full app. Start it with `./scripts/serv
 
 ### Implementing a backend
 
-- The test suite assumes the backend can be instantiated without any paramters
+- The test suite assumes the backend can be instantiated without any parameters
   required by the constructor.
 
 [poetry]: https://python-poetry.org/
