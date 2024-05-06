@@ -1,15 +1,20 @@
 name: run cdk deploy
 description: deploy example to AWS using CDK
 inputs:
-  AWS_SECRET_ACCESS_KEY:
-    required: true
   AWS_ACCESS_KEY_ID:
+    description: AWS access key id to use
+    required: true
+  AWS_SECRET_ACCESS_KEY:
+    description: AWS secret access key to use
     required: true
   AWS_ECR_REPOSITORY_ARN:
+    description: AWS ECR repository to pull docker image from
     required: true
   IMAGE_TAG_OR_DIGEST:
+    description: docker image tag or digest to pull
     required: true
   BACKEND_NAME:
+    description: STAPI-FastAPI backend implementation to use
     required: true
 
 runs:
@@ -22,7 +27,7 @@ runs:
       shell: bash
     - run: poetry run cdk deploy --require-approval=never
       shell: bash
-      working-directory: deployment
+      working-directory: deploy_cdk
       env:
         AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
         AWS_ACCESS_KEY_ID: ${{ inputs.AWS_ACCESS_KEY_ID }}

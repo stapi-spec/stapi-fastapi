@@ -6,7 +6,7 @@ from aws_cdk import aws_logs as logs
 from aws_cdk.aws_ecr import Repository
 from constructs import Construct
 
-from deployment.profile import DeploymentProfile
+from deploy_cdk.profile import DeploymentProfile
 
 
 class LambdaService(Construct):
@@ -49,7 +49,7 @@ class LambdaService(Construct):
         )
 
 
-class STATDeploy(Stack):
+class StapiStack(Stack):
     def __init__(
         self,
         scope: Construct,
@@ -65,7 +65,7 @@ class STATDeploy(Stack):
 def main():
     app = App()
     profile = DeploymentProfile()
-    STATDeploy(app, f"Stat{profile.backend_name.capitalize()}Backend", profile)
+    StapiStack(app, f"Stapi{profile.backend_name.capitalize()}Backend", profile)
     app.synth()
 
 
