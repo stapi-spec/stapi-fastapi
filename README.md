@@ -1,6 +1,6 @@
 # STAT FastAPI - SpatioTemporal Asset Tasking with FastAPI
 
-WARNING: The whole [STAT spec](https://github.com/Element84/stapi-spec) is very much work in progress, so things are
+WARNING: The whole [STAT spec](https://github.com/stapi-spec/stapi-spec) is very much work in progress, so things are
 guaranteed to be not correct.
 
 NOTE: This repository uses [scripts to rule them all](https://github.com/github/scripts-to-rule-them-all)
