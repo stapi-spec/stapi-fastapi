@@ -1,12 +1,10 @@
+__pycache__
+.env
+.idea
+.python-version
+.venv
+.vscode
 *.sqlite
 /.coverage
 /.pytest_cache
 /.ruff_cache
-
-# python
-.python-version
-.venv
-__pycache__
-.env
-
-.idea
