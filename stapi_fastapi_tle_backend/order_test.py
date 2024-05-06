@@ -17,9 +17,9 @@ START_END_INTERVAL = f"{START.isoformat()}/{END.isoformat()}".replace("+00:00", 
 
 @fixture
 def new_order_response(
-    stat_client: TestClient, product_id: str
+    stapi_client: TestClient, product_id: str
 ) -> Generator[Response, None, None]:
-    res = stat_client.post(
+    res = stapi_client.post(
         "/orders",
         json={
             "type": "Feature",
@@ -50,11 +50,11 @@ def test_new_order_status_is_pending(new_order_response: Response):
 
 @fixture
 def get_order_response(
-    stat_client: TestClient, new_order_response: Response
+    stapi_client: TestClient, new_order_response: Response
 ) -> Generator[Response, None, None]:
     order_id = new_order_response.json()["id"]
 
-    res = stat_client.get(f"/orders/{order_id}")
+    res = stapi_client.get(f"/orders/{order_id}")
 
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/geo+json"

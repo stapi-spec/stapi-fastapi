@@ -11,8 +11,8 @@ except ImportError:
     print("install uvicorn and pydantic-settings to use the dev server", file=stderr)
     exit(1)
 
-from stat_fastapi.api import StatApiRouter
-from stat_fastapi_tle_backend import StatMockBackend
+from stapi_fastapi.api import StapiRouter
+from stapi_fastapi_tle_backend import StapiMockBackend
 
 
 class DevSettings(BaseSettings):
@@ -21,9 +21,11 @@ class DevSettings(BaseSettings):
 
 
 app = FastAPI(debug=True)
-app.include_router(StatApiRouter(backend=StatMockBackend()).router)
+app.include_router(StapiRouter(backend=StapiMockBackend()).router)
 
 
 def cli():
     settings = DevSettings()
-    run("stat_fastapi.__dev__:app", reload=True, host=settings.host, port=settings.port)
+    run(
+        "stapi_fastapi.__dev__:app", reload=True, host=settings.host, port=settings.port
+    )

@@ -1,14 +1,14 @@
 from fastapi import Request
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
-from stat_fastapi.exceptions import ConstraintsException, NotFoundException
-from stat_fastapi.models.opportunity import Opportunity, OpportunityRequest
-from stat_fastapi.models.order import Order
-from stat_fastapi.models.product import Product, Provider, ProviderRole
-from stat_fastapi_tle_backend.models import ValidatedOpportunityRequest
-from stat_fastapi_tle_backend.repository import Repository
-from stat_fastapi_tle_backend.satellite import EarthObservationSatelliteModel
-from stat_fastapi_tle_backend.settings import Settings
+from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
+from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
+from stapi_fastapi.models.order import Order
+from stapi_fastapi.models.product import Product, Provider, ProviderRole
+from stapi_fastapi_tle_backend.models import ValidatedOpportunityRequest
+from stapi_fastapi_tle_backend.repository import Repository
+from stapi_fastapi_tle_backend.satellite import EarthObservationSatelliteModel
+from stapi_fastapi_tle_backend.settings import Settings
 
 
 class OffNadirRange(BaseModel):
@@ -50,7 +50,7 @@ PRODUCTS = [
 ]
 
 
-class StatMockBackend:
+class StapiMockBackend:
     repository: Repository
     satellite: EarthObservationSatelliteModel
 

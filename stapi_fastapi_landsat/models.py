@@ -1,7 +1,7 @@
 from pydantic import ConfigDict
 
-from stat_fastapi.models.constraints import Constraints as BaseConstraints
-from stat_fastapi.models.opportunity import OpportunityRequest
+from stapi_fastapi.models.constraints import Constraints as BaseConstraints
+from stapi_fastapi.models.opportunity import OpportunityRequest
 
 
 class Constraints(BaseConstraints):

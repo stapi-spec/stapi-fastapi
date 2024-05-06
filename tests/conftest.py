@@ -4,8 +4,8 @@ from geojson_pydantic import Point
 from pydantic import BaseModel
 from pytest import fixture
 
-from stat_fastapi.models.opportunity import Opportunity, OpportunityRequest
-from stat_fastapi.models.product import Product, Provider, ProviderRole
+from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
+from stapi_fastapi.models.product import Product, Provider, ProviderRole
 
 
 @fixture

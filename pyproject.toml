@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "stat-fastapi"
+name = "stapi-fastapi"
 version = "0.0.0"
 description = "Spatio Temporal Asset Tasking with FastAPI"
 authors = ["Christian Wygoda <christian.wygoda@wygoda.net>"]
@@ -39,8 +39,8 @@ constructs = "^10.3.0"
 pydantic-settings = "^2.2.1"
 
 [tool.poetry.scripts]
-dev = "stat_fastapi.__dev__:cli"
-landsat = "stat_fastapi_landsat.__dev__:cli"
+dev = "stapi_fastapi.__dev__:cli"
+landsat = "stapi_fastapi_landsat.__dev__:cli"
 
 [tool.ruff]
 line-length = 88
@@ -66,11 +66,11 @@ sort = "Cover"
 omit = [
     "**/*_test.py",
     "**/conftest.py",
-    "stat_fastapi/__dev__.py",
+    "stapi_fastapi/__dev__.py",
 ]
 
 [tool.pytest.ini_options]
-addopts="--cov=stat_fastapi"
+addopts="--cov=stapi_fastapi"
 filterwarnings = [
     "ignore:The 'app' shortcut is now deprecated.:DeprecationWarning",
     "ignore:Pydantic serializer warnings:UserWarning",

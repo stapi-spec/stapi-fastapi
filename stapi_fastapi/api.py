@@ -2,35 +2,35 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
-from stat_fastapi.backend import StatApiBackend
-from stat_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
-from stat_fastapi.exceptions import ConstraintsException, NotFoundException
-from stat_fastapi.models.opportunity import (
+from stapi_fastapi.backend import StapiBackend
+from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
+from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
+from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
     OpportunityRequest,
 )
-from stat_fastapi.models.order import Order
-from stat_fastapi.models.product import Product, ProductsCollection
-from stat_fastapi.models.root import RootResponse
-from stat_fastapi.models.shared import HTTPException as HTTPExceptionModel
-from stat_fastapi.models.shared import Link
+from stapi_fastapi.models.order import Order
+from stapi_fastapi.models.product import Product, ProductsCollection
+from stapi_fastapi.models.root import RootResponse
+from stapi_fastapi.models.shared import HTTPException as HTTPExceptionModel
+from stapi_fastapi.models.shared import Link
 
 
-class StatApiException(HTTPException):
+class StapiException(HTTPException):
     def __init__(self, status_code: int, detail: str) -> None:
         super().__init__(status_code, detail)
 
 
-class StatApiRouter:
-    NAME_PREFIX = "stat"
-    backend: StatApiBackend
+class StapiRouter:
+    NAME_PREFIX = "stapi"
+    backend: StapiBackend
     openapi_endpoint_name: str
     docs_endpoint_name: str
     router: APIRouter
 
     def __init__(
         self,
-        backend: StatApiBackend,
+        backend: StapiBackend,
         openapi_endpoint_name="openapi",
         docs_endpoint_name="swagger_ui_html",
         *args,
@@ -93,12 +93,12 @@ class StatApiRouter:
         return RootResponse(
             links=[
                 Link(
-                    href=str(request.url_for("stat:root")),
+                    href=str(request.url_for(f"{self.NAME_PREFIX}:root")),
                     rel="self",
                     type=TYPE_JSON,
                 ),
                 Link(
-                    href=str(request.url_for("stat:list-products")),
+                    href=str(request.url_for(f"{self.NAME_PREFIX}:list-products")),
                     rel="products",
                     type=TYPE_JSON,
                 ),
@@ -121,7 +121,9 @@ class StatApiRouter:
             product.links.append(
                 Link(
                     href=str(
-                        request.url_for("stat:get-product", product_id=product.id)
+                        request.url_for(
+                            f"{self.NAME_PREFIX}:get-product", product_id=product.id
+                        )
                     ),
                     rel="self",
                     type=TYPE_JSON,
@@ -131,7 +133,7 @@ class StatApiRouter:
             products=products,
             links=[
                 Link(
-                    href=str(request.url_for("stat:list-products")),
+                    href=str(request.url_for(f"{self.NAME_PREFIX}:list-products")),
                     rel="self",
                     type=TYPE_JSON,
                 )
@@ -142,12 +144,16 @@ class StatApiRouter:
         try:
             product = self.backend.product(product_id, request)
         except NotFoundException as exc:
-            raise StatApiException(
+            raise StapiException(
                 status.HTTP_404_NOT_FOUND, "product not found"
             ) from exc
         product.links.append(
             Link(
-                href=str(request.url_for("stat:get-product", product_id=product.id)),
+                href=str(
+                    request.url_for(
+                        f"{self.NAME_PREFIX}:get-product", product_id=product.id
+                    )
+                ),
                 rel="self",
                 type=TYPE_JSON,
             )

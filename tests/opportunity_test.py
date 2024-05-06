@@ -3,25 +3,25 @@ from datetime import UTC, datetime, timedelta
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from stat_fastapi.models.opportunity import Opportunity, OpportunityCollection
-from stat_fastapi.models.product import Product
-from stat_fastapi_test_backend.backend import TestBackend
+from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
+from stapi_fastapi.models.product import Product
+from stapi_fastapi_test_backend.backend import TestBackend
 
 
 def test_search_opportunities_response(
     products: list[Product],
     opportunities: list[Opportunity],
-    stat_backend: TestBackend,
-    stat_client: TestClient,
+    stapi_backend: TestBackend,
+    stapi_client: TestClient,
 ):
-    stat_backend._products = products
-    stat_backend._opportunities = opportunities
+    stapi_backend._products = products
+    stapi_backend._opportunities = opportunities
 
     now = datetime.now(UTC)
     start = now
     end = start + timedelta(days=5)
 
-    res = stat_client.post(
+    res = stapi_client.post(
         "/opportunities",
         json={
             "geometry": {

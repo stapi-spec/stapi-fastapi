@@ -1,13 +1,13 @@
-# STAT FastAPI - SpatioTemporal Asset Tasking with FastAPI
+# STAPI FastAPI - Sensor Tasking API with FastAPI
 
-WARNING: The whole [STAT spec](https://github.com/stapi-spec/stapi-spec) is very much work in progress, so things are
+WARNING: The whole [STAPI spec](https://github.com/stapi-spec/stapi-spec) is very much work in progress, so things are
 guaranteed to be not correct.
 
 NOTE: This repository uses [scripts to rule them all](https://github.com/github/scripts-to-rule-them-all)
 
 ## Usage
 
-STAT FastAPI provides an `fastapi.APIRouter` which must be included in
+STAPI FastAPI provides an `fastapi.APIRouter` which must be included in
 `fastapi.FastAPI` instance.
 
 ## Development
@@ -35,7 +35,7 @@ pytest flags are passed along
 
 ### Dev Server
 
-For dev purposes, [stat_fastapi.**dev**.py](./stat_fastapi/__dev__.py) shows
+For dev purposes, [stapi_fastapi.**dev**.py](./stapi_fastapi/__dev__.py) shows
 a minimal demo with `uvicorn` to run the full app. Start it with `./scripts/server`.
 
 ### Implementing a backend

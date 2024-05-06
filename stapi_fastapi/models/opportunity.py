@@ -4,8 +4,8 @@ from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
 from pydantic import BaseModel, ConfigDict
 
-from stat_fastapi.types.datetime_interval import DatetimeInterval
-from stat_fastapi.types.filter import CQL2Filter
+from stapi_fastapi.types.datetime_interval import DatetimeInterval
+from stapi_fastapi.types.filter import CQL2Filter
 
 
 # Copied and modified from stack_pydantic.item.ItemProperties

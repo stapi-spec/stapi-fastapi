@@ -10,8 +10,8 @@ from sqlalchemy.event import listen
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from stat_fastapi.models.constraints import Constraints
-from stat_fastapi.models.order import Order
+from stapi_fastapi.models.constraints import Constraints
+from stapi_fastapi.models.order import Order
 
 from .models import OffNadirRange, ValidatedOpportunityRequest
 
