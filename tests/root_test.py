@@ -5,12 +5,12 @@ from fastapi.testclient import TestClient
 from pytest import fixture
 
 from .utils import find_link
-from .warnings import StatSpecWarning
+from .warnings import StapiSpecWarning
 
 
 @fixture
-def data(stat_client: TestClient):
-    res = stat_client.get("/")
+def data(stapi_client: TestClient):
+    res = stapi_client.get("/")
 
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
@@ -18,8 +18,8 @@ def data(stat_client: TestClient):
     yield res.json()
 
 
-def test_root(stat_client: TestClient, url_for):
-    res = stat_client.get("/")
+def test_root(stapi_client: TestClient, url_for):
+    res = stapi_client.get("/")
 
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
@@ -28,14 +28,14 @@ def test_root(stat_client: TestClient, url_for):
 
     link = find_link(data["links"], "self")
     if link is None:
-        warn(StatSpecWarning("GET / Link[rel=self] should exist"))
+        warn(StapiSpecWarning("GET / Link[rel=self] should exist"))
     else:
         assert link["type"] == "application/json"
         assert link["href"] == url_for("/")
 
     link = find_link(data["links"], "service-description")
     if link is None:
-        warn(StatSpecWarning("GET / Link[rel=service-description] should exist"))
+        warn(StapiSpecWarning("GET / Link[rel=service-description] should exist"))
 
     else:
         assert link["type"] == "application/json"
@@ -43,7 +43,7 @@ def test_root(stat_client: TestClient, url_for):
 
     link = find_link(data["links"], "service-docs")
     if link is None:
-        warn(StatSpecWarning("GET / Link[rel=service-docs] should exist"))
+        warn(StapiSpecWarning("GET / Link[rel=service-docs] should exist"))
     else:
         assert link["type"] == "text/html"
         assert str(link["href"]) == url_for("/docs")

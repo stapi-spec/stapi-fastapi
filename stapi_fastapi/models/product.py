@@ -3,8 +3,8 @@ from typing import Literal, Optional
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
-from stat_fastapi.models.shared import Link
-from stat_fastapi.types.json_schema_model import JsonSchemaModel
+from stapi_fastapi.models.shared import Link
+from stapi_fastapi.types.json_schema_model import JsonSchemaModel
 
 
 class ProviderRole(str, Enum):

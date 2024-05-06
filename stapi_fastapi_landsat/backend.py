@@ -6,15 +6,15 @@ import pytz
 from fastapi import Request
 from shapely.geometry import shape
 
-from stat_fastapi.exceptions import NotFoundException
-from stat_fastapi.models.opportunity import (
+from stapi_fastapi.exceptions import NotFoundException
+from stapi_fastapi.models.opportunity import (
     Opportunity,
     OpportunityProperties,
     OpportunityRequest,
 )
-from stat_fastapi.models.order import Order
-from stat_fastapi.models.product import Product, Provider, ProviderRole
-from stat_fastapi_landsat.models import Constraints
+from stapi_fastapi.models.order import Order
+from stapi_fastapi.models.product import Product, Provider, ProviderRole
+from stapi_fastapi_landsat.models import Constraints
 
 PRODUCTS = [
     Product(
@@ -66,17 +66,17 @@ PRODUCTS = [
 ]
 
 
-class StatLandsatBackend:
+class LandsatBackend:
     def __init__(self):
         self.wrs = {
             "ascending": self._load_json(
-                "stat_fastapi_landsat/files/wrs2ascending.geojson"
+                "stapi_fastapi_landsat/files/wrs2ascending.geojson"
             ),
             "descending": self._load_json(
-                "stat_fastapi_landsat/files/wrs2descending.geojson"
+                "stapi_fastapi_landsat/files/wrs2descending.geojson"
             ),
         }
-        self.satellite = self._load_json("stat_fastapi_landsat/files/satellites.json")
+        self.satellite = self._load_json("stapi_fastapi_landsat/files/satellites.json")
 
     def products(self, request: Request) -> list[Product]:
         """

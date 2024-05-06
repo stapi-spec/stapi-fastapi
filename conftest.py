@@ -5,8 +5,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pytest import Parser, fixture
 
-from stat_fastapi.api import StatApiRouter
-from stat_fastapi_test_backend import TestBackend
+from stapi_fastapi.api import StapiRouter
+from stapi_fastapi_test_backend import TestBackend
 
 T = TypeVar("T")
 
@@ -15,30 +15,30 @@ YieldFixture = Generator[T, None, None]
 
 def pytest_addoption(parser: Parser):
     parser.addoption(
-        "--stat-backend",
+        "--stapi-backend",
         action="store",
-        default="stat_fastapi_test_backend:TestBackend",
+        default="stapi_fastapi_test_backend:TestBackend",
     )
-    parser.addoption("--stat-prefix", action="store", default="/stat")
-    parser.addoption("--stat-product-id", action="store", default="mock:standard")
+    parser.addoption("--stapi-prefix", action="store", default="/stapi")
+    parser.addoption("--stapi-product-id", action="store", default="mock:standard")
 
 
 @fixture(scope="session")
 def base_url() -> YieldFixture[str]:
-    yield "http://statserver"
+    yield "http://stapiserver"
 
 
 @fixture
-def stat_backend():
+def stapi_backend():
     yield TestBackend()
 
 
 @fixture
-def stat_client(stat_backend, base_url: str) -> YieldFixture[TestClient]:
+def stapi_client(stapi_backend, base_url: str) -> YieldFixture[TestClient]:
     app = FastAPI()
 
     app.include_router(
-        StatApiRouter(backend=stat_backend).router,
+        StapiRouter(backend=stapi_backend).router,
         prefix="",
     )
 

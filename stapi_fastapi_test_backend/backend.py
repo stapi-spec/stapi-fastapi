@@ -3,10 +3,10 @@ from uuid import uuid4
 
 from fastapi import Request
 
-from stat_fastapi.exceptions import ConstraintsException, NotFoundException
-from stat_fastapi.models.opportunity import Opportunity, OpportunityRequest
-from stat_fastapi.models.order import Order
-from stat_fastapi.models.product import Product
+from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
+from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
+from stapi_fastapi.models.order import Order
+from stapi_fastapi.models.product import Product
 
 
 class TestBackend:

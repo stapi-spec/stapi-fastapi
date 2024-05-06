@@ -1,2 +1,2 @@
-class StatSpecWarning(Warning):
+class StapiSpecWarning(Warning):
     pass
