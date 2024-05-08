@@ -33,9 +33,12 @@ As well, CDK will need an AWS profile to be configured.
 
 ### Execution
 
-Having set up the configuration env vars as required, execute the CDK deployment with
+Having set up the configuration env vars as required, the CDK deployment can be started:
 
 ```
+export AWS_ECR_REPOSITORY_ARN=arn:aws:ecr:us-east-1:992382462803:repository/stat-utils/stat-fastapi
+export IMAGE_TAG_OR_DIGEST=0.0.1
+cd deploy_cdk
 poetry run cdk deploy
 ```
 
