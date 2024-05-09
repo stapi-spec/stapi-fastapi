@@ -1,0 +1,36 @@
+name: bump version
+description: bump version
+outputs:
+  version:
+    description: new version
+    value: ${{ steps.bump.outputs.version }}
+runs:
+  using: "composite"
+  steps:
+    - id: install poetry
+      shell: bash
+      run: pipx install poetry==1.7.1
+    - id: configure-git
+      shell: bash
+      run: |
+        git config --local user.name "github-actions[bot]"
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local pull.rebase true
+    - id: bump
+      shell: bash
+      env:
+        ORIGIN: ${{ github. }}
+        BRANCH: ${{ github.event.repository.default_branch }}
+      run: |
+        export OLD=$(poetry version --short)
+        export NEW=$(date +%y%m%d-%H%M%S)
+
+        poetry version r${NEW}
+        git add pyproject.toml
+        git commit -m "bump: ${OLD} → ${NEW}"
+        git tag r${NEW}
+
+        git pull ${ORIGIN} ${BRANCH}
+        git push ${ORIGIN} HEAD:{$BRANCH} --tags
+
+        echo "version=${NEW}" >> "$GITHUB_OUTPUT"
