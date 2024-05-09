@@ -13,6 +13,8 @@ pydantic = "^2.6.4"
 geojson-pydantic = "^1.0.2"
 pygeofilter = "^0.2.1"
 
+[tool.poetry.group.dev]
+optional = true
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"
@@ -28,10 +30,12 @@ geoalchemy2 = "^0.14.6"
 shapely = "^2.0.3"
 pre-commit = "^3.7.0"
 
+[tool.poetry.group.lambda]
+optional = true
+
 [tool.poetry.group.lambda.dependencies]
 mangum  = "^0.17.0"
 awslambdaric = "^2.0.11"
-
 
 [tool.poetry.group.deploy-aws.dependencies]
 aws-cdk-lib = "^2.137.0"
