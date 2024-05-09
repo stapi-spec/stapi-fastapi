@@ -28,9 +28,6 @@ class LambdaService(Construct):
             code=_lambda.Code.from_ecr_image(
                 repository=repository,
                 tag_or_digest=profile.image_tag_or_digest,
-                entrypoint=["poetry", "run", "python3", "-m", "awslambdaric"],
-                cmd=["lambda_handler.handler"],
-                working_directory="/app",
             ),
             memory_size=profile.memory,
             timeout=Duration.seconds(profile.timeout),
