@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "stapi-fastapi"
-version = "0.0.0+240509-172957"
+version = "0.0.0+240509-174406"
 description = "Spatio Temporal Asset Tasking with FastAPI"
 authors = ["Christian Wygoda <christian.wygoda@wygoda.net>"]
 license = "MIT"
