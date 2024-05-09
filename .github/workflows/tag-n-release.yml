@@ -108,10 +108,15 @@ jobs:
           cache: poetry
       - name: Install deploy dependencies
         run: poetry install --only=deploy-aws
+      - name: Normalize git tag
+        id: normalize-tag
+        env:
+          GIT_TAG: ${{ needs.tag.outputs.tag }}
+        run: echo "docker-tag=$(echo ${GIT_TAG} | sed s/+/-/)" >> "$GITHUB_OUTPUT"
       - name: Run CDK deploy
         uses: ./.github/actions/cdk-deploy
         with:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
           AWS_ECR_REPOSITORY_ARN: arn:aws:ecr:${{ vars.AWS_REGION }}:${{ vars.AWS_ACCOUNT_ID}}:repository/stapi-spec/stapi-fastapi
-          IMAGE_TAG_OR_DIGEST: ${{ needs.tag.outputs.tag }}
+          IMAGE_TAG_OR_DIGEST: ${{ steps.normalize-tag.outputs.docker-tag }}
