@@ -23,6 +23,8 @@ export DATABASE=sqlite:///order.sqlite
 export SPATIALITE_LIBRARY_PATH=/path/to/mod_spatialite.dylib
 ```
 
+Also see [DOCKER.md](./DOCKER.md) for details on docker setup for and deployment.
+
 ### Dev Setup
 
 Setup is managed with `poetry` and `pre-commit`, all of which can be initialised
@@ -37,6 +39,7 @@ pytest flags are passed along
 
 For dev purposes, [stapi_fastapi.**dev**.py](./stapi_fastapi/__dev__.py) shows
 a minimal demo with `uvicorn` to run the full app. Start it with `./scripts/server`.
+Choose backend with `BACKEND_NAME` env var, defaults to Landsat backend.
 
 ### Implementing a backend
 
