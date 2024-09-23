@@ -29,6 +29,7 @@ sqlalchemy = "^2.0.29"
 geoalchemy2 = "^0.14.6"
 shapely = "^2.0.3"
 pre-commit = "^3.7.0"
+nox = "^2024.4.15"
 
 [tool.poetry.group.lambda]
 optional = true
