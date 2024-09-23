@@ -21,8 +21,7 @@ class Provider(BaseModel):
     url: AnyHttpUrl
 
 
-class Product(BaseModel):
-    type: Literal["Product"] = "Product"
+class ProductMeta(BaseModel):
     conformsTo: list[str] = Field(default_factory=list)
     id: str
     title: str = ""
@@ -30,6 +29,10 @@ class Product(BaseModel):
     keywords: list[str] = Field(default_factory=list)
     license: str
     providers: list[Provider] = Field(default_factory=list)
+
+
+class Product(ProductMeta):
+    type: Literal["Product"] = "Product"
     links: list[Link]
     parameters: JsonSchemaModel
 
