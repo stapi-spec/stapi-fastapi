@@ -12,6 +12,5 @@ Bootstrap the dependencies of the project.
 if [ "${1:-}" = "--help" ]; then
     usage
 else
-    pip install poetry;
     poetry install --with dev;
 fi
