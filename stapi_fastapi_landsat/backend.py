@@ -20,8 +20,8 @@ PRODUCTS = [
     Product(
         id="landsat:8",
         conformsTo=[
-            "https://geojson.org/schema/Point.json"
-            "https://geojson.org/schema/Polygon.json"
+            "https://geojson.org/schema/Point.json",
+            "https://geojson.org/schema/Polygon.json",
         ],
         description="Landsat 8",
         license="CC0-1.0",
@@ -43,8 +43,8 @@ PRODUCTS = [
     Product(
         id="landsat:9",
         conformsTo=[
-            "https://geojson.org/schema/Point.json"
-            "https://geojson.org/schema/Polygon.json"
+            "https://geojson.org/schema/Point.json",
+            "https://geojson.org/schema/Polygon.json",
         ],
         description="Landsat 9",
         license="CC0-1.0",
