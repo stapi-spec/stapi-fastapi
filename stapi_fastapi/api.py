@@ -117,20 +117,26 @@ class StapiRouter:
 
     def products(self, request: Request) -> ProductsCollection:
         products = self.backend.products(request)
-        for product in products:
-            product.links.append(
-                Link(
-                    href=str(
-                        request.url_for(
-                            f"{self.NAME_PREFIX}:get-product", product_id=product.id
-                        )
-                    ),
-                    rel="self",
-                    type=TYPE_JSON,
-                )
-            )
+
         return ProductsCollection(
-            products=products,
+            products=[
+                Product.from_meta(
+                    product,
+                    links=[
+                        Link(
+                            href=str(
+                                request.url_for(
+                                    f"{self.NAME_PREFIX}:get-product",
+                                    product_id=product.id,
+                                )
+                            ),
+                            rel="self",
+                            type=TYPE_JSON,
+                        )
+                    ],
+                )
+                for product in products
+            ],
             links=[
                 Link(
                     href=str(request.url_for(f"{self.NAME_PREFIX}:list-products")),
@@ -147,18 +153,21 @@ class StapiRouter:
             raise StapiException(
                 status.HTTP_404_NOT_FOUND, "product not found"
             ) from exc
-        product.links.append(
-            Link(
-                href=str(
-                    request.url_for(
-                        f"{self.NAME_PREFIX}:get-product", product_id=product.id
-                    )
-                ),
-                rel="self",
-                type=TYPE_JSON,
-            )
+
+        return Product.from_meta(
+            product,
+            links=[
+                Link(
+                    href=str(
+                        request.url_for(
+                            f"{self.NAME_PREFIX}:get-product", product_id=product.id
+                        )
+                    ),
+                    rel="self",
+                    type=TYPE_JSON,
+                )
+            ],
         )
-        return product
 
     async def search_opportunities(
         self, search: OpportunityRequest, request: Request

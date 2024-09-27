@@ -1,3 +1,4 @@
+from copy import copy
 from enum import Enum
 from typing import Literal, Optional
 
@@ -21,8 +22,11 @@ class Provider(BaseModel):
     url: AnyHttpUrl
 
 
-class Product(BaseModel):
-    type: Literal["Product"] = "Product"
+class ProductMeta(BaseModel):
+    """
+    Product metadata
+    """
+
     conformsTo: list[str] = Field(default_factory=list)
     id: str
     title: str = ""
@@ -30,11 +34,29 @@ class Product(BaseModel):
     keywords: list[str] = Field(default_factory=list)
     license: str
     providers: list[Provider] = Field(default_factory=list)
-    links: list[Link]
     parameters: JsonSchemaModel
 
 
+class Product(ProductMeta):
+    """
+    Product schema for JSON responses
+    """
+
+    type: Literal["Product"] = "Product"
+    links: list[Link]
+
+    @classmethod
+    def from_meta(cls, meta: ProductMeta, links: list[Link] = []):
+        attribs = copy(meta.__dict__)
+        attribs |= {"links": links}
+        return cls(**attribs)
+
+
 class ProductsCollection(BaseModel):
+    """
+    Products collection schema for JSON responses
+    """
+
     type: Literal["ProductCollection"] = "ProductCollection"
     links: list[Link] = Field(default_factory=list)
     products: list[Product]

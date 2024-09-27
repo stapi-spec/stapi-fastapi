@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, ValidationError, model_validator
 from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stapi_fastapi.models.order import Order
-from stapi_fastapi.models.product import Product, Provider, ProviderRole
+from stapi_fastapi.models.product import ProductMeta, Provider, ProviderRole
 from stapi_fastapi_tle_backend.models import ValidatedOpportunityRequest
 from stapi_fastapi_tle_backend.repository import Repository
 from stapi_fastapi_tle_backend.satellite import EarthObservationSatelliteModel
@@ -28,7 +28,7 @@ class Parameters(BaseModel):
 
 
 PRODUCTS = [
-    Product(
+    ProductMeta(
         id="mock:standard",
         description="Mock backend's standard product",
         license="CC0-1.0",
@@ -44,7 +44,6 @@ PRODUCTS = [
                 url="http://acme.example.com",
             )
         ],
-        links=[],
         parameters=Parameters,
     )
 ]
@@ -59,13 +58,13 @@ class StapiMockBackend:
         self.repository = Repository(settings.database)
         self.satellite = EarthObservationSatelliteModel(settings.satellite)
 
-    def products(self, request: Request) -> list[Product]:
+    def products(self, request: Request) -> list[ProductMeta]:
         """
         Return a list of supported products.
         """
         return PRODUCTS
 
-    def product(self, product_id: str, request: Request) -> Product | None:
+    def product(self, product_id: str, request: Request) -> ProductMeta | None:
         """
         Return the product identified by `product_id` or `None` if it isn't
         supported.

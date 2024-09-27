@@ -13,11 +13,11 @@ from stapi_fastapi.models.opportunity import (
     OpportunityRequest,
 )
 from stapi_fastapi.models.order import Order
-from stapi_fastapi.models.product import Product, Provider, ProviderRole
+from stapi_fastapi.models.product import ProductMeta, Provider, ProviderRole
 from stapi_fastapi_landsat.models import Constraints
 
 PRODUCTS = [
-    Product(
+    ProductMeta(
         id="landsat:8",
         conformsTo=[
             "https://geojson.org/schema/Point.json",
@@ -38,9 +38,8 @@ PRODUCTS = [
             )
         ],
         parameters=Constraints,
-        links=[],
     ),
-    Product(
+    ProductMeta(
         id="landsat:9",
         conformsTo=[
             "https://geojson.org/schema/Point.json",
@@ -61,7 +60,6 @@ PRODUCTS = [
             )
         ],
         parameters=Constraints,
-        links=[],
     ),
 ]
 
@@ -78,13 +76,13 @@ class LandsatBackend:
         }
         self.satellite = self._load_json("stapi_fastapi_landsat/files/satellites.json")
 
-    def products(self, request: Request) -> list[Product]:
+    def products(self, request: Request) -> list[ProductMeta]:
         """
         Return a list of supported products.
         """
         return PRODUCTS
 
-    def product(self, product_id: str, request: Request) -> Product | None:
+    def product(self, product_id: str, request: Request) -> ProductMeta | None:
         """
         Return the product identified by `product_id` or `None` if it isn't
         supported.
