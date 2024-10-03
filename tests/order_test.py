@@ -5,10 +5,9 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from httpx import Response
 from pytest import fixture
-
 from stapi_fastapi.models.opportunity import OpportunityRequest
-from stapi_fastapi_test_backend.backend import TestBackend
 
+from .backend import TestBackend
 from .utils import find_link
 
 NOW = datetime.now(UTC)

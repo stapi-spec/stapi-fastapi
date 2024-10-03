@@ -2,10 +2,10 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import status
 from fastapi.testclient import TestClient
-
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
 from stapi_fastapi.models.product import Product
-from stapi_fastapi_test_backend.backend import TestBackend
+
+from .backend import TestBackend
 
 
 def test_search_opportunities_response(
