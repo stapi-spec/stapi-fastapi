@@ -1,9 +1,7 @@
 # STAPI FastAPI - Sensor Tasking API with FastAPI
 
-WARNING: The whole [STAPI spec](https://github.com/stapi-spec/stapi-spec) is very much work in progress, so things are
-guaranteed to be not correct.
-
-NOTE: This repository uses [scripts to rule them all](https://github.com/github/scripts-to-rule-them-all)
+WARNING: The whole [STAPI spec](https://github.com/stapi-spec/stapi-spec) is
+very much work in progress, so things are guaranteed to be not correct.
 
 ## Usage
 
@@ -15,31 +13,33 @@ STAPI FastAPI provides an `fastapi.APIRouter` which must be included in
 It's 2024 and we still need to pick our poison for a 2024 dependency management
 solution. This project picks [poetry][poetry] for now.
 
-The mock backend uses SQLite/Spatialite as storage, therefore the
-`SPATIALITE_LIBRARY_PATH` env var must be set to load the spatialite extension:
-
-```bash
-export DATABASE=sqlite:///order.sqlite
-export SPATIALITE_LIBRARY_PATH=/path/to/mod_spatialite.dylib
-```
-
-Also see [DOCKER.md](./DOCKER.md) for details on docker setup for and deployment.
-
 ### Dev Setup
 
-Setup is managed with `poetry` and `pre-commit`, all of which can be initialised
-by `./scripts/bootstrap`.
+Setup is managed with `poetry` and `pre-commit`. It's recommended to install
+the project into a virtual environment. Bootstrapping a development environment
+could look something like this:
+
+```commandline
+python -m venv .venv
+source .venv/bin/activate
+pip install poetry  # if not already installed to the system
+poetry install --with dev
+pre-commit install
+```
 
 ### Test Suite
 
-A `pytest` based test suite is provided. Run it as `./scripts/test`. Any additional
-pytest flags are passed along
+A `pytest` based test suite is provided, and can be run simply using the
+command `pytest`.
 
 ### Dev Server
 
-For dev purposes, [stapi_fastapi.**dev**.py](./stapi_fastapi/__dev__.py) shows
-a minimal demo with `uvicorn` to run the full app. Start it with `./scripts/server`.
-Choose backend with `BACKEND_NAME` env var, defaults to Landsat backend.
+This project cannot be run on its own because it does not have any backend
+implementations. If a development server is desired, run one of the
+implementations such as
+[stapi-fastapi-tle](https://github.com/stapi-spec/stapi-fastapi-tle). To test
+something like stapi-fastapi-tle with your development version of
+stapi-fastapi, install them both into the same virtual environment.
 
 ### Implementing a backend
 

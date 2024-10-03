@@ -2,10 +2,9 @@ from warnings import warn
 
 from fastapi import status
 from fastapi.testclient import TestClient
-
 from stapi_fastapi.models.product import Product
-from stapi_fastapi_test_backend.backend import TestBackend
 
+from .backend import TestBackend
 from .utils import find_link
 from .warnings import StapiSpecWarning
 
