@@ -12,6 +12,7 @@ def validate(v: dict):
             raise ValueError("Filter is not valid cql2-json") from e
     return v
 
+
 CQL2Filter: TypeAlias = Annotated[
     dict,
     BeforeValidator(validate),
