@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Any, Callable, TypeAlias
+from typing import Annotated, Any, Callable
 
 from pydantic import (
     AfterValidator,
@@ -31,7 +31,7 @@ def serialize(
     return f"{value[0].isoformat()}/{value[1].isoformat()}"
 
 
-DatetimeInterval = TypeAlias = Annotated[
+DatetimeInterval = Annotated[
     tuple[AwareDatetime, AwareDatetime],
     BeforeValidator(validate_before),
     AfterValidator(validate_after),

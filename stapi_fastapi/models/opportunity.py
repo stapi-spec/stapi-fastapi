@@ -1,6 +1,5 @@
 from typing import Literal, Optional
 
-
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
 from pydantic import BaseModel, ConfigDict
