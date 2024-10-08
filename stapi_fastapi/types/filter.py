@@ -1,4 +1,4 @@
-from typing import Annotated, TypeAlias
+from typing import Annotated
 
 from pydantic import BeforeValidator
 from pygeofilter.parsers import cql2_json
@@ -13,7 +13,7 @@ def validate(v: dict):
     return v
 
 
-CQL2Filter: TypeAlias = Annotated[
+type CQL2Filter = Annotated[
     dict,
     BeforeValidator(validate),
 ]
