@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Type, TypeAliasType
+from typing import Annotated, Any, Type, TypeAlias
 
 from pydantic import (
     BaseModel,
@@ -18,12 +18,9 @@ def serialize(v: Type[BaseModel]) -> dict[str, Any]:
     return v.model_json_schema()
 
 
-JsonSchemaModel = TypeAliasType(
-    "JsonSchemaModel",
-    Annotated[
-        Type[BaseModel],
-        PlainValidator(validate),
-        PlainSerializer(serialize),
-        WithJsonSchema({"type": "object"}),
-    ],
-)
+JsonSchemaModel: TypeAlias = Annotated[
+    Type[BaseModel],
+    PlainValidator(validate),
+    PlainSerializer(serialize),
+    WithJsonSchema({"type": "object"}),
+]
