@@ -1,5 +1,4 @@
 from typing import Protocol
-
 from fastapi import Request
 
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest

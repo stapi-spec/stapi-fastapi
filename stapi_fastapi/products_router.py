@@ -1,6 +1,5 @@
 # Generic product router factory
 from fastapi import APIRouter, HTTPException, status, Request
-from typing import Dict, Any
 from stapi_fastapi.models.opportunity import OpportunityRequest
 from stapi_fastapi.backend import StapiBackend
 from stapi_fastapi.exceptions import ConstraintsException
@@ -12,7 +11,6 @@ from stapi_fastapi.exceptions import ConstraintsException
 """
 
 def create_products_router(product_id: str, backend: StapiBackend) -> APIRouter:
-    # TODO: map product names to product IDs
     """
     Creates a new APIRouter for a specific product type with standardized routes.
 
