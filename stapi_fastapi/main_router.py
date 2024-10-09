@@ -1,3 +1,4 @@
+from typing import Self, Optional
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -14,78 +15,52 @@ from stapi_fastapi.models.product import Product, ProductsCollection
 from stapi_fastapi.models.root import RootResponse
 from stapi_fastapi.models.shared import HTTPException as HTTPExceptionModel
 from stapi_fastapi.models.shared import Link
+from stapi_fastapi.products_router import ProductRouter
 
 """
 /products/{component router} # router for each product added to main router
 /orders # list all orders
 """
-class MainRouter:
-    NAME_PREFIX = "main"
-    backend: StapiBackend
-    openapi_endpoint_name: str
-    docs_endpoint_name: str
-    router: APIRouter
+class MainRouter(APIRouter):
 
     def __init__(
-        self,
+        self: Self,
         backend: StapiBackend,
-        openapi_endpoint_name="openapi",
-        docs_endpoint_name="swagger_ui_html",
+        name: str = "main",
+        openapi_endpoint_name: str = "openapi",
+        docs_endpoint_name: str = "swagger_ui_html",
         *args,
         **kwargs,
     ):
+        super().__init__(*args, **kwargs)
         self.backend = backend
+        self.name = name
         self.openapi_endpoint_name = openapi_endpoint_name
         self.docs_endpoint_name = docs_endpoint_name
 
-        self.router = APIRouter(*args, **kwargs)
-        self.router.add_api_route(
+        self.product_routers: dict[str, ProductRouter] = {}
+
+        self.add_api_route(
             "/",
             self.root,
             methods=["GET"],
-            name=f"{self.NAME_PREFIX}:root",
+            name=f"{self.name}:root",
             tags=["Root"],
         )
 
-        self.router.add_api_route(
+        self.add_api_route(
             "/products",
             self.products,
             methods=["GET"],
-            name=f"{self.NAME_PREFIX}:list-products",
+            name=f"{self.name}:list-products",
             tags=["Product"],
         )
 
-        self.router.add_api_route(
-            "/products/{product_id}",
-            self.product,
-            methods=["GET"],
-            name=f"{self.NAME_PREFIX}:get-product",
-            tags=["Product"],
-            responses={status.HTTP_404_NOT_FOUND: {"model": HTTPExceptionModel}},
-        )
-
-        self.router.add_api_route(
-            "/opportunities",
-            self.search_opportunities,
-            methods=["POST"],
-            name=f"{self.NAME_PREFIX}:search-opportunities",
-            tags=["Opportunities"],
-        )
-
-        self.router.add_api_route(
-            "/orders",
-            self.create_order,
-            methods=["POST"],
-            name=f"{self.NAME_PREFIX}:create-order",
-            tags=["Orders"],
-            response_model=Order,
-        )
-
-        self.router.add_api_route(
+        self.add_api_route(
             "/orders/{order_id}",
             self.get_order,
             methods=["GET"],
-            name=f"{self.NAME_PREFIX}:get-order",
+            name=f"{self.name}:get-order",
             tags=["Orders"],
         )
 
@@ -93,12 +68,12 @@ class MainRouter:
         return RootResponse(
             links=[
                 Link(
-                    href=str(request.url_for(f"{self.NAME_PREFIX}:root")),
+                    href=str(request.url_for(f"{self.name}:root")),
                     rel="self",
                     type=TYPE_JSON,
                 ),
                 Link(
-                    href=str(request.url_for(f"{self.NAME_PREFIX}:list-products")),
+                    href=str(request.url_for(f"{self.name}:list-products")),
                     rel="products",
                     type=TYPE_JSON,
                 ),
@@ -122,7 +97,7 @@ class MainRouter:
                 Link(
                     href=str(
                         request.url_for(
-                            f"{self.NAME_PREFIX}:get-product", product_id=product.id
+                            f"{self.name}:get-product", product_id=product.id
                         )
                     ),
                     rel="self",
@@ -133,68 +108,11 @@ class MainRouter:
             products=products,
             links=[
                 Link(
-                    href=str(request.url_for(f"{self.NAME_PREFIX}:list-products")),
+                    href=str(request.url_for(f"{self.name}:list-products")),
                     rel="self",
                     type=TYPE_JSON,
                 )
             ],
-        )
-
-    def product(self, product_id: str, request: Request) -> Product:
-        try:
-            product = self.backend.product(product_id, request)
-        except NotFoundException as exc:
-            raise StapiException(
-                status.HTTP_404_NOT_FOUND, "product not found"
-            ) from exc
-        product.links.append(
-            Link(
-                href=str(
-                    request.url_for(
-                        f"{self.NAME_PREFIX}:get-product", product_id=product.id
-                    )
-                ),
-                rel="self",
-                type=TYPE_JSON,
-            )
-        )
-        return product
-
-    async def search_opportunities(
-        self, search: OpportunityRequest, request: Request
-    ) -> OpportunityCollection:
-        """
-        Explore the opportunities available for a particular set of constraints
-        """
-        try:
-            opportunities = await self.backend.search_opportunities(search, request)
-        except ConstraintsException as exc:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
-        return JSONResponse(
-            jsonable_encoder(OpportunityCollection(features=opportunities)),
-            media_type=TYPE_GEOJSON,
-        )
-
-    async def create_order(
-        self, search: OpportunityRequest, request: Request
-    ) -> JSONResponse:
-        """
-        Create a new order.
-        """
-        try:
-            order = await self.backend.create_order(search, request)
-        except ConstraintsException as exc:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
-
-        location = str(
-            request.url_for(f"{self.NAME_PREFIX}:get-order", order_id=order.id)
-        )
-        order.links.append(Link(href=location, rel="self", type=TYPE_GEOJSON))
-        return JSONResponse(
-            jsonable_encoder(order, exclude_unset=True),
-            status.HTTP_201_CREATED,
-            {"Location": location},
-            TYPE_GEOJSON,
         )
 
     async def get_order(self, order_id: str, request: Request) -> Order:
@@ -213,3 +131,8 @@ class MainRouter:
             status.HTTP_200_OK,
             media_type=TYPE_GEOJSON,
         )
+
+    def add_product_router(self, product_router: ProductRouter):
+        # Give the include a prefix from the product router
+        self.include_router(product_router, prefix=product_router.product.id)
+        self.product_routers[product_router.product.id] = product_router

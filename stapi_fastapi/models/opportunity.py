@@ -20,7 +20,7 @@ class OpportunityRequest(BaseModel):
     geometry: Geometry
     # TODO: validate the CQL2 filter?
     filter: Optional[CQL2Filter] = None
-    # PHILOSOPH: strict?
+    model_config = ConfigDict(strict=True)
 
 # Generic type definition for Opportunity
 P = TypeVar("P", bound=OpportunityProperties)
@@ -30,6 +30,5 @@ K = TypeVar("K", bound=Geometry)
 class Opportunity(Feature[K, P], Generic[K, P]):
     type: Literal["Feature"] = "Feature"
 
-
-class OpportunityCollection(FeatureCollection[Opportunity]):
+class OpportunityCollection(FeatureCollection[Opportunity[K, P]], Generic[K, P]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
