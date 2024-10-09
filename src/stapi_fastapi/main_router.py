@@ -51,7 +51,7 @@ class MainRouter(APIRouter):
         self.add_api_route(
             "/products",
             self.products,
-            methods=["GET"],
+            methods=["GET","POST"],
             name=f"{self.name}:list-products",
             tags=["Product"],
         )
@@ -134,5 +134,5 @@ class MainRouter(APIRouter):
 
     def add_product_router(self, product_router: ProductRouter):
         # Give the include a prefix from the product router
-        self.include_router(product_router, prefix=product_router.product.id)
+        self.include_router(product_router, prefix=f"/products/{product_router.product.id}")
         self.product_routers[product_router.product.id] = product_router

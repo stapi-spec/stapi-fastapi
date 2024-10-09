@@ -8,15 +8,15 @@ from stapi_fastapi.models.product import Product
 
 from .backend import TestBackend
 
-@pytest.mark.parametrize("product_id", ["umbra-spotlight-1"])
+@pytest.mark.parametrize("product_id", ["umbra-spotlight"])
 def test_search_opportunities_response(
     product_id: str,
-    mock_products: list[Product],
+    products: list[Product],
     mock_umbra_spotlight_opportunities: List[Opportunity],
     stapi_backend: TestBackend,
     stapi_client: TestClient,
 ):
-    stapi_backend._products = mock_products
+    stapi_backend._products = products
     stapi_backend._opportunities = mock_umbra_spotlight_opportunities
 
     now = datetime.now(UTC)
@@ -24,7 +24,7 @@ def test_search_opportunities_response(
     end = start + timedelta(days=5)
 
     # Create mock products and opportunities for the test
-    mock_products[0].id = product_id
+    products[0].id = product_id
 
     # Prepare the request payload
     request_payload = {

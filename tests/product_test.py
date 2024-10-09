@@ -9,6 +9,7 @@ from .utils import find_link
 from .warnings import StapiSpecWarning
 
 
+
 def test_products_response(stapi_client: TestClient):
     res = stapi_client.get("/products")
 

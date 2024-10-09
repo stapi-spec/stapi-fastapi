@@ -23,10 +23,26 @@ class ProductRouter(APIRouter):
         super().__init__(*args, **kwargs)
         self.product = product
 
-        # TODO: use add_api_route
-        self.post("/opportunities", summary="Search Opportunities for the product")(self.search_opportunities)
-        self.get("/parameters", summary="Get parameters for the product")(self.get_product_parameters)
-        self.post("/order", summary="Create an order for the product")(self.create_order)
+        self.add_api_route(
+            path="/opportunities",
+            endpoint=self.search_opportunities,
+            methods=["POST"],
+            summary="Search Opportunities for the product"
+        )
+
+        self.add_api_route(
+            path="/parameters",
+            endpoint=self.get_product_parameters,
+            methods=["GET"],
+            summary="Get parameters for the product"
+        )
+
+        self.add_api_route(
+            path="/order",
+            endpoint=self.create_order,
+            methods=["POST"],
+            summary="Create an order for the product"
+        )
 
     async def search_opportunities(self: Self, request: Request, search: OpportunityRequest):
         try:
