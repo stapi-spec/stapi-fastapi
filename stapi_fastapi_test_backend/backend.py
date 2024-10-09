@@ -6,22 +6,22 @@ from fastapi import Request
 from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stapi_fastapi.models.order import Order
-from stapi_fastapi.models.product import Product
+from stapi_fastapi.models.product import ProductMeta
 
 
 class TestBackend:
-    _products: list[Product] = []
+    _products: list[ProductMeta] = []
     _opportunities: list[Opportunity] = []
     _allowed_payloads: list[OpportunityRequest] = []
     _orders: Mapping[str, Order] = {}
 
-    def products(self, request: Request) -> list[Product]:
+    def products(self, request: Request) -> list[ProductMeta]:
         """
         Return a list of supported products.
         """
         return self._products
 
-    def product(self, product_id: str, request: Request) -> Product | None:
+    def product(self, product_id: str, request: Request) -> ProductMeta | None:
         """
         Return the product identified by `product_id` or `None` if it isn't
         supported.

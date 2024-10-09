@@ -3,7 +3,7 @@ from warnings import warn
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from stapi_fastapi.models.product import Product
+from stapi_fastapi.models.product import ProductMeta
 from stapi_fastapi_test_backend.backend import TestBackend
 
 from .utils import find_link
@@ -23,7 +23,7 @@ def test_products_response(stapi_client: TestClient):
 
 
 def test_product_response_self_link(
-    products: list[Product],
+    products: list[ProductMeta],
     stapi_backend: TestBackend,
     stapi_client: TestClient,
     url_for,

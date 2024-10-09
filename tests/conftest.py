@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from pytest import fixture
 
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
-from stapi_fastapi.models.product import Product, Provider, ProviderRole
+from stapi_fastapi.models.product import ProductMeta, Provider, ProviderRole
 
 
 @fixture
@@ -14,7 +14,7 @@ def products():
         pass
 
     yield [
-        Product(
+        ProductMeta(
             id="mock:standard",
             description="Mock backend's standard product",
             license="CC0-1.0",
@@ -31,13 +31,12 @@ def products():
                 )
             ],
             parameters=Parameters,
-            links=[],
         )
     ]
 
 
 @fixture
-def opportunities(products: list[Product]):
+def opportunities(products: list[ProductMeta]):
     yield [
         Opportunity(
             geometry=Point(type="Point", coordinates=[13.4, 52.5]),
@@ -51,7 +50,7 @@ def opportunities(products: list[Product]):
 
 
 @fixture
-def allowed_payloads(products: list[Product]):
+def allowed_payloads(products: list[ProductMeta]):
     yield [
         OpportunityRequest(
             geometry=Point(type="Point", coordinates=[13.4, 52.5]),
