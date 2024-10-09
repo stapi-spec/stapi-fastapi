@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 
 from stapi_fastapi.backend import StapiBackend
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
-from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
+from stapi_fastapi.exceptions import StapiException, ConstraintsException, NotFoundException
 from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
     OpportunityRequest,
@@ -15,14 +15,12 @@ from stapi_fastapi.models.root import RootResponse
 from stapi_fastapi.models.shared import HTTPException as HTTPExceptionModel
 from stapi_fastapi.models.shared import Link
 
-
-class StapiException(HTTPException):
-    def __init__(self, status_code: int, detail: str) -> None:
-        super().__init__(status_code, detail)
-
-
-class StapiRouter:
-    NAME_PREFIX = "stapi"
+"""
+/products/{component router} # router for each product added to main router
+/orders # list all orders
+"""
+class MainRouter:
+    NAME_PREFIX = "main"
     backend: StapiBackend
     openapi_endpoint_name: str
     docs_endpoint_name: str
@@ -56,6 +54,7 @@ class StapiRouter:
             name=f"{self.NAME_PREFIX}:list-products",
             tags=["Product"],
         )
+
         self.router.add_api_route(
             "/products/{product_id}",
             self.product,
@@ -81,6 +80,7 @@ class StapiRouter:
             tags=["Orders"],
             response_model=Order,
         )
+
         self.router.add_api_route(
             "/orders/{order_id}",
             self.get_order,

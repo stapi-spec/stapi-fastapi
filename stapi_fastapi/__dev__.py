@@ -13,8 +13,8 @@ except ImportError:
     print("install uvicorn and pydantic-settings to use the dev server", file=stderr)
     exit(1)
 
-from stapi_fastapi.api import StapiRouter
-
+from stapi_fastapi.main_router import MainRouter
+from stapi_fastapi.routers.umbra_spotlight_router import umbra_spotlight_router
 
 class DevSettings(BaseSettings):
     port: int = 8000
@@ -34,8 +34,19 @@ class DevSettings(BaseSettings):
 
 settings = DevSettings()
 backend = settings.backend_name()
+
+# Compose the router
+main_router = MainRouter()
+main_router.include_router(umbra_spotlight_router, prefix="/umbra_spotlight")
+
 app = FastAPI(debug=True)
-app.include_router(StapiRouter(backend).router)
+app.include_router(main_router)
+
+# Define a root endpoint
+# TODO: do I need this?
+@app.get("/")
+async def read_root():
+    return {"message": "Welcome to STAPI AKA STAC to the Future AKA STAC-ish Order API"}
 
 
 def cli():

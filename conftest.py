@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pytest import Parser, fixture
 
-from stapi_fastapi.api import StapiRouter
+from stapi_fastapi.main_router import MainRouter
 from stapi_fastapi_test_backend import TestBackend
 
 T = TypeVar("T")
@@ -38,7 +38,7 @@ def stapi_client(stapi_backend, base_url: str) -> YieldFixture[TestClient]:
     app = FastAPI()
 
     app.include_router(
-        StapiRouter(backend=stapi_backend).router,
+        MainRouter(backend=stapi_backend).router,
         prefix="",
     )
 
