@@ -3,7 +3,7 @@ from typing import List
 from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
-from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
+from stapi_fastapi.models.opportunity import Opportunity
 from stapi_fastapi.models.product import Product
 
 from .backend import TestBackend

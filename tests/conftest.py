@@ -2,28 +2,19 @@ from typing import Callable, Generator, TypeVar, List
 from urllib.parse import urljoin
 from uuid import uuid4
 import pytest
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, UTC
 from geojson_pydantic import Point
 from pytest import Parser, fixture
 
 from stapi_fastapi.models.product import Product, Provider, ProviderRole
-from stapi_fastapi.main_router import MainRouter
 from stapi_fastapi.models.shared import Link
-from stapi_fastapi.models.opportunity import OpportunityProperties, Opportunity
+from stapi_fastapi.models.opportunity import OpportunityProperties, Opportunity, OpportunityRequest
 from stapi_fastapi.types.datetime_interval import DatetimeInterval
 
 from collections.abc import Iterator
-from datetime import UTC, datetime
-from typing import Callable
-from urllib.parse import urljoin
-
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from geojson_pydantic import Point
 from pydantic import BaseModel
-from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
-from stapi_fastapi.models.product import Product, Provider, ProviderRole
 from stapi_fastapi.products_router import ProductRouter
 
 from .backend import TestBackend
@@ -38,13 +29,30 @@ def base_url() -> Iterator[str]:
 def stapi_backend() -> Iterator[TestBackend]:
     yield TestBackend()
 
+@pytest.fixture
+def mock_product_umbra_spotlight(mock_provider_umbra: Provider) -> Product:
+    """Fixture for a mock Umbra Spotlight product."""
+
+    return Product(
+        id=str(uuid4()),
+        title="Umbra Spotlight Product",
+        description="Test product for umbra spotlight",
+        license="CC-BY-4.0",
+        keywords=["test", "umbra", "satellite"],
+        providers=[mock_provider_umbra],
+        links=[
+            Link(href="http://example.com", rel="self"),
+            Link(href="http://example.com/catalog", rel="parent"),
+        ],
+        parameters=UmbraSpotlightProperties
+    )
 
 @pytest.fixture
 def stapi_client(stapi_backend, base_url: str) -> Iterator[TestClient]:
     app = FastAPI()
 
     app.include_router(
-        ProductRouter(backend=stapi_backend).router,
+        ProductRouter(mock_product_umbra_spotlight),
         prefix="",
     )
 
@@ -135,23 +143,6 @@ def base_url() -> YieldFixture[str]:
     yield "http://stapiserver"
 
 
-@fixture
-def stapi_backend():
-    yield TestBackend()
-
-
-@fixture
-def stapi_client(stapi_backend, base_url: str) -> YieldFixture[TestClient]:
-    app = FastAPI()
-
-    app.include_router(
-        MainRouter(backend=stapi_backend).router,
-        prefix="",
-    )
-
-    yield TestClient(app, base_url=f"{base_url}")
-
-
 @fixture(scope="session")
 def url_for(base_url: str) -> YieldFixture[Callable[[str], str]]:
     def with_trailing_slash(value: str) -> str:
@@ -174,24 +165,6 @@ def mock_provider_umbra() -> Provider:
 # Define a mock OpportunityProperties class for Umbra
 class UmbraSpotlightProperties(OpportunityProperties):
     datetime: DatetimeInterval
-
-@pytest.fixture
-def mock_product_umbra_spotlight(mock_provider_umbra: Provider) -> Product:
-    """Fixture for a mock Umbra Spotlight product."""
-
-    return Product(
-        id=str(uuid4()),
-        title="Umbra Spotlight Product",
-        description="Test product for umbra spotlight",
-        license="CC-BY-4.0",
-        keywords=["test", "umbra", "satellite"],
-        providers=[mock_provider_umbra],
-        links=[
-            Link(href="http://example.com", rel="self"),
-            Link(href="http://example.com/catalog", rel="parent"),
-        ],
-        parameters=UmbraSpotlightProperties
-    )
 
 @pytest.fixture
 def mock_products(mock_product_umbra_spotlight: Product) -> List[Product]:
