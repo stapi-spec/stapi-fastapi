@@ -3,10 +3,10 @@ from typing import List
 from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
-
-from stapi_fastapi.models.opportunity import Opportunity, OpportunityProperties
+from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
 from stapi_fastapi.models.product import Product
-from stapi_fastapi_test_backend.backend import TestBackend
+
+from .backend import TestBackend
 
 @pytest.mark.parametrize("product_id", ["umbra-spotlight-1"])
 def test_search_opportunities_response(

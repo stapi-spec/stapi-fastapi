@@ -4,9 +4,8 @@ from itertools import product
 from pydantic import BaseModel, ValidationError
 from pyrfc3339.utils import timedelta_seconds, timezone
 from pytest import mark, raises
-from zoneinfo import ZoneInfo
-
 from stapi_fastapi.types.datetime_interval import DatetimeInterval
+from zoneinfo import ZoneInfo
 
 EUROPE_BERLIN = ZoneInfo("Europe/Berlin")
 
