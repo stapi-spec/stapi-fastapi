@@ -4,6 +4,7 @@ from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
 from pydantic import BaseModel, ConfigDict
 
+from stapi_fastapi.models.shared import Link
 from stapi_fastapi.types.datetime_interval import DatetimeInterval
 from stapi_fastapi.types.filter import CQL2Filter
 
@@ -22,6 +23,7 @@ class OpportunityRequest(OpportunityProperties):
 
 class Opportunity(Feature[Geometry, OpportunityProperties]):
     type: Literal["Feature"] = "Feature"
+    links: list[Link] = []
 
 
 class OpportunityCollection(FeatureCollection[Opportunity]):
