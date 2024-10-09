@@ -41,7 +41,7 @@ poetry update --with dev
 A `pytest` based test suite is provided. Run it as `./scripts/test`. Any additional
 pytest flags are passed along.
 
-Run the tests (at the top level, not in the `scripts` folder) with: 
+Run the tests (at the top level, not in the `scripts` folder) with:
 
 ```bash
 poetry run pytest
