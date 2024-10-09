@@ -30,16 +30,42 @@ Also see [DOCKER.md](./DOCKER.md) for details on docker setup for and deployment
 Setup is managed with `poetry` and `pre-commit`, all of which can be initialised
 by `./scripts/bootstrap`.
 
+Install the dev dependencies with:
+
+```bash
+poetry update --with dev
+```
+
 ### Test Suite
 
 A `pytest` based test suite is provided. Run it as `./scripts/test`. Any additional
-pytest flags are passed along
+pytest flags are passed along.
+
+Run the tests (at the top level, not in the `scripts` folder) with: 
+
+```bash
+poetry run pytest
+```
 
 ### Dev Server
 
 For dev purposes, [stapi_fastapi.**dev**.py](./stapi_fastapi/__dev__.py) shows
 a minimal demo with `uvicorn` to run the full app. Start it with `./scripts/server`.
 Choose backend with `BACKEND_NAME` env var, defaults to Landsat backend.
+
+Run the server with:
+
+```bash
+poetry run dev
+```
+
+Check that the server is running with:
+
+```bash
+curl localhost:8000/products
+```
+
+With the default backend, you should get back the mock Landsat ProductCollection.
 
 ### Implementing a backend
 
