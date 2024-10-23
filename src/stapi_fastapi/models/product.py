@@ -1,13 +1,11 @@
 from enum import Enum
-from typing import Literal, Optional
-from abc import ABC, abstractmethod
-from fastapi import Request
+from typing import Literal, Optional, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
+from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.models.shared import Link
-from stapi_fastapi.models.opportunity import Opportunity, OpportunityProperties, OpportunityRequest
-from stapi_fastapi.models.order import Order
+from stapi_fastapi.types.json_schema_model import JsonSchemaModel
 
 
 class ProviderRole(str, Enum):
@@ -24,7 +22,7 @@ class Provider(BaseModel):
     url: AnyHttpUrl
 
 
-class Product(BaseModel, ABC):
+class Product(BaseModel):
     type: Literal["Product"] = "Product"
     conformsTo: list[str] = Field(default_factory=list)
     id: str
@@ -34,28 +32,12 @@ class Product(BaseModel, ABC):
     license: str
     providers: list[Provider] = Field(default_factory=list)
     links: list[Link]
-    parameters: OpportunityProperties
+    constraints: JsonSchemaModel
 
-    @abstractmethod
-    def search_opportunities(self, search: OpportunityRequest, request: Request
-    ) -> list[Opportunity]:
-        """
-        Search for ordering opportunities for the  given search parameters.
+    def __init__(self: Self, backend: ProductBackend, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.backend = backend
 
-        Backends must validate search constraints and raise
-        `stapi_fastapi.backend.exceptions.ConstraintsException` if not valid.
-        """
-        ...
-
-    @abstractmethod
-    def create_order(self, search: OpportunityRequest, request: Request) -> Order:
-        """
-        Create a new order.
-
-        Backends must validate order payload and raise
-        `stapi_fastapi.backend.exceptions.ConstraintsException` if not valid.
-        """
-        ...
 
 class ProductsCollection(BaseModel):
     type: Literal["ProductCollection"] = "ProductCollection"
