@@ -1,13 +1,14 @@
+from __future__ import annotations
+
+from copy import deepcopy
 from enum import Enum
-from typing import Literal, Optional
-from abc import ABC, abstractmethod
-from fastapi import Request
+from typing import Literal, Optional, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
+from stapi_fastapi.backends.product_backend import ProductBackend
+from stapi_fastapi.models.opportunity import OpportunityProperties
 from stapi_fastapi.models.shared import Link
-from stapi_fastapi.models.opportunity import Opportunity, OpportunityProperties, OpportunityRequest
-from stapi_fastapi.models.order import Order
 
 
 class ProviderRole(str, Enum):
@@ -24,8 +25,8 @@ class Provider(BaseModel):
     url: AnyHttpUrl
 
 
-class Product(BaseModel, ABC):
-    type: Literal["Product"] = "Product"
+class Product(BaseModel):
+    type_: Literal["Product"] = Field(default="Product", alias="type")
     conformsTo: list[str] = Field(default_factory=list)
     id: str
     title: str = ""
@@ -34,28 +35,38 @@ class Product(BaseModel, ABC):
     license: str
     providers: list[Provider] = Field(default_factory=list)
     links: list[Link]
-    parameters: OpportunityProperties
 
-    @abstractmethod
-    def search_opportunities(self, search: OpportunityRequest, request: Request
-    ) -> list[Opportunity]:
-        """
-        Search for ordering opportunities for the  given search parameters.
+    # we don't want to include these in the model fields
+    _constraints: type[OpportunityProperties]
+    _backend: ProductBackend
 
-        Backends must validate search constraints and raise
-        `stapi_fastapi.backend.exceptions.ConstraintsException` if not valid.
-        """
-        ...
+    def __init__(
+        self: Self,
+        *args,
+        backend: ProductBackend,
+        constraints: type[OpportunityProperties],
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self._backend = backend
+        self._constraints = constraints
 
-    @abstractmethod
-    def create_order(self, search: OpportunityRequest, request: Request) -> Order:
-        """
-        Create a new order.
+    @property
+    def backend(self: Self) -> ProductBackend:
+        return self._backend
 
-        Backends must validate order payload and raise
-        `stapi_fastapi.backend.exceptions.ConstraintsException` if not valid.
-        """
-        ...
+    @property
+    def constraints(self: Self) -> type[OpportunityProperties]:
+        return self._constraints
+
+    def with_links(self: Self, links: list[Link] | None = None) -> Self:
+        if not links:
+            return self
+
+        new = deepcopy(self)
+        new.links.extend(links)
+        return new
+
 
 class ProductsCollection(BaseModel):
     type: Literal["ProductCollection"] = "ProductCollection"

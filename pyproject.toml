@@ -6,6 +6,7 @@ description = "Spatio Temporal Asset Tasking with FastAPI"
 authors = ["Christian Wygoda <christian.wygoda@wygoda.net>"]
 license = "MIT"
 readme = "README.md"
+packages = [{include = "stapi_fastapi", from="src"}]
 
 [tool.poetry.dependencies]
 python = "3.12.*"
