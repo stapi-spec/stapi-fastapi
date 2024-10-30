@@ -1,13 +1,12 @@
+import json
 from warnings import warn
 
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-from stapi_fastapi.models.product import Product
 
-from .backend import TestBackend
 from .utils import find_link
 from .warnings import StapiSpecWarning
-
 
 
 def test_products_response(stapi_client: TestClient):
@@ -22,16 +21,14 @@ def test_products_response(stapi_client: TestClient):
     assert isinstance(data["products"], list)
 
 
+@pytest.mark.parametrize("product_id", ["test-spotlight"])
 def test_product_response_self_link(
-    products: list[Product],
-    stapi_backend: TestBackend,
+    product_id: str,
     stapi_client: TestClient,
     url_for,
 ):
-    stapi_backend._products = products
-
-    res = stapi_client.get("/products/mock:standard")
-
+    res = stapi_client.get(f"/products/{product_id}")
+    print(json.dumps(res.json(), indent=4))
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
 
@@ -41,4 +38,4 @@ def test_product_response_self_link(
         warn(StapiSpecWarning("GET /products Link[rel=self] should exist"))
     else:
         assert link["type"] == "application/json"
-        assert link["href"] == url_for("/products/mock:standard")
+        assert link["href"] == url_for(f"/products/{product_id}")

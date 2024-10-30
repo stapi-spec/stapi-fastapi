@@ -32,27 +32,27 @@ class RootRouter(APIRouter):
 
         self.product_routers: dict[str, ProductRouter] = {}
 
-        self.router.add_api_route(
-            "/",
-            self.root,
+        self.add_api_route(
+            "$",
+            self.get_root,
             methods=["GET"],
-            name=f"{self.NAME_PREFIX}:root",
+            name=f"{self.name}:root",
             tags=["Root"],
         )
 
-        self.router.add_api_route(
+        self.add_api_route(
             "/products",
-            self.products,
+            self.get_products,
             methods=["GET"],
-            name=f"{self.NAME_PREFIX}:list-products",
+            name=f"{self.name}:list-products",
             tags=["Product"],
         )
 
-        self.router.add_api_route(
+        self.add_api_route(
             "/orders",
-            self.orders,
+            self.get_orders,
             methods=["GET"],
-            name=f"{self.NAME_PREFIX}:list-orders",
+            name=f"{self.name}:list-orders",
             tags=["Order"],
         )
 
@@ -64,21 +64,21 @@ class RootRouter(APIRouter):
             tags=["Orders"],
         )
 
-    def root(self, request: Request) -> RootResponse:
+    def get_root(self, request: Request) -> RootResponse:
         return RootResponse(
             links=[
                 Link(
-                    href=str(request.url_for(f"{self.NAME_PREFIX}:root")),
+                    href=str(request.url_for(f"{self.name}:root")),
                     rel="self",
                     type=TYPE_JSON,
                 ),
                 Link(
-                    href=str(request.url_for(f"{self.NAME_PREFIX}:list-products")),
+                    href=str(request.url_for(f"{self.name}:list-products")),
                     rel="products",
                     type=TYPE_JSON,
                 ),
                 Link(
-                    href=str(request.url_for(f"{self.NAME_PREFIX}:list-orders")),
+                    href=str(request.url_for(f"{self.name}:list-orders")),
                     rel="orders",
                     type=TYPE_JSON,
                 ),
@@ -95,42 +95,25 @@ class RootRouter(APIRouter):
             ]
         )
 
-    def products(self, request: Request) -> ProductsCollection:
-        products: list[Product] = []
-        for product_router in self.product_routers:
-            product = product_router.product
-            products.append(product)
-            product.links.append(
-                Link(
-                    href=str(
-                        request.url_for(
-                            f"{self.NAME_PREFIX}:get-product", product_id=product.id
-                        )
-                    ),
-                    rel="self",
-                    type=TYPE_JSON,
-                )
-            )
+    def get_products(self, request: Request) -> ProductsCollection:
         return ProductsCollection(
-            products=products,
+            products=[pr.get_product(request) for pr in self.product_routers.values()],
             links=[
                 Link(
-                    href=str(request.url_for(f"{self.NAME_PREFIX}:list-products")),
+                    href=str(request.url_for(f"{self.name}:list-products")),
                     rel="self",
                     type=TYPE_JSON,
                 )
             ],
         )
 
-    def orders(self, request: Request) -> list[Order]:
-        orders = self.backend.orders(request)
+    async def get_orders(self, request: Request) -> list[Order]:
+        orders = await self.backend.orders(request)
         for order in orders:
             order.links.append(
                 Link(
                     href=str(
-                        request.url_for(
-                            f"{self.NAME_PREFIX}:get-order", order_id=order.id
-                        )
+                        request.url_for(f"{self.name}:get-order", order_id=order.id)
                     ),
                     rel="self",
                     type=TYPE_JSON,
@@ -138,7 +121,7 @@ class RootRouter(APIRouter):
             )
         return list[Order]
 
-    async def get_order(self, order_id: str, request: Request) -> Order:
+    async def get_order(self: Self, order_id: str, request: Request) -> Order:
         """
         Get details for order with `order_id`.
         """
@@ -155,9 +138,11 @@ class RootRouter(APIRouter):
             media_type=TYPE_GEOJSON,
         )
 
-    def add_product_router(self, product_router: ProductRouter):
+    def add_product(self: Self, product: Product) -> None:
         # Give the include a prefix from the product router
-        self.include_router(
-            product_router, prefix=f"/products/{product_router.product.id}"
-        )
-        self.product_routers[product_router.product.id] = product_router
+        product_router = ProductRouter(product, self)
+        self.include_router(product_router, prefix=f"/products/{product.id}")
+        self.product_routers[product.id] = product_router
+
+    def generate_order_href(self: Self, request: Request, order_id: str) -> str:
+        return str(request.url_for(f"{self.name}:get-order", order_id=order_id))

@@ -1,11 +1,14 @@
+from __future__ import annotations
+
+from copy import deepcopy
 from enum import Enum
 from typing import Literal, Optional, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
 from stapi_fastapi.backends.product_backend import ProductBackend
+from stapi_fastapi.models.opportunity import OpportunityProperties
 from stapi_fastapi.models.shared import Link
-from stapi_fastapi.types.json_schema_model import JsonSchemaModel
 
 
 class ProviderRole(str, Enum):
@@ -23,7 +26,7 @@ class Provider(BaseModel):
 
 
 class Product(BaseModel):
-    type: Literal["Product"] = "Product"
+    type_: Literal["Product"] = Field(default="Product", alias="type")
     conformsTo: list[str] = Field(default_factory=list)
     id: str
     title: str = ""
@@ -32,11 +35,37 @@ class Product(BaseModel):
     license: str
     providers: list[Provider] = Field(default_factory=list)
     links: list[Link]
-    constraints: JsonSchemaModel
 
-    def __init__(self: Self, backend: ProductBackend, *args, **kwargs):
+    # we don't want to include these in the model fields
+    _constraints: type[OpportunityProperties]
+    _backend: ProductBackend
+
+    def __init__(
+        self: Self,
+        *args,
+        backend: ProductBackend,
+        constraints: type[OpportunityProperties],
+        **kwargs,
+    ) -> None:
         super().__init__(*args, **kwargs)
-        self.backend = backend
+        self._backend = backend
+        self._constraints = constraints
+
+    @property
+    def backend(self: Self) -> ProductBackend:
+        return self._backend
+
+    @property
+    def constraints(self: Self) -> type[OpportunityProperties]:
+        return self._constraints
+
+    def with_links(self: Self, links: list[Link] | None = None) -> Self:
+        if not links:
+            return self
+
+        new = deepcopy(self)
+        new.links.extend(links)
+        return new
 
 
 class ProductsCollection(BaseModel):
