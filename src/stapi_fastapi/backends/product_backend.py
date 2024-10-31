@@ -4,15 +4,15 @@ from typing import Protocol
 
 from fastapi import Request
 
-import stapi_fastapi
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stapi_fastapi.models.order import Order
+from stapi_fastapi.models.product import Product
 
 
 class ProductBackend(Protocol):
     async def search_opportunities(
         self,
-        product: stapi_fastapi.models.product.Product,
+        product: Product,
         search: OpportunityRequest,
         request: Request,
     ) -> list[Opportunity]:
@@ -26,7 +26,7 @@ class ProductBackend(Protocol):
 
     async def create_order(
         self,
-        product: stapi_fastapi.models.product.Product,
+        product: Product,
         search: OpportunityRequest,
         request: Request,
     ) -> Order:

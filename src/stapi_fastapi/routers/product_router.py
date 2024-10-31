@@ -1,38 +1,32 @@
-# Generic product router factory
 from __future__ import annotations
 
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 from fastapi import APIRouter, HTTPException, Request, status
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
 
-import stapi_fastapi
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.exceptions import ConstraintsException
 from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
     OpportunityRequest,
 )
+from stapi_fastapi.models.order import Order
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.types.json_schema_model import JsonSchemaModel
 
-"""
-/products[MainRouter]/opportunities
-/products[MainRouter]/parameters
-/products[MainRouter]/order
-"""
+if TYPE_CHECKING:
+    from stapi_fastapi.routers import RootRouter
 
 
 class ProductRouter(APIRouter):
     def __init__(
-        self: Self,
+        self,
         product: Product,
-        root_router: stapi_fastapi.routers.RootRouter,
+        root_router: RootRouter,
         *args,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.product = product
         self.root_router = root_router
@@ -50,6 +44,13 @@ class ProductRouter(APIRouter):
             endpoint=self.search_opportunities,
             name=f"{self.root_router.name}:{self.product.id}:search-opportunities",
             methods=["POST"],
+            responses={
+                200: {
+                    "content": {
+                        "TYPE_GEOJSON": {},
+                    },
+                }
+            },
             summary="Search Opportunities for the product",
         )
 
@@ -66,6 +67,13 @@ class ProductRouter(APIRouter):
             endpoint=self.create_order,
             name=f"{self.root_router.name}:{self.product.id}:create-order",
             methods=["POST"],
+            responses={
+                201: {
+                    "content": {
+                        "TYPE_GEOJSON": {},
+                    },
+                }
+            },
             summary="Create an order for the product",
         )
 
@@ -92,16 +100,13 @@ class ProductRouter(APIRouter):
         """
         try:
             opportunities = await self.product.backend.search_opportunities(
-                search, request
+                self.product, search, request
             )
         except ConstraintsException as exc:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
-        return JSONResponse(
-            jsonable_encoder(OpportunityCollection(features=opportunities)),
-            media_type=TYPE_GEOJSON,
-        )
+        return OpportunityCollection(features=opportunities)
 
-    async def get_product_constraints(self: Self, request: Request) -> JsonSchemaModel:
+    async def get_product_constraints(self: Self) -> JsonSchemaModel:
         """
         Return supported constraints of a specific product
         """
@@ -109,20 +114,19 @@ class ProductRouter(APIRouter):
 
     async def create_order(
         self, payload: OpportunityRequest, request: Request
-    ) -> JSONResponse:
+    ) -> Order:
         """
         Create a new order.
         """
         try:
-            order = await self.product.backend.create_order(payload, request)
+            order = await self.product.backend.create_order(
+                self.product,
+                payload,
+                request,
+            )
         except ConstraintsException as exc:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
 
         location = self.root_router.generate_order_href(request, order.id)
-        order.links.append(Link(href=location, rel="self", type=TYPE_GEOJSON))
-        return JSONResponse(
-            jsonable_encoder(order, exclude_unset=True),
-            status.HTTP_201_CREATED,
-            {"Location": location},
-            TYPE_GEOJSON,
-        )
+        order.links.append(Link(href=str(location), rel="self", type=TYPE_GEOJSON))
+        return order

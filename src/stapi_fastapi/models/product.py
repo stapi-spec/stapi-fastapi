@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from copy import deepcopy
 from enum import Enum
-from typing import Literal, Optional, Self
+from typing import TYPE_CHECKING, Literal, Optional, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
-from stapi_fastapi.backends.product_backend import ProductBackend
-from stapi_fastapi.models.opportunity import OpportunityProperties
+from stapi_fastapi.models.opportunity import OpportunityPropertiesBase
 from stapi_fastapi.models.shared import Link
+
+if TYPE_CHECKING:
+    from stapi_fastapi.backends.product_backend import ProductBackend
 
 
 class ProviderRole(str, Enum):
@@ -24,6 +26,11 @@ class Provider(BaseModel):
     roles: list[ProviderRole]
     url: AnyHttpUrl
 
+    # redefining init is a hack to get str type to validate for `url`,
+    # as str is ultimately coerced into an AnyHttpUrl automatically anyway
+    def __init__(self, url: AnyHttpUrl | str, **kwargs):
+        super().__init__(url=url, **kwargs)
+
 
 class Product(BaseModel):
     type_: Literal["Product"] = Field(default="Product", alias="type")
@@ -37,14 +44,14 @@ class Product(BaseModel):
     links: list[Link]
 
     # we don't want to include these in the model fields
-    _constraints: type[OpportunityProperties]
+    _constraints: type[OpportunityPropertiesBase]
     _backend: ProductBackend
 
     def __init__(
-        self: Self,
+        self,
         *args,
         backend: ProductBackend,
-        constraints: type[OpportunityProperties],
+        constraints: type[OpportunityPropertiesBase],
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
@@ -56,7 +63,7 @@ class Product(BaseModel):
         return self._backend
 
     @property
-    def constraints(self: Self) -> type[OpportunityProperties]:
+    def constraints(self: Self) -> type[OpportunityPropertiesBase]:
         return self._constraints
 
     def with_links(self: Self, links: list[Link] | None = None) -> Self:

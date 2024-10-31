@@ -14,7 +14,12 @@ class Link(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    def model_dump_json(self: Self, *args, **kwargs) -> bytes:
+    # redefining init is a hack to get str type to validate for `href`,
+    # as str is ultimately coerced into an AnyUrl automatically anyway
+    def __init__(self, href: AnyUrl | str, **kwargs):
+        super().__init__(href=href, **kwargs)
+
+    def model_dump_json(self: Self, *args, **kwargs) -> str:
         # TODO: this isn't working as expected and we get nulls in the output
         #       maybe need to override python dump too
         # forcing the call to model_dump_json to exclude unset fields by default

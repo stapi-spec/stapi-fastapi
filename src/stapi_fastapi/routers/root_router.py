@@ -1,8 +1,7 @@
 from typing import Self
 
 from fastapi import APIRouter, HTTPException, Request, status
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi.datastructures import URL
 
 from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
@@ -16,20 +15,24 @@ from stapi_fastapi.routers.product_router import ProductRouter
 
 class RootRouter(APIRouter):
     def __init__(
-        self: Self,
+        self,
         backend: RootBackend,
         name: str = "root",
         openapi_endpoint_name="openapi",
         docs_endpoint_name="swagger_ui_html",
         *args,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.backend = backend
         self.name = name
         self.openapi_endpoint_name = openapi_endpoint_name
         self.docs_endpoint_name = docs_endpoint_name
 
+        # A dict is used to track the product routers so we can ensure
+        # idempotentcy in case a product is added multiple times, and also to
+        # manage clobbering if multiple products with the same product_id are
+        # added.
         self.product_routers: dict[str, ProductRouter] = {}
 
         self.add_api_route(
@@ -53,6 +56,13 @@ class RootRouter(APIRouter):
             self.get_orders,
             methods=["GET"],
             name=f"{self.name}:list-orders",
+            responses={
+                200: {
+                    "content": {
+                        "TYPE_GEOJSON": {},
+                    },
+                }
+            },
             tags=["Order"],
         )
 
@@ -61,6 +71,13 @@ class RootRouter(APIRouter):
             self.get_order,
             methods=["GET"],
             name=f"{self.name}:get-order",
+            responses={
+                200: {
+                    "content": {
+                        "TYPE_GEOJSON": {},
+                    },
+                }
+            },
             tags=["Orders"],
         )
 
@@ -108,7 +125,7 @@ class RootRouter(APIRouter):
         )
 
     async def get_orders(self, request: Request) -> list[Order]:
-        orders = await self.backend.orders(request)
+        orders = await self.backend.get_orders(request)
         for order in orders:
             order.links.append(
                 Link(
@@ -119,7 +136,7 @@ class RootRouter(APIRouter):
                     type=TYPE_JSON,
                 )
             )
-        return list[Order]
+        return orders
 
     async def get_order(self: Self, order_id: str, request: Request) -> Order:
         """
@@ -131,12 +148,7 @@ class RootRouter(APIRouter):
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="not found") from exc
 
         order.links.append(Link(href=str(request.url), rel="self", type=TYPE_GEOJSON))
-
-        return JSONResponse(
-            jsonable_encoder(order, exclude_unset=True),
-            status.HTTP_200_OK,
-            media_type=TYPE_GEOJSON,
-        )
+        return order
 
     def add_product(self: Self, product: Product) -> None:
         # Give the include a prefix from the product router
@@ -144,5 +156,5 @@ class RootRouter(APIRouter):
         self.include_router(product_router, prefix=f"/products/{product.id}")
         self.product_routers[product.id] = product_router
 
-    def generate_order_href(self: Self, request: Request, order_id: str) -> str:
-        return str(request.url_for(f"{self.name}:get-order", order_id=order_id))
+    def generate_order_href(self: Self, request: Request, order_id: int | str) -> URL:
+        return request.url_for(f"{self.name}:get-order", order_id=order_id)
