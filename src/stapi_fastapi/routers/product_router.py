@@ -105,10 +105,7 @@ class ProductRouter(APIRouter):
         """
         Return supported constraints of a specific product
         """
-        return {
-            "product.id": self.product.product.id,
-            "constraints": self.product.constraints,
-        }
+        return self.product.constraints
 
     async def create_order(
         self, payload: OpportunityRequest, request: Request
