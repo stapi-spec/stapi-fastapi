@@ -1,6 +1,12 @@
 from typing import Any, Self
 
-from pydantic import AnyUrl, BaseModel, ConfigDict
+from pydantic import (
+    AnyUrl,
+    BaseModel,
+    ConfigDict,
+    SerializerFunctionWrapHandler,
+    model_serializer,
+)
 
 
 class Link(BaseModel):
@@ -19,9 +25,8 @@ class Link(BaseModel):
     def __init__(self, href: AnyUrl | str, **kwargs):
         super().__init__(href=href, **kwargs)
 
-    def model_dump_json(self: Self, *args, **kwargs) -> str:
-        # TODO: this isn't working as expected and we get nulls in the output
-        #       maybe need to override python dump too
-        # forcing the call to model_dump_json to exclude unset fields by default
-        kwargs["exclude_unset"] = kwargs.get("exclude_unset", True)
-        return super().model_dump_json(*args, **kwargs)
+    # overriding the default serialization to filter None field values from
+    # dumped json
+    @model_serializer(mode="wrap", when_used="json")
+    def serialize(self: Self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        return {k: v for k, v in handler(self).items() if v is not None}

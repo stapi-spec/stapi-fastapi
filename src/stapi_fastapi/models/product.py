@@ -76,6 +76,6 @@ class Product(BaseModel):
 
 
 class ProductsCollection(BaseModel):
-    type: Literal["ProductCollection"] = "ProductCollection"
+    type_: Literal["ProductCollection"] = Field("ProductCollection", alias="type")
     links: list[Link] = Field(default_factory=list)
     products: list[Product]
