@@ -20,7 +20,7 @@ class ProductBackend(Protocol):
         Search for ordering opportunities for the  given search parameters.
 
         Backends must validate search constraints and raise
-        `stapi_fastapi.backend.exceptions.ConstraintsException` if not valid.
+        `stapi_fastapi.exceptions.ConstraintsException` if not valid.
         """
         ...
 
@@ -34,6 +34,6 @@ class ProductBackend(Protocol):
         Create a new order.
 
         Backends must validate order payload and raise
-        `stapi_fastapi.backend.exceptions.ConstraintsException` if not valid.
+        `stapi_fastapi.exceptions.ConstraintsException` if not valid.
         """
         ...

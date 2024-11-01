@@ -1,20 +1,17 @@
-from typing import Any, Mapping
+from typing import Any
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 
 class StapiException(HTTPException):
-    def __init__(self, status_code: int, detail: str) -> None:
-        super().__init__(status_code, detail)
-
-
-class ConstraintsException(Exception):
-    detail: Mapping[str, Any] | None
-
-    def __init__(self, detail: Mapping[str, Any] | None = None) -> None:
-        super().__init__()
-        self.detail = detail
-
-
-class NotFoundException(Exception):
     pass
+
+
+class ConstraintsException(StapiException):
+    def __init__(self, detail: Any) -> None:
+        super().__init__(status.HTTP_422_UNPROCESSABLE_ENTITY, detail)
+
+
+class NotFoundException(StapiException):
+    def __init__(self, detail: Any) -> None:
+        super().__init__(status.HTTP_404_NOT_FOUND, detail)

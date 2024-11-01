@@ -1,11 +1,10 @@
 from typing import Self
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Request
 from fastapi.datastructures import URL
 
 from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
-from stapi_fastapi.exceptions import NotFoundException
 from stapi_fastapi.models.order import Order
 from stapi_fastapi.models.product import Product, ProductsCollection
 from stapi_fastapi.models.root import RootResponse
@@ -132,11 +131,7 @@ class RootRouter(APIRouter):
         """
         Get details for order with `order_id`.
         """
-        try:
-            order = await self.backend.get_order(order_id, request)
-        except NotFoundException as exc:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="not found") from exc
-
+        order = await self.backend.get_order(order_id, request)
         order.links.append(Link(href=str(request.url), rel="self", type=TYPE_GEOJSON))
         return order
 

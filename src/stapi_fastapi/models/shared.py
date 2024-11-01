@@ -1,4 +1,4 @@
-from typing import Any, Optional, Self, Union
+from typing import Any, Self
 
 from pydantic import AnyUrl, BaseModel, ConfigDict
 
@@ -7,9 +7,9 @@ class Link(BaseModel):
     href: AnyUrl
     rel: str
     type: str | None = None
-    title: Optional[str] = None
-    method: Optional[str] = None
-    headers: Optional[dict[str, Union[str, list[str]]]] = None
+    title: str | None = None
+    method: str | None = None
+    headers: dict[str, str | list[str]] | None = None
     body: Any = None
 
     model_config = ConfigDict(extra="allow")

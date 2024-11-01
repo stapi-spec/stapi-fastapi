@@ -16,7 +16,7 @@ class RootBackend(Protocol):
         """
         Get details for order with `order_id`.
 
-        Backends must raise `stapi_fastapi.backend.exceptions.NotFoundException`
+        Backends must raise `stapi_fastapi.exceptions.NotFoundException`
         if not found or access denied.
         """
         ...
