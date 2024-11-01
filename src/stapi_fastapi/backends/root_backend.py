@@ -5,7 +5,7 @@ from fastapi import Request
 from stapi_fastapi.models.order import Order, OrderCollection
 
 
-class RootBackend(Protocol):
+class RootBackend(Protocol):  # pragma: nocover
     async def get_orders(self, request: Request) -> OrderCollection:
         """
         Return a list of existing orders.

@@ -9,7 +9,7 @@ from stapi_fastapi.models.order import Order
 from stapi_fastapi.routers.product_router import ProductRouter
 
 
-class ProductBackend(Protocol):
+class ProductBackend(Protocol):  # pragma: nocover
     async def search_opportunities(
         self,
         product_router: ProductRouter,
