@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta, timezone
-from typing import Callable, List
+from typing import Callable
 from urllib.parse import urljoin
 from uuid import uuid4
 
@@ -40,7 +40,7 @@ def product_backend(order_db: MockOrderDB) -> MockProductBackend:
 
 
 @pytest.fixture
-def root_backend(order_db) -> MockRootBackend:
+def root_backend(order_db: MockOrderDB) -> MockRootBackend:
     return MockRootBackend(order_db)
 
 
@@ -87,22 +87,8 @@ def url_for(base_url: str) -> Iterator[Callable[[str], str]]:
 
 
 @pytest.fixture
-def products(mock_product_test_spotlight) -> list[Product]:
+def products(mock_product_test_spotlight: Product) -> list[Product]:
     return [mock_product_test_spotlight]
-
-
-@pytest.fixture
-def opportunities(products: list[Product]) -> list[Opportunity]:
-    return [
-        Opportunity(
-            geometry=Point(type="Point", coordinates=[13.4, 52.5]),
-            properties={
-                "product_id": products[0].id,
-                "datetime": (datetime.now(UTC), datetime.now(UTC)),
-                "filter": {},
-            },
-        )
-    ]
 
 
 @pytest.fixture
@@ -116,7 +102,7 @@ def mock_provider() -> Provider:
 
 
 @pytest.fixture
-def mock_test_spotlight_opportunities() -> List[Opportunity]:
+def mock_test_spotlight_opportunities() -> list[Opportunity]:
     """Fixture to create mock data for Opportunities for `test-spotlight-1`."""
     now = datetime.now(timezone.utc)  # Use timezone-aware datetime
     start = now
