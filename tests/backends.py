@@ -5,7 +5,7 @@ from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stapi_fastapi.models.order import Order
-from stapi_fastapi.models.product import Product
+from stapi_fastapi.routers.product_router import ProductRouter
 
 
 class MockOrderDB(dict[int | str, Order]):
@@ -39,12 +39,18 @@ class MockProductBackend(ProductBackend):
         self._orders = orders
 
     async def search_opportunities(
-        self, product: Product, search: OpportunityRequest, request: Request
+        self,
+        product_router: ProductRouter,
+        search: OpportunityRequest,
+        request: Request,
     ) -> list[Opportunity]:
         return [o.model_copy(update=search.model_dump()) for o in self._opportunities]
 
     async def create_order(
-        self, product: Product, payload: OpportunityRequest, request: Request
+        self,
+        product_router: ProductRouter,
+        payload: OpportunityRequest,
+        request: Request,
     ) -> Order:
         """
         Create a new order.
@@ -57,7 +63,7 @@ class MockProductBackend(ProductBackend):
                 properties={
                     "filter": payload.filter,
                     "datetime": payload.datetime,
-                    "product_id": product.id,
+                    "product_id": product_router.product.id,
                 },
                 links=[],
             )

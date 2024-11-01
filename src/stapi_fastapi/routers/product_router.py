@@ -90,7 +90,7 @@ class ProductRouter(APIRouter):
         """
         try:
             opportunities = await self.product.backend.search_opportunities(
-                self.product, search, request
+                self, search, request
             )
         except ConstraintsException as exc:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
@@ -111,7 +111,7 @@ class ProductRouter(APIRouter):
         """
         try:
             order = await self.product.backend.create_order(
-                self.product,
+                self,
                 payload,
                 request,
             )

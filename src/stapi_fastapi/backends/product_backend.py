@@ -6,13 +6,13 @@ from fastapi import Request
 
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stapi_fastapi.models.order import Order
-from stapi_fastapi.models.product import Product
+from stapi_fastapi.routers.product_router import ProductRouter
 
 
 class ProductBackend(Protocol):
     async def search_opportunities(
         self,
-        product: Product,
+        product_router: ProductRouter,
         search: OpportunityRequest,
         request: Request,
     ) -> list[Opportunity]:
@@ -26,7 +26,7 @@ class ProductBackend(Protocol):
 
     async def create_order(
         self,
-        product: Product,
+        product_router: ProductRouter,
         search: OpportunityRequest,
         request: Request,
     ) -> Order:
