@@ -41,7 +41,7 @@ class Product(BaseModel):
     keywords: list[str] = Field(default_factory=list)
     license: str
     providers: list[Provider] = Field(default_factory=list)
-    links: list[Link]
+    links: list[Link] = Field(default_factory=list)
 
     # we don't want to include these in the model fields
     _constraints: type[OpportunityPropertiesBase]

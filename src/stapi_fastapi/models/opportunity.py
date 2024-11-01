@@ -2,7 +2,7 @@ from typing import Literal, TypeVar
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.types.datetime_interval import DatetimeInterval
@@ -29,8 +29,9 @@ P = TypeVar("P", bound=OpportunityPropertiesBase)
 
 class Opportunity(Feature[G, P]):
     type: Literal["Feature"] = "Feature"
-    links: list[Link] = []
+    links: list[Link] = Field(default_factory=list)
 
 
 class OpportunityCollection(FeatureCollection[Opportunity[G, P]]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
+    links: list[Link] = Field(default_factory=list)

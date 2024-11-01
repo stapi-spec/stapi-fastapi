@@ -2,7 +2,7 @@ from typing import Literal
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
-from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.types.datetime_interval import DatetimeInterval
@@ -18,8 +18,9 @@ class Order(Feature[Geometry, OrderProperties]):
     # retrieve them via the API
     id: StrictInt | StrictStr  # type: ignore
     type: Literal["Feature"] = "Feature"
-    links: list[Link]
+    links: list[Link] = Field(default_factory=list)
 
 
 class OrderCollection(FeatureCollection[Order]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
+    links: list[Link] = Field(default_factory=list)
