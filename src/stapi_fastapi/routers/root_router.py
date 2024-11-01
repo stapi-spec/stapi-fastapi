@@ -5,7 +5,7 @@ from fastapi.datastructures import URL
 
 from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
-from stapi_fastapi.models.order import Order
+from stapi_fastapi.models.order import Order, OrderCollection
 from stapi_fastapi.models.product import Product, ProductsCollection
 from stapi_fastapi.models.root import RootResponse
 from stapi_fastapi.models.shared import Link
@@ -112,7 +112,7 @@ class RootRouter(APIRouter):
             ],
         )
 
-    async def get_orders(self, request: Request) -> list[Order]:
+    async def get_orders(self, request: Request) -> OrderCollection:
         orders = await self.backend.get_orders(request)
         for order in orders:
             order.links.append(

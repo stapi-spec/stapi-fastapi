@@ -1,19 +1,25 @@
-from typing import Literal, TypeVar
+from typing import Literal
 
-from geojson_pydantic import Feature
+from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
-from pydantic import StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
 
-from stapi_fastapi.models.opportunity import OpportunityPropertiesBase
 from stapi_fastapi.models.shared import Link
-
-G = TypeVar("G", bound=Geometry)
-P = TypeVar("P", bound=OpportunityPropertiesBase)
+from stapi_fastapi.types.datetime_interval import DatetimeInterval
 
 
-class Order(Feature[G, P]):
+class OrderProperties(BaseModel):
+    datetime: DatetimeInterval
+    model_config = ConfigDict(extra="allow")
+
+
+class Order(Feature[Geometry, OrderProperties]):
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
     id: StrictInt | StrictStr  # type: ignore
     type: Literal["Feature"] = "Feature"
     links: list[Link]
+
+
+class OrderCollection(FeatureCollection[Order]):
+    type: Literal["FeatureCollection"] = "FeatureCollection"

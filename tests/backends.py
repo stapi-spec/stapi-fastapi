@@ -4,7 +4,7 @@ from fastapi import Request
 from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
-from stapi_fastapi.models.order import Order
+from stapi_fastapi.models.order import Order, OrderCollection
 from stapi_fastapi.routers.product_router import ProductRouter
 
 
@@ -16,7 +16,7 @@ class MockRootBackend:
     def __init__(self, orders: MockOrderDB) -> None:
         self._orders = orders
 
-    async def get_orders(self, request: Request) -> list[Order]:
+    async def get_orders(self, request: Request) -> OrderCollection:
         """
         Show all orders.
         """
