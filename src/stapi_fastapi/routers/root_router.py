@@ -10,6 +10,7 @@ from stapi_fastapi.models.order import Order
 from stapi_fastapi.models.product import Product, ProductsCollection
 from stapi_fastapi.models.root import RootResponse
 from stapi_fastapi.models.shared import Link
+from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.product_router import ProductRouter
 
 
@@ -56,13 +57,7 @@ class RootRouter(APIRouter):
             self.get_orders,
             methods=["GET"],
             name=f"{self.name}:list-orders",
-            responses={
-                200: {
-                    "content": {
-                        "TYPE_GEOJSON": {},
-                    },
-                }
-            },
+            response_class=GeoJSONResponse,
             tags=["Order"],
         )
 
@@ -71,13 +66,7 @@ class RootRouter(APIRouter):
             self.get_order,
             methods=["GET"],
             name=f"{self.name}:get-order",
-            responses={
-                200: {
-                    "content": {
-                        "TYPE_GEOJSON": {},
-                    },
-                }
-            },
+            response_class=GeoJSONResponse,
             tags=["Orders"],
         )
 
@@ -136,6 +125,7 @@ class RootRouter(APIRouter):
                     type=TYPE_JSON,
                 )
             )
+
         return orders
 
     async def get_order(self: Self, order_id: str, request: Request) -> Order:

@@ -1,4 +1,3 @@
-from typing import Mapping
 from uuid import uuid4
 
 from fastapi import Request
@@ -9,8 +8,13 @@ from stapi_fastapi.models.order import Order
 from stapi_fastapi.models.product import Product
 
 
-class TestRootBackend:
-    _orders: Mapping[str, Order] = {}
+class MockOrderDB(dict[int | str, Order]):
+    pass
+
+
+class MockRootBackend:
+    def __init__(self, orders: MockOrderDB) -> None:
+        self._orders = orders
 
     async def get_orders(self, request: Request) -> list[Order]:
         """
@@ -28,10 +32,11 @@ class TestRootBackend:
             raise NotFoundException()
 
 
-class TestProductBackend(ProductBackend):
-    _opportunities: list[Opportunity] = []
-    _allowed_payloads: list[OpportunityRequest] = []
-    _orders: Mapping[str, Order] = {}
+class MockProductBackend(ProductBackend):
+    def __init__(self, orders: MockOrderDB) -> None:
+        self._opportunities: list[Opportunity] = []
+        self._allowed_payloads: list[OpportunityRequest] = []
+        self._orders = orders
 
     async def search_opportunities(
         self, product: Product, search: OpportunityRequest, request: Request

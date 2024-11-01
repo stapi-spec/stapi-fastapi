@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.exceptions import ConstraintsException
@@ -13,6 +13,7 @@ from stapi_fastapi.models.opportunity import (
 from stapi_fastapi.models.order import Order
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.models.shared import Link
+from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.types.json_schema_model import JsonSchemaModel
 
 if TYPE_CHECKING:
@@ -44,13 +45,7 @@ class ProductRouter(APIRouter):
             endpoint=self.search_opportunities,
             name=f"{self.root_router.name}:{self.product.id}:search-opportunities",
             methods=["POST"],
-            responses={
-                200: {
-                    "content": {
-                        "TYPE_GEOJSON": {},
-                    },
-                }
-            },
+            response_class=GeoJSONResponse,
             summary="Search Opportunities for the product",
         )
 
@@ -67,13 +62,8 @@ class ProductRouter(APIRouter):
             endpoint=self.create_order,
             name=f"{self.root_router.name}:{self.product.id}:create-order",
             methods=["POST"],
-            responses={
-                201: {
-                    "content": {
-                        "TYPE_GEOJSON": {},
-                    },
-                }
-            },
+            response_class=GeoJSONResponse,
+            status_code=status.HTTP_201_CREATED,
             summary="Create an order for the product",
         )
 
@@ -104,6 +94,7 @@ class ProductRouter(APIRouter):
             )
         except ConstraintsException as exc:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
+
         return OpportunityCollection(features=opportunities)
 
     async def get_product_constraints(self: Self) -> JsonSchemaModel:
@@ -113,7 +104,7 @@ class ProductRouter(APIRouter):
         return self.product.constraints
 
     async def create_order(
-        self, payload: OpportunityRequest, request: Request
+        self, payload: OpportunityRequest, request: Request, response: Response
     ) -> Order:
         """
         Create a new order.
@@ -127,6 +118,7 @@ class ProductRouter(APIRouter):
         except ConstraintsException as exc:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
 
-        location = self.root_router.generate_order_href(request, order.id)
-        order.links.append(Link(href=str(location), rel="self", type=TYPE_GEOJSON))
+        location = str(self.root_router.generate_order_href(request, order.id))
+        order.links.append(Link(href=location, rel="self", type=TYPE_GEOJSON))
+        response.headers["Location"] = location
         return order

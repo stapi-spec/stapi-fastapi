@@ -1,12 +1,11 @@
-import json
 from datetime import UTC, datetime, timedelta
 from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
-from stapi_fastapi.models.opportunity import Opportunity
+from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
 
-from .backend import TestProductBackend
+from .backends import MockProductBackend
 from .datetime_interval_test import rfc3339_strftime
 
 
@@ -14,9 +13,9 @@ from .datetime_interval_test import rfc3339_strftime
 def test_search_opportunities_response(
     product_id: str,
     mock_test_spotlight_opportunities: List[Opportunity],
-    product_backend: TestProductBackend,
+    product_backend: MockProductBackend,
     stapi_client: TestClient,
-):
+) -> None:
     product_backend._opportunities = mock_test_spotlight_opportunities
 
     now = datetime.now(UTC)
@@ -48,15 +47,11 @@ def test_search_opportunities_response(
     # Use POST method to send the payload
     response = stapi_client.post(url, json=request_payload)
 
-    print(json.dumps(response.json(), indent=4))
-
     # Validate response status and structure
     assert response.status_code == 200, f"Failed for product: {product_id}"
-    assert isinstance(
-        response.json(), list
-    ), "Response should be a list of opportunities"
-    for opportunity in response.json():
-        assert "id" in opportunity, "Opportunity item should have an 'id' field"
-        assert (
-            "properties" in opportunity
-        ), "Opportunity item should have a 'properties' field"
+    _json = response.json()
+
+    try:
+        OpportunityCollection(**_json)
+    except Exception as _:
+        pytest.fail("response is not an opportunity collection")

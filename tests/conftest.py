@@ -12,31 +12,16 @@ from geojson_pydantic.types import Position2D
 from stapi_fastapi.models.opportunity import (
     Opportunity,
     OpportunityPropertiesBase,
+    OpportunityRequest,
 )
 from stapi_fastapi.models.product import Product, Provider, ProviderRole
 from stapi_fastapi.routers.root_router import RootRouter
 
-from .backend import TestProductBackend, TestRootBackend
+from .backends import MockOrderDB, MockProductBackend, MockRootBackend
 
 
 class TestSpotlightProperties(OpportunityPropertiesBase):
     off_nadir: int
-
-
-@pytest.fixture
-def mock_product_test_spotlight(mock_provider_test: Provider) -> Product:
-    """Fixture for a mock Test Spotlight product."""
-    return Product(
-        id="test-spotlight",
-        title="Test Spotlight Product",
-        description="Test product for test spotlight",
-        license="CC-BY-4.0",
-        keywords=["test", "satellite"],
-        providers=[mock_provider_test],
-        links=[],
-        constraints=TestSpotlightProperties,
-        backend=TestProductBackend(),
-    )
 
 
 @pytest.fixture(scope="session")
@@ -45,13 +30,36 @@ def base_url() -> Iterator[str]:
 
 
 @pytest.fixture
-def product_backend() -> Iterator[TestProductBackend]:
-    yield TestProductBackend()
+def order_db() -> MockOrderDB:
+    return MockOrderDB()
 
 
 @pytest.fixture
-def root_backend() -> Iterator[TestRootBackend]:
-    yield TestRootBackend()
+def product_backend(order_db: MockOrderDB) -> MockProductBackend:
+    return MockProductBackend(order_db)
+
+
+@pytest.fixture
+def root_backend(order_db) -> MockRootBackend:
+    return MockRootBackend(order_db)
+
+
+@pytest.fixture
+def mock_product_test_spotlight(
+    product_backend: MockProductBackend, mock_provider: Provider
+) -> Product:
+    """Fixture for a mock Test Spotlight product."""
+    return Product(
+        id="test-spotlight",
+        title="Test Spotlight Product",
+        description="Test product for test spotlight",
+        license="CC-BY-4.0",
+        keywords=["test", "satellite"],
+        providers=[mock_provider],
+        links=[],
+        constraints=TestSpotlightProperties,
+        backend=product_backend,
+    )
 
 
 @pytest.fixture
@@ -63,7 +71,8 @@ def stapi_client(
     app = FastAPI()
     app.include_router(root_router, prefix="")
 
-    yield TestClient(app, base_url=f"{base_url}")
+    with TestClient(app, base_url=f"{base_url}") as client:
+        yield client
 
 
 @pytest.fixture(scope="session")
@@ -83,8 +92,8 @@ def products(mock_product_test_spotlight) -> list[Product]:
 
 
 @pytest.fixture
-def opportunities(products: list[Product]) -> Iterator[list[Opportunity]]:
-    yield [
+def opportunities(products: list[Product]) -> list[Opportunity]:
+    return [
         Opportunity(
             geometry=Point(type="Point", coordinates=[13.4, 52.5]),
             properties={
@@ -97,7 +106,7 @@ def opportunities(products: list[Product]) -> Iterator[list[Opportunity]]:
 
 
 @pytest.fixture
-def mock_provider_test() -> Provider:
+def mock_provider() -> Provider:
     return Provider(
         name="Test Provider",
         description="A provider for Test data",
@@ -126,5 +135,18 @@ def mock_test_spotlight_opportunities() -> List[Opportunity]:
                 datetime=(start, end),
                 off_nadir=20,
             ),
+        ),
+    ]
+
+
+@pytest.fixture
+def allowed_payloads() -> list[OpportunityRequest]:
+    return [
+        OpportunityRequest(
+            geometry=Point(
+                type="Point", coordinates=Position2D(longitude=13.4, latitude=52.5)
+            ),
+            datetime=(datetime.now(UTC), datetime.now(UTC)),
+            filter={},
         ),
     ]
