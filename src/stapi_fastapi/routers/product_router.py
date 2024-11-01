@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
+from geojson_pydantic.geometries import Geometry
 
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.exceptions import ConstraintsException
@@ -46,6 +47,7 @@ class ProductRouter(APIRouter):
             name=f"{self.root_router.name}:{self.product.id}:search-opportunities",
             methods=["POST"],
             response_class=GeoJSONResponse,
+            response_model=OpportunityCollection[Geometry, self.product.constraints],
             summary="Search Opportunities for the product",
         )
 
