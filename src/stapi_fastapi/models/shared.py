@@ -25,7 +25,3 @@ class Link(BaseModel):
         # forcing the call to model_dump_json to exclude unset fields by default
         kwargs["exclude_unset"] = kwargs.get("exclude_unset", True)
         return super().model_dump_json(*args, **kwargs)
-
-
-class HTTPException(BaseModel):
-    detail: str
