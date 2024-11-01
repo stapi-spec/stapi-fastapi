@@ -1,11 +1,8 @@
-from warnings import warn
-
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from .utils import find_link
-from .warnings import StapiSpecWarning
 
 
 def test_products_response(stapi_client: TestClient):
@@ -32,11 +29,9 @@ def test_product_response_self_link(
 
     data = res.json()
     link = find_link(data["links"], "self")
-    if link is None:
-        warn(StapiSpecWarning("GET /products Link[rel=self] should exist"))
-    else:
-        assert link["type"] == "application/json"
-        assert link["href"] == url_for(f"/products/{product_id}")
+    assert link, "GET /products Link[rel=self] should exist"
+    assert link["type"] == "application/json"
+    assert link["href"] == url_for(f"/products/{product_id}")
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])

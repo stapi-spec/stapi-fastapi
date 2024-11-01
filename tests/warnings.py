@@ -1,2 +1,0 @@
-class StapiSpecWarning(Warning):
-    pass
