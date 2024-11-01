@@ -36,7 +36,7 @@ class RootRouter(APIRouter):
         self.product_routers: dict[str, ProductRouter] = {}
 
         self.add_api_route(
-            "$",
+            "/",
             self.get_root,
             methods=["GET"],
             name=f"{self.name}:root",
