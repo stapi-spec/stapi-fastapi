@@ -1,8 +1,8 @@
-from typing import Literal, Optional
+from typing import Literal, TypeVar
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.types.datetime_interval import DatetimeInterval
@@ -10,21 +10,28 @@ from stapi_fastapi.types.filter import CQL2Filter
 
 
 # Copied and modified from https://github.com/stac-utils/stac-pydantic/blob/main/stac_pydantic/item.py#L11
-class OpportunityProperties(BaseModel):
+class OpportunityPropertiesBase(BaseModel):
     datetime: DatetimeInterval
-    product_id: str
     model_config = ConfigDict(extra="allow")
 
 
-class OpportunityRequest(OpportunityProperties):
+class OpportunityRequest(BaseModel):
+    datetime: DatetimeInterval
     geometry: Geometry
-    filter: Optional[CQL2Filter] = None
+    # TODO: validate the CQL2 filter?
+    filter: CQL2Filter | None = None
+    model_config = ConfigDict(strict=True)
 
 
-class Opportunity(Feature[Geometry, OpportunityProperties]):
+G = TypeVar("G", bound=Geometry)
+P = TypeVar("P", bound=OpportunityPropertiesBase)
+
+
+class Opportunity(Feature[G, P]):
     type: Literal["Feature"] = "Feature"
-    links: list[Link] = []
+    links: list[Link] = Field(default_factory=list)
 
 
-class OpportunityCollection(FeatureCollection[Opportunity]):
+class OpportunityCollection(FeatureCollection[Opportunity[G, P]]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
+    links: list[Link] = Field(default_factory=list)

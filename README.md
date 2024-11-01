@@ -1,7 +1,7 @@
 # STAPI FastAPI - Sensor Tasking API with FastAPI
 
-WARNING: The whole [STAPI spec](https://github.com/stapi-spec/stapi-spec) is
-very much work in progress, so things are guaranteed to be not correct.
+WARNING: The whole [STAPI spec] is very much work in progress, so things are
+guaranteed to be not correct.
 
 ## Usage
 
@@ -11,7 +11,7 @@ STAPI FastAPI provides an `fastapi.APIRouter` which must be included in
 ## Development
 
 It's 2024 and we still need to pick our poison for a 2024 dependency management
-solution. This project picks [poetry][poetry] for now.
+solution. This project picks [poetry] for now.
 
 ### Dev Setup
 
@@ -35,15 +35,22 @@ command `pytest`.
 ### Dev Server
 
 This project cannot be run on its own because it does not have any backend
-implementations. If a development server is desired, run one of the
-implementations such as
-[stapi-fastapi-tle](https://github.com/stapi-spec/stapi-fastapi-tle). To test
-something like stapi-fastapi-tle with your development version of
-stapi-fastapi, install them both into the same virtual environment.
+implementations. However, a minimal test implementation is provided in
+[`./bin/server.py`](./bin/server.py). It can be run with `uvicorn` as a way to
+interact with the API and to view the OpenAPI documentation. Run it like so
+from the project root:
+
+```commandline
+uvicorn server:app --app-dir ./bin --reload
+```
+
+With the `uvicorn` defaults the app should be accessible at
+`http://localhost:8000`.
 
 ### Implementing a backend
 
 - The test suite assumes the backend can be instantiated without any parameters
   required by the constructor.
 
+[STAPI spec]: https://github.com/stapi-spec/stapi-spec
 [poetry]: https://python-poetry.org/

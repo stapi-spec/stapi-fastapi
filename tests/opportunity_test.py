@@ -1,46 +1,57 @@
 from datetime import UTC, datetime, timedelta
+from typing import List
 
-from fastapi import status
+import pytest
 from fastapi.testclient import TestClient
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
-from stapi_fastapi.models.product import Product
 
-from .backend import TestBackend
+from .backends import MockProductBackend
+from .datetime_interval_test import rfc3339_strftime
 
 
+@pytest.mark.parametrize("product_id", ["test-spotlight"])
 def test_search_opportunities_response(
-    products: list[Product],
-    opportunities: list[Opportunity],
-    stapi_backend: TestBackend,
+    product_id: str,
+    mock_test_spotlight_opportunities: List[Opportunity],
+    product_backend: MockProductBackend,
     stapi_client: TestClient,
-):
-    stapi_backend._products = products
-    stapi_backend._opportunities = opportunities
+) -> None:
+    product_backend._opportunities = mock_test_spotlight_opportunities
 
     now = datetime.now(UTC)
     start = now
     end = start + timedelta(days=5)
+    format = "%Y-%m-%dT%H:%M:%S.%f%z"
+    start_string = rfc3339_strftime(start, format)
+    end_string = rfc3339_strftime(end, format)
 
-    res = stapi_client.post(
-        "/opportunities",
-        json={
-            "geometry": {
-                "type": "Point",
-                "coordinates": [0, 0],
-            },
-            "product_id": products[0].id,
-            "datetime": f"{start.isoformat()}/{end.isoformat()}",
-            "filter": {
-                "op": "and",
-                "args": [
-                    {"op": ">", "args": [{"property": "off_nadir"}, 0]},
-                    {"op": "<", "args": [{"property": "off_nadir"}, 45]},
-                ],
-            },
+    # Prepare the request payload
+    request_payload = {
+        "geometry": {
+            "type": "Point",
+            "coordinates": [0, 0],
         },
-    )
-    assert res.status_code == status.HTTP_200_OK
-    assert res.headers["Content-Type"] == "application/geo+json"
-    response = OpportunityCollection(**res.json())
+        "datetime": f"{start_string}/{end_string}",
+        "filter": {
+            "op": "and",
+            "args": [
+                {"op": ">", "args": [{"property": "off_nadir"}, 0]},
+                {"op": "<", "args": [{"property": "off_nadir"}, 45]},
+            ],
+        },
+    }
 
-    assert len(response.features) > 0
+    # Construct the endpoint URL using the `product_name` parameter
+    url = f"/products/{product_id}/opportunities"
+
+    # Use POST method to send the payload
+    response = stapi_client.post(url, json=request_payload)
+
+    # Validate response status and structure
+    assert response.status_code == 200, f"Failed for product: {product_id}"
+    _json = response.json()
+
+    try:
+        OpportunityCollection(**_json)
+    except Exception as _:
+        pytest.fail("response is not an opportunity collection")

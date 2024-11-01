@@ -10,10 +10,10 @@ from pydantic import (
 )
 
 
-def validate_before(value: Any):
+def validate_before(value: Any) -> tuple[datetime, datetime]:
     if isinstance(value, str):
         start, end = value.split("/", 1)
-        return (start, end)
+        return (datetime.fromisoformat(start), datetime.fromisoformat(end))
     return value
 
 
