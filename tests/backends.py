@@ -64,7 +64,7 @@ class MockProductBackend(ProductBackend):
                     "filter": payload.filter,
                     "datetime": payload.datetime,
                     "product_id": product_router.product.id,
-                    # **payload.order_parameters,
+                    **dict(payload.order_parameters),
                 },
                 links=[],
             )

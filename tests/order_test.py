@@ -4,7 +4,7 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 from httpx import Response
-from stapi_fastapi.models.opportunity import OpportunityRequest
+from stapi_fastapi.models.order import OrderRequest
 
 from .backends import MockProductBackend
 from .utils import find_link
@@ -19,7 +19,7 @@ def new_order_response(
     product_id: str,
     product_backend: MockProductBackend,
     stapi_client: TestClient,
-    allowed_payloads: list[OpportunityRequest],
+    allowed_payloads: list[OrderRequest],
 ) -> Response:
     product_backend._allowed_payloads = allowed_payloads
 

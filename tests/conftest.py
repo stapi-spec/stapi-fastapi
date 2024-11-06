@@ -12,8 +12,8 @@ from geojson_pydantic.types import Position2D
 from stapi_fastapi.models.opportunity import (
     Opportunity,
     OpportunityPropertiesBase,
-    OpportunityRequest,
 )
+from stapi_fastapi.models.order import OrderParametersBase, OrderRequest
 from stapi_fastapi.models.product import Product, Provider, ProviderRole
 from stapi_fastapi.routers.root_router import RootRouter
 
@@ -22,6 +22,10 @@ from .backends import MockOrderDB, MockProductBackend, MockRootBackend
 
 class TestSpotlightProperties(OpportunityPropertiesBase):
     off_nadir: int
+
+
+class TestSpotlightOrderProperties(OrderParametersBase):
+    s3_path: str | None = None
 
 
 @pytest.fixture(scope="session")
@@ -58,6 +62,7 @@ def mock_product_test_spotlight(
         providers=[mock_provider],
         links=[],
         constraints=TestSpotlightProperties,
+        order_parameters=TestSpotlightOrderProperties,
         backend=product_backend,
     )
 
@@ -126,13 +131,14 @@ def mock_test_spotlight_opportunities() -> list[Opportunity]:
 
 
 @pytest.fixture
-def allowed_payloads() -> list[OpportunityRequest]:
+def allowed_payloads() -> list[OrderRequest]:
     return [
-        OpportunityRequest(
+        OrderRequest(
             geometry=Point(
                 type="Point", coordinates=Position2D(longitude=13.4, latitude=52.5)
             ),
             datetime=(datetime.now(UTC), datetime.now(UTC)),
             filter={},
+            order_parameters={"s3_path": "BUCKET"},
         ),
     ]

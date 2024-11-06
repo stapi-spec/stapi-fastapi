@@ -8,12 +8,13 @@ from stapi_fastapi.models.opportunity import (
     OpportunityPropertiesBase,
     OpportunityRequest,
 )
-from stapi_fastapi.models.order import Order
+from stapi_fastapi.models.order import Order, OrderParametersBase, OrderRequest
 from stapi_fastapi.models.product import (
     Product,
     Provider,
     ProviderRole,
 )
+from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_fastapi.routers.root_router import RootRouter
 
 
@@ -44,21 +45,25 @@ class MockRootBackend:
 class MockProductBackend(ProductBackend):
     def __init__(self, orders: MockOrderDB) -> None:
         self._opportunities: list[Opportunity] = []
-        self._allowed_payloads: list[OpportunityRequest] = []
+        self._allowed_payloads: list[OrderRequest] = []
         self._orders: MockOrderDB = orders
 
     async def search_opportunities(
-        self, product: Product, search: OpportunityRequest, request: Request
+        self,
+        product_router: ProductRouter,
+        search: OpportunityRequest,
+        request: Request,
     ) -> list[Opportunity]:
         return [o.model_copy(update=search.model_dump()) for o in self._opportunities]
 
     async def create_order(
-        self, product: Product, payload: OpportunityRequest, request: Request
+        self, product_router: ProductRouter, payload: OrderRequest, request: Request
     ) -> Order:
         """
         Create a new order.
         """
         allowed: bool = any(allowed == payload for allowed in self._allowed_payloads)
+        allowed = True
         if allowed:
             order = Order(
                 id=str(uuid4()),
@@ -66,7 +71,8 @@ class MockProductBackend(ProductBackend):
                 properties={
                     "filter": payload.filter,
                     "datetime": payload.datetime,
-                    "product_id": product.id,
+                    "product_id": product_router.product.id,
+                    **dict(payload.order_parameters),
                 },
                 links=[],
             )
@@ -77,6 +83,10 @@ class MockProductBackend(ProductBackend):
 
 class TestSpotlightProperties(OpportunityPropertiesBase):
     off_nadir: int
+
+
+class TestOrderParameters(OrderParametersBase):
+    s3_path: str
 
 
 order_db = MockOrderDB()
@@ -99,6 +109,7 @@ product = Product(
     providers=[provider],
     links=[],
     constraints=TestSpotlightProperties,
+    order_parameters=TestOrderParameters,
     backend=product_backend,
 )
 
