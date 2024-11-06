@@ -6,6 +6,19 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.types.datetime_interval import DatetimeInterval
+from stapi_fastapi.types.filter import CQL2Filter
+
+
+class OrderParametersBase(BaseModel): ...
+
+
+class OrderRequest(BaseModel):
+    datetime: DatetimeInterval
+    geometry: Geometry
+    # TODO: validate the CQL2 filter?
+    filter: CQL2Filter | None = None
+    order_parameters: OrderParametersBase | None = None
+    model_config = ConfigDict(strict=True)
 
 
 class OrderProperties(BaseModel):

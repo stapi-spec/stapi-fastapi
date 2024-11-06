@@ -11,7 +11,7 @@ from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
     OpportunityRequest,
 )
-from stapi_fastapi.models.order import Order
+from stapi_fastapi.models.order import Order, OrderRequest
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.responses import GeoJSONResponse
@@ -60,6 +60,14 @@ class ProductRouter(APIRouter):
         )
 
         self.add_api_route(
+            path="/order-parameters",
+            endpoint=self.get_product_order_parameters,
+            name=f"{self.root_router.name}:{self.product.id}:get-order-parameters",
+            methods=["GET"],
+            summary="Get order parameters for the product",
+        )
+
+        self.add_api_route(
             path="/order",
             endpoint=self.create_order,
             name=f"{self.root_router.name}:{self.product.id}:create-order",
@@ -105,8 +113,14 @@ class ProductRouter(APIRouter):
         """
         return self.product.constraints
 
+    async def get_product_order_parameters(self: Self) -> JsonSchemaModel:
+        """
+        Return supported order parameters of a specific product
+        """
+        return self.product.order_parameters
+
     async def create_order(
-        self, payload: OpportunityRequest, request: Request, response: Response
+        self, payload: OrderRequest, request: Request, response: Response
     ) -> Order:
         """
         Create a new order.
