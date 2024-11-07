@@ -46,7 +46,7 @@ class Product(BaseModel):
 
     # we don't want to include these in the model fields
     _constraints: type[OpportunityPropertiesBase]
-    _order_parameters: type[OrderParametersBase]
+    _order_parameters: OrderParametersBase
     _backend: ProductBackend
 
     def __init__(

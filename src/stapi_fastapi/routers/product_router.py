@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self, Any
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from geojson_pydantic.geometries import Geometry
@@ -67,6 +67,7 @@ class ProductRouter(APIRouter):
             summary="Get order parameters for the product",
         )
 
+
         self.add_api_route(
             path="/order",
             endpoint=self.create_order,
@@ -107,13 +108,13 @@ class ProductRouter(APIRouter):
 
         return OpportunityCollection(features=opportunities)
 
-    async def get_product_constraints(self: Self) -> JsonSchemaModel:
+    def get_product_constraints(self: Self) -> JsonSchemaModel:
         """
         Return supported constraints of a specific product
         """
         return self.product.constraints
 
-    async def get_product_order_parameters(self: Self) -> JsonSchemaModel:
+    def get_product_order_parameters(self: Self) -> JsonSchemaModel:
         """
         Return supported order parameters of a specific product
         """

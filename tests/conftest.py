@@ -139,6 +139,6 @@ def allowed_payloads() -> list[OrderRequest]:
             ),
             datetime=(datetime.now(UTC), datetime.now(UTC)),
             filter={},
-            order_parameters={"s3_path": "BUCKET"},
+            order_parameters=TestSpotlightOrderProperties(s3_path="BUCKET"),
         ),
     ]
