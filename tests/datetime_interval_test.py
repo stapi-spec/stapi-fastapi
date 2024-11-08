@@ -16,7 +16,7 @@ class Model(BaseModel):
 
 
 def rfc3339_strftime(dt: datetime, format: str) -> str:
-    tds = timedelta_seconds(dt.tzinfo.utcoffset(dt))
+    tds = timedelta_seconds(dt.tzinfo.utcoffset(dt))  # type: ignore
     long = timezone(tds)
     short = "Z"
 
