@@ -39,6 +39,7 @@ class ProductRouter(APIRouter):
             name=f"{self.root_router.name}:{self.product.id}:get-product",
             methods=["GET"],
             summary="Retrieve this product",
+            tags=["Products"],
         )
 
         self.add_api_route(
@@ -49,6 +50,7 @@ class ProductRouter(APIRouter):
             response_class=GeoJSONResponse,
             response_model=OpportunityCollection[Geometry, self.product.constraints],
             summary="Search Opportunities for the product",
+            tags=["Products"],
         )
 
         self.add_api_route(
@@ -57,6 +59,7 @@ class ProductRouter(APIRouter):
             name=f"{self.root_router.name}:{self.product.id}:get-constraints",
             methods=["GET"],
             summary="Get constraints for the product",
+            tags=["Products"],
         )
 
         self.add_api_route(
@@ -67,6 +70,7 @@ class ProductRouter(APIRouter):
             response_class=GeoJSONResponse,
             status_code=status.HTTP_201_CREATED,
             summary="Create an order for the product",
+            tags=["Products"],
         )
 
     def get_product(self, request: Request) -> Product:
