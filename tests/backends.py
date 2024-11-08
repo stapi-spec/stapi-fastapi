@@ -3,6 +3,7 @@ from uuid import uuid4
 from fastapi import Request
 
 from stapi_fastapi.backends.product_backend import ProductBackend
+from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stapi_fastapi.models.order import Order, OrderCollection
@@ -13,7 +14,7 @@ class MockOrderDB(dict[int | str, Order]):
     pass
 
 
-class MockRootBackend:
+class MockRootBackend(RootBackend):
     def __init__(self, orders: MockOrderDB) -> None:
         self._orders = orders
 
@@ -21,7 +22,7 @@ class MockRootBackend:
         """
         Show all orders.
         """
-        return list(self._orders.values())
+        return OrderCollection(features=list(self._orders.values()))
 
     async def get_order(self, order_id: str, request: Request) -> Order:
         """
