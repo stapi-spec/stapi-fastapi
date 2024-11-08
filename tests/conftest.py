@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from geojson_pydantic import Point
 from geojson_pydantic.types import Position2D
+
 from stapi_fastapi.models.opportunity import (
     Opportunity,
     OpportunityPropertiesBase,
