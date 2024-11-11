@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from fastapi import Request
+
 from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest

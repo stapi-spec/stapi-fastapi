@@ -4,6 +4,7 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 from httpx import Response
+
 from stapi_fastapi.models.opportunity import OpportunityRequest
 
 from .backends import MockProductBackend
