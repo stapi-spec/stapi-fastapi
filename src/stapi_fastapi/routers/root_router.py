@@ -48,7 +48,7 @@ class RootRouter(APIRouter):
             self.get_products,
             methods=["GET"],
             name=f"{self.name}:list-products",
-            tags=["Product"],
+            tags=["Products"],
         )
 
         self.add_api_route(
