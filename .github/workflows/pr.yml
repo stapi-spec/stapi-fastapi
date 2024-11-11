@@ -8,11 +8,14 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - run: pipx install poetry==1.7.1 pre-commit
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: actions/checkout@v4
-      - run: pipx install pre-commit
+          cache: poetry
+      - name: Install dependencies
+        run: poetry install --with=dev
       - name: Run commit checks
         uses: ./.github/actions/pre-commit
 
