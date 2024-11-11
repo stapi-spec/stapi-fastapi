@@ -21,7 +21,6 @@ repos:
     rev: v1.13.0
     hooks:
       - id: mypy
-        args: [--python-version=3.12]
         files: ".*\\.py$"
         additional_dependencies:
           - types-pyRFC3339~=1.1.1
