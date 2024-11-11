@@ -7,9 +7,10 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    with:
-      python-version: "3.12"
     steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - uses: actions/checkout@v4
       - run: pipx install pre-commit
       - name: Run commit checks
