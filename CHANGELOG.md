@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Conformance endpoint `/conformance` and root body `conformsTo` attribute.
+- Endpoint /product/{productId}/order-parameters.
+- Links in Product entity to order-parameters and constraints endpoints for that product.
 
 ### Changed
 
