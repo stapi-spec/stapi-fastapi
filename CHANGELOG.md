@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Conformance endpoint `/conformance` and root body `conformsTo` attribute.
+- Field `product_id` to Opportunity and Order Properties
 
 ### Changed
 
