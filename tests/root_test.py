@@ -3,10 +3,8 @@ from fastapi.testclient import TestClient
 
 from stapi_fastapi.models.conformance import CORE
 
-from .utils import assert_link
 
-
-def test_root(stapi_client: TestClient, url_for) -> None:
+def test_root(stapi_client: TestClient, assert_link) -> None:
     res = stapi_client.get("/")
 
     assert res.status_code == status.HTTP_200_OK
@@ -16,9 +14,9 @@ def test_root(stapi_client: TestClient, url_for) -> None:
 
     assert body["conformsTo"] == [CORE]
 
-    assert_link("GET /", body, "self", "/", url_for)
-    assert_link("GET /", body, "service-description", "/openapi.json", url_for)
-    assert_link("GET /", body, "service-docs", "/docs", url_for, media_type="text/html")
-    assert_link("GET /", body, "conformance", "/conformance", url_for)
-    assert_link("GET /", body, "products", "/products", url_for)
-    assert_link("GET /", body, "orders", "/orders", url_for)
+    assert_link("GET /", body, "self", "/")
+    assert_link("GET /", body, "service-description", "/openapi.json")
+    assert_link("GET /", body, "service-docs", "/docs", media_type="text/html")
+    assert_link("GET /", body, "conformance", "/conformance")
+    assert_link("GET /", body, "products", "/products")
+    assert_link("GET /", body, "orders", "/orders")
