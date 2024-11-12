@@ -1,28 +1,22 @@
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from .utils import find_link
+from stapi_fastapi.models.conformance import CORE
 
 
-def test_root(stapi_client: TestClient, url_for) -> None:
+def test_root(stapi_client: TestClient, assert_link) -> None:
     res = stapi_client.get("/")
 
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
 
-    data = res.json()
+    body = res.json()
 
-    link = find_link(data["links"], "self")
-    assert link, "GET / Link[rel=self] should exist"
-    assert link["type"] == "application/json"
-    assert link["href"] == url_for("/")
+    assert body["conformsTo"] == [CORE]
 
-    link = find_link(data["links"], "service-description")
-    assert link, "GET / Link[rel=service-description] should exist"
-    assert link["type"] == "application/json"
-    assert str(link["href"]) == url_for("/openapi.json")
-
-    link = find_link(data["links"], "service-docs")
-    assert link, "GET / Link[rel=service-docs] should exist"
-    assert link["type"] == "text/html"
-    assert str(link["href"]) == url_for("/docs")
+    assert_link("GET /", body, "self", "/")
+    assert_link("GET /", body, "service-description", "/openapi.json")
+    assert_link("GET /", body, "service-docs", "/docs", media_type="text/html")
+    assert_link("GET /", body, "conformance", "/conformance")
+    assert_link("GET /", body, "products", "/products")
+    assert_link("GET /", body, "orders", "/orders")

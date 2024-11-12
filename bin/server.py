@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
+from stapi_fastapi.models.conformance import CORE
 from stapi_fastapi.models.opportunity import (
     Opportunity,
     OpportunityPropertiesBase,
@@ -104,7 +105,7 @@ product = Product(
     backend=product_backend,
 )
 
-root_router = RootRouter(root_backend)
+root_router = RootRouter(root_backend, conformances=[CORE])
 root_router.add_product(product)
 app: FastAPI = FastAPI()
 app.include_router(root_router, prefix="")

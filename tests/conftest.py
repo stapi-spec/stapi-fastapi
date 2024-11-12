@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta, timezone
-from typing import Callable
+from typing import Any, Callable
 from urllib.parse import urljoin
 from uuid import uuid4
 
@@ -19,6 +19,7 @@ from stapi_fastapi.models.product import Product, Provider, ProviderRole
 from stapi_fastapi.routers.root_router import RootRouter
 
 from .backends import MockOrderDB, MockProductBackend, MockRootBackend
+from .utils import find_link
 
 
 class TestSpotlightProperties(OpportunityPropertiesBase):
@@ -85,6 +86,23 @@ def url_for(base_url: str) -> Iterator[Callable[[str], str]]:
         return urljoin(with_trailing_slash(base_url), f"./{value.lstrip('/')}")
 
     yield url_for
+
+
+@pytest.fixture
+def assert_link(url_for) -> Callable:
+    def _assert_link(
+        req: str,
+        body: dict[str, Any],
+        rel: str,
+        path: str,
+        media_type: str = "application/json",
+    ):
+        link = find_link(body["links"], rel)
+        assert link, f"{req} Link[rel={rel}] should exist"
+        assert link["type"] == media_type
+        assert link["href"] == url_for(path)
+
+    return _assert_link
 
 
 @pytest.fixture
