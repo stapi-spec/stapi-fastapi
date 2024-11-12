@@ -137,6 +137,7 @@ def mock_test_spotlight_opportunities() -> list[Opportunity]:
                 coordinates=Position2D(longitude=0.0, latitude=0.0),
             ),
             properties=TestSpotlightProperties(
+                product_id="xyz123",
                 datetime=(start, end),
                 off_nadir=20,
             ),
