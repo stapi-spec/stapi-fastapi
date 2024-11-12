@@ -3,7 +3,6 @@ from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
-
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
 
 from .backends import MockProductBackend
@@ -16,6 +15,7 @@ def test_search_opportunities_response(
     mock_test_spotlight_opportunities: List[Opportunity],
     product_backend: MockProductBackend,
     stapi_client: TestClient,
+    assert_link
 ) -> None:
     product_backend._opportunities = mock_test_spotlight_opportunities
 
@@ -50,9 +50,11 @@ def test_search_opportunities_response(
 
     # Validate response status and structure
     assert response.status_code == 200, f"Failed for product: {product_id}"
-    _json = response.json()
+    body = response.json()
 
     try:
-        OpportunityCollection(**_json)
+        oc = OpportunityCollection(**body)
     except Exception as _:
         pytest.fail("response is not an opportunity collection")
+
+    assert_link(f"POST {url}", body, "create-order", f"/products/{product_id}/order")

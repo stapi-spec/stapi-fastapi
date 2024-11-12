@@ -33,6 +33,12 @@ def test_product_response_self_link(
     assert_link(
         url, body, "order-parameters", f"/products/{product_id}/order-parameters"
     )
+    assert_link(
+        url, body, "opportunities", f"/products/{product_id}/opportunities"
+    )
+    assert_link(
+        url, body, "create-order", f"/products/{product_id}/order"
+    )
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
