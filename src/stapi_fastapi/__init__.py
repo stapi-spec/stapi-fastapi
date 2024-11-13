@@ -1,7 +1,7 @@
 from .backends import ProductBackend, RootBackend
 from .models import (
     Link,
-    OpportunityPropertiesBase,
+    OpportunityProperties,
     Product,
     Provider,
     ProviderRole,
@@ -10,7 +10,7 @@ from .routers import ProductRouter, RootRouter
 
 __all__ = [
     "Link",
-    "OpportunityPropertiesBase",
+    "OpportunityProperties",
     "Product",
     "ProductBackend",
     "ProductRouter",

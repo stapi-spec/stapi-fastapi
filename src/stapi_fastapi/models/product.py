@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Literal, Optional, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
-from stapi_fastapi.models.opportunity import OpportunityPropertiesBase
-from stapi_fastapi.models.order import OrderParametersBase
+from stapi_fastapi.models.opportunity import OpportunityProperties
+from stapi_fastapi.models.order import OrderParameters
 from stapi_fastapi.models.shared import Link
 
 if TYPE_CHECKING:
@@ -45,16 +45,16 @@ class Product(BaseModel):
     links: list[Link] = Field(default_factory=list)
 
     # we don't want to include these in the model fields
-    _constraints: type[OpportunityPropertiesBase]
-    _order_parameters: OrderParametersBase
+    _constraints: type[OpportunityProperties]
+    _order_parameters: type[OrderParameters]
     _backend: ProductBackend
 
     def __init__(
         self,
         *args,
         backend: ProductBackend,
-        constraints: type[OpportunityPropertiesBase],
-        order_parameters: type[OrderParametersBase],
+        constraints: type[OpportunityProperties],
+        order_parameters: type[OrderParameters],
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
@@ -67,11 +67,11 @@ class Product(BaseModel):
         return self._backend
 
     @property
-    def constraints(self: Self) -> type[OpportunityPropertiesBase]:
+    def constraints(self: Self) -> type[OpportunityProperties]:
         return self._constraints
 
     @property
-    def order_parameters(self: Self) -> type[OrderParametersBase]:
+    def order_parameters(self: Self) -> type[OrderParameters]:
         return self._order_parameters
 
     def with_links(self: Self, links: list[Link] | None = None) -> Self:

@@ -11,20 +11,20 @@ from geojson_pydantic import Point
 from geojson_pydantic.types import Position2D
 from stapi_fastapi.models.opportunity import (
     Opportunity,
-    OpportunityPropertiesBase,
+    OpportunityProperties,
 )
-from stapi_fastapi.models.order import OrderParametersBase, OrderRequest
+from stapi_fastapi.models.order import OrderParameters, OrderRequest
 from stapi_fastapi.models.product import Product, Provider, ProviderRole
 from stapi_fastapi.routers.root_router import RootRouter
 
 from .backends import MockOrderDB, MockProductBackend, MockRootBackend
 
 
-class TestSpotlightProperties(OpportunityPropertiesBase):
+class TestSpotlightProperties(OpportunityProperties):
     off_nadir: int
 
 
-class TestSpotlightOrderProperties(OrderParametersBase):
+class TestSpotlightOrderProperties(OrderParameters):
     s3_path: str | None = None
 
 

@@ -5,10 +5,10 @@ from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
 from stapi_fastapi.models.opportunity import (
     Opportunity,
-    OpportunityPropertiesBase,
+    OpportunityProperties,
     OpportunityRequest,
 )
-from stapi_fastapi.models.order import Order, OrderParametersBase, OrderRequest
+from stapi_fastapi.models.order import Order, OrderParameters, OrderRequest
 from stapi_fastapi.models.product import (
     Product,
     Provider,
@@ -81,11 +81,11 @@ class MockProductBackend(ProductBackend):
         raise ConstraintsException("not allowed")
 
 
-class TestSpotlightProperties(OpportunityPropertiesBase):
+class TestSpotlightProperties(OpportunityProperties):
     off_nadir: int
 
 
-class TestOrderParameters(OrderParametersBase):
+class TestOrderParameters(OrderParameters):
     s3_path: str
 
 

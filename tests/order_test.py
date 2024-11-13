@@ -28,7 +28,7 @@ def new_order_response(
         json=allowed_payloads[0].model_dump(),
     )
 
-    assert res.status_code == status.HTTP_201_CREATED
+    assert res.status_code == status.HTTP_201_CREATED, res.text
     assert res.headers["Content-Type"] == "application/geo+json"
     return res
 

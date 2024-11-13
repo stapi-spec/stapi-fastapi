@@ -4,15 +4,15 @@ from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 
-from stapi_fastapi.models.opportunity import OpportunityRequest, OpportunityPropertiesBase
+from stapi_fastapi.models.opportunity import OpportunityRequest, OpportunityProperties
 from stapi_fastapi.models.shared import Link
 
 
-class OrderParametersBase(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+class OrderParameters(BaseModel):
+    model_config = ConfigDict(extra="allow")
 
-P = TypeVar("P", bound=OrderParametersBase)
-O = TypeVar("O", bound=OpportunityPropertiesBase)
+P = TypeVar("P", bound=OrderParameters)
+O = TypeVar("O", bound=OpportunityProperties)
 
 class OrderRequest(OpportunityRequest, Generic[P]):
     order_parameters: P

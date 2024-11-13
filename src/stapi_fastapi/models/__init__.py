@@ -1,10 +1,10 @@
-from .opportunity import OpportunityPropertiesBase
+from .opportunity import OpportunityProperties
 from .product import Product, Provider, ProviderRole
 from .shared import Link
 
 __all__ = [
     "Link",
-    "OpportunityPropertiesBase",
+    "OpportunityProperties",
     "Product",
     "Provider",
     "ProviderRole",

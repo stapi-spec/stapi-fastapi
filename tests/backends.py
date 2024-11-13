@@ -55,8 +55,7 @@ class MockProductBackend(ProductBackend):
         """
         Create a new order.
         """
-        allowed = any(allowed == payload for allowed in self._allowed_payloads)
-        if allowed:
+        if any(allowed == payload for allowed in self._allowed_payloads):
             order = Order(
                 id=str(uuid4()),
                 geometry=payload.geometry,
@@ -70,4 +69,5 @@ class MockProductBackend(ProductBackend):
             )
             self._orders[order.id] = order
             return order
-        raise ConstraintsException("not allowed")
+        else:
+            raise ConstraintsException(f"not allowed: payload {payload.model_dump_json()} not in {[p.model_dump_json() for p in self._allowed_payloads]}")
