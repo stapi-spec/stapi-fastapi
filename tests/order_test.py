@@ -19,13 +19,13 @@ def new_order_response(
     product_id: str,
     product_backend: MockProductBackend,
     stapi_client: TestClient,
-    allowed_payloads: list[OrderRequest],
+    create_order_allowed_payloads: list[OrderRequest],
 ) -> Response:
-    product_backend._allowed_payloads = allowed_payloads
+    product_backend._allowed_payloads = create_order_allowed_payloads
 
     res = stapi_client.post(
         f"products/{product_id}/order",
-        json=allowed_payloads[0].model_dump(),
+        json=create_order_allowed_payloads[0].model_dump(),
     )
 
     assert res.status_code == status.HTTP_201_CREATED, res.text
@@ -56,14 +56,17 @@ def get_order_response(
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
-def test_get_order_properties(get_order_response: Response, allowed_payloads) -> None:
+def test_get_order_properties(
+    get_order_response: Response, create_order_allowed_payloads
+) -> None:
     order = get_order_response.json()
 
     assert order["geometry"] == {
         "type": "Point",
-        "coordinates": list(allowed_payloads[0].geometry.coordinates),
+        "coordinates": list(create_order_allowed_payloads[0].geometry.coordinates),
     }
 
     assert (
-        order["properties"]["datetime"] == allowed_payloads[0].model_dump()["datetime"]
+        order["properties"]["datetime"]
+        == create_order_allowed_payloads[0].model_dump()["datetime"]
     )

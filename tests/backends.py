@@ -60,14 +60,21 @@ class MockProductBackend(ProductBackend):
                 id=str(uuid4()),
                 geometry=payload.geometry,
                 properties={
-                    "filter": payload.filter,
-                    "datetime": payload.datetime,
                     "product_id": product_router.product.id,
-                    **dict(payload.order_parameters),
+                    "datetime": payload.datetime,
+                    "geometry": payload.geometry,
+                    "filter": payload.filter,
+                    "order_parameters": payload.order_parameters,
+                    "opportunity_properties": {
+                        "datetime": "2024-01-29T12:00:00Z/2024-01-30T12:00:00Z",
+                        "off_nadir": 10,
+                    },
                 },
                 links=[],
             )
             self._orders[order.id] = order
             return order
         else:
-            raise ConstraintsException(f"not allowed: payload {payload.model_dump_json()} not in {[p.model_dump_json() for p in self._allowed_payloads]}")
+            raise ConstraintsException(
+                f"not allowed: payload {payload.model_dump_json()} not in {[p.model_dump_json() for p in self._allowed_payloads]}"
+            )

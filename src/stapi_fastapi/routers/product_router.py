@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, Any
+from typing import TYPE_CHECKING, Self
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from geojson_pydantic.geometries import Geometry
@@ -67,14 +67,27 @@ class ProductRouter(APIRouter):
             summary="Get order parameters for the product",
         )
 
+        async def _create_order(
+            payload: OrderRequest,
+            request: Request,
+            response: Response,
+        ) -> Order:
+            return await self.create_order(payload, request, response)
+
+        _create_order.__annotations__["payload"] = OrderRequest[
+            product.order_parameters
+        ]
 
         self.add_api_route(
             path="/order",
-            endpoint=self.create_order,
+            endpoint=_create_order,
             name=f"{self.root_router.name}:{self.product.id}:create-order",
             methods=["POST"],
             response_class=GeoJSONResponse,
             status_code=status.HTTP_201_CREATED,
+            response_model=Order[
+                self.product.constraints, self.product.order_parameters
+            ],
             summary="Create an order for the product",
         )
 

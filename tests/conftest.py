@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Callable
 from urllib.parse import urljoin
 from uuid import uuid4
@@ -24,7 +24,7 @@ class TestSpotlightProperties(OpportunityProperties):
     off_nadir: int
 
 
-class TestSpotlightOrderProperties(OrderParameters):
+class TestSpotlightOrderParameters(OrderParameters):
     s3_path: str | None = None
 
 
@@ -62,7 +62,7 @@ def mock_product_test_spotlight(
         providers=[mock_provider],
         links=[],
         constraints=TestSpotlightProperties,
-        order_parameters=TestSpotlightOrderProperties,
+        order_parameters=TestSpotlightOrderParameters,
         backend=product_backend,
     )
 
@@ -131,14 +131,17 @@ def mock_test_spotlight_opportunities() -> list[Opportunity]:
 
 
 @pytest.fixture
-def allowed_payloads() -> list[OrderRequest]:
+def create_order_allowed_payloads() -> list[OrderRequest]:
     return [
         OrderRequest(
             geometry=Point(
                 type="Point", coordinates=Position2D(longitude=13.4, latitude=52.5)
             ),
-            datetime=(datetime.now(UTC), datetime.now(UTC)),
-            filter={},
-            order_parameters=TestSpotlightOrderProperties(s3_path="BUCKET"),
+            datetime=(
+                datetime.fromisoformat("2024-11-11T18:55:33Z"),
+                datetime.fromisoformat("2024-11-15T18:55:33Z"),
+            ),
+            filter=None,
+            order_parameters=TestSpotlightOrderParameters(s3_path="BUCKET"),
         ),
     ]

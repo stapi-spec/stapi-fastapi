@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from stapi_fastapi.backends.product_backend import ProductBackend
-from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
+from stapi_fastapi.exceptions import NotFoundException
 from stapi_fastapi.models.opportunity import (
     Opportunity,
     OpportunityProperties,
@@ -62,23 +62,25 @@ class MockProductBackend(ProductBackend):
         """
         Create a new order.
         """
-        allowed: bool = any(allowed == payload for allowed in self._allowed_payloads)
-        allowed = True
-        if allowed:
-            order = Order(
-                id=str(uuid4()),
-                geometry=payload.geometry,
-                properties={
-                    "filter": payload.filter,
-                    "datetime": payload.datetime,
-                    "product_id": product_router.product.id,
-                    **dict(payload.order_parameters),
+        order = Order(
+            id=str(uuid4()),
+            geometry=payload.geometry,
+            properties={
+                "product_id": product_router.product.id,
+                "datetime": payload.datetime,
+                "geometry": payload.geometry,
+                "filter": payload.filter,
+                "order_parameters": payload.order_parameters,
+                "opportunity_properties": {
+                    "datetime": "2024-01-29T12:00:00Z/2024-01-30T12:00:00Z",
+                    "off_nadir": 10,
                 },
-                links=[],
-            )
-            self._orders[order.id] = order
-            return order
-        raise ConstraintsException("not allowed")
+            },
+            links=[],
+        )
+
+        self._orders[order.id] = order
+        return order
 
 
 class TestSpotlightProperties(OpportunityProperties):

@@ -1,25 +1,45 @@
-from typing import Literal, TypeVar, Generic, Any
+from typing import Generic, Literal, TypeVar
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 
-from stapi_fastapi.models.opportunity import OpportunityRequest, OpportunityProperties
+from stapi_fastapi.models.opportunity import OpportunityProperties
 from stapi_fastapi.models.shared import Link
+from stapi_fastapi.types.datetime_interval import DatetimeInterval
+from stapi_fastapi.types.filter import CQL2Filter
 
 
 class OrderParameters(BaseModel):
     model_config = ConfigDict(extra="allow")
 
-P = TypeVar("P", bound=OrderParameters)
-O = TypeVar("O", bound=OpportunityProperties)
 
-class OrderRequest(OpportunityRequest, Generic[P]):
-    order_parameters: P
+ORP = TypeVar("P", bound=OrderParameters)
+OPP = TypeVar("O", bound=OpportunityProperties)
 
-class OrderProperties(BaseModel, Generic[O]):
-    opportunity_properties: O
-    order_parameters: dict[str, Any]
+
+class OrderRequest(BaseModel, Generic[ORP]):
+    datetime: DatetimeInterval
+    geometry: Geometry
+    # TODO: validate the CQL2 filter?
+    filter: CQL2Filter | None = None
+
+    order_parameters: ORP
+
+    model_config = ConfigDict(strict=True)
+
+
+class OrderProperties(BaseModel, Generic[OPP, ORP]):
+    product_id: str
+    datetime: DatetimeInterval
+    geometry: Geometry
+    # TODO: validate the CQL2 filter?
+    filter: CQL2Filter | None = None
+
+    opportunity_properties: OPP
+    order_parameters: ORP
+
+    model_config = ConfigDict(extra="allow")
 
 
 class Order(Feature[Geometry, OrderProperties]):
@@ -28,6 +48,7 @@ class Order(Feature[Geometry, OrderProperties]):
     id: StrictInt | StrictStr  # type: ignore
     type: Literal["Feature"] = "Feature"
     links: list[Link] = Field(default_factory=list)
+
 
 class OrderCollection(FeatureCollection[Order]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
