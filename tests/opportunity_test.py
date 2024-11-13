@@ -3,6 +3,7 @@ from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
+
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
 
 from .backends import MockProductBackend

@@ -1,14 +1,22 @@
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
+
 from stapi_fastapi.backends.product_backend import ProductBackend
+from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.exceptions import NotFoundException
+from stapi_fastapi.models.conformance import CORE
 from stapi_fastapi.models.opportunity import (
     Opportunity,
     OpportunityProperties,
     OpportunityRequest,
 )
-from stapi_fastapi.models.order import Order, OrderParameters, OrderRequest
+from stapi_fastapi.models.order import (
+    Order,
+    OrderCollection,
+    OrderParameters,
+    OrderRequest,
+)
 from stapi_fastapi.models.product import (
     Product,
     Provider,
@@ -22,15 +30,15 @@ class MockOrderDB(dict[int | str, Order]):
     pass
 
 
-class MockRootBackend:
+class MockRootBackend(RootBackend):
     def __init__(self, orders: MockOrderDB) -> None:
         self._orders: MockOrderDB = orders
 
-    async def get_orders(self, request: Request) -> list[Order]:
+    async def get_orders(self, request: Request) -> OrderCollection:
         """
         Show all orders.
         """
-        return list(self._orders.values())
+        return OrderCollection(features=list(self._orders.values()))
 
     async def get_order(self, order_id: str, request: Request) -> Order:
         """
@@ -115,7 +123,7 @@ product = Product(
     backend=product_backend,
 )
 
-root_router = RootRouter(root_backend)
+root_router = RootRouter(root_backend, conformances=[CORE])
 root_router.add_product(product)
 app: FastAPI = FastAPI()
 app.include_router(root_router, prefix="")

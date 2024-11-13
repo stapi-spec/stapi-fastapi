@@ -5,6 +5,7 @@ from fastapi.datastructures import URL
 
 from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
+from stapi_fastapi.models.conformance import CORE, Conformance
 from stapi_fastapi.models.order import Order, OrderCollection
 from stapi_fastapi.models.product import Product, ProductsCollection
 from stapi_fastapi.models.root import RootResponse
@@ -17,15 +18,17 @@ class RootRouter(APIRouter):
     def __init__(
         self,
         backend: RootBackend,
+        conformances: list[str] = [CORE],
         name: str = "root",
-        openapi_endpoint_name="openapi",
-        docs_endpoint_name="swagger_ui_html",
+        openapi_endpoint_name: str = "openapi",
+        docs_endpoint_name: str = "swagger_ui_html",
         *args,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.backend = backend
         self.name = name
+        self.conformances = conformances
         self.openapi_endpoint_name = openapi_endpoint_name
         self.docs_endpoint_name = docs_endpoint_name
 
@@ -44,11 +47,19 @@ class RootRouter(APIRouter):
         )
 
         self.add_api_route(
+            "/conformance",
+            self.get_conformance,
+            methods=["GET"],
+            name=f"{self.name}:conformance",
+            tags=["Conformance"],
+        )
+
+        self.add_api_route(
             "/products",
             self.get_products,
             methods=["GET"],
             name=f"{self.name}:list-products",
-            tags=["Product"],
+            tags=["Products"],
         )
 
         self.add_api_route(
@@ -71,10 +82,17 @@ class RootRouter(APIRouter):
 
     def get_root(self, request: Request) -> RootResponse:
         return RootResponse(
+            id="STAPI API",
+            conformsTo=self.conformances,
             links=[
                 Link(
                     href=str(request.url_for(f"{self.name}:root")),
                     rel="self",
+                    type=TYPE_JSON,
+                ),
+                Link(
+                    href=str(request.url_for(f"{self.name}:conformance")),
+                    rel="conformance",
                     type=TYPE_JSON,
                 ),
                 Link(
@@ -97,8 +115,11 @@ class RootRouter(APIRouter):
                     rel="service-docs",
                     type="text/html",
                 ),
-            ]
+            ],
         )
+
+    def get_conformance(self, request: Request) -> Conformance:
+        return Conformance(conforms_to=self.conformances)
 
     def get_products(self, request: Request) -> ProductsCollection:
         return ProductsCollection(

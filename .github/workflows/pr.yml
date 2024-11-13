@@ -5,28 +5,24 @@ on:
     branches: ["main"]
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: pipx install pre-commit
-      - name: Run commit checks
-        uses: ./.github/actions/pre-commit
-
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.12"]
-
     steps:
       - uses: actions/checkout@v4
       - run: pipx install poetry==1.7.1
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
           cache: poetry
       - name: Install dependencies
         run: poetry install --with=dev
+      - name: Lint code
+        if: ${{ matrix.python-version == 3.12 }}
+        run: |
+          python -m pip install pre-commit
+          pre-commit run --all-files
       - name: Run tests
         run: poetry run nox

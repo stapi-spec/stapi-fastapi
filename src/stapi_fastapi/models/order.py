@@ -14,8 +14,8 @@ class OrderParameters(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-ORP = TypeVar("P", bound=OrderParameters)
-OPP = TypeVar("O", bound=OpportunityProperties)
+ORP = TypeVar("ORP", bound=OrderParameters)
+OPP = TypeVar("OPP", bound=OpportunityProperties)
 
 
 class OrderRequest(BaseModel, Generic[ORP]):
@@ -45,7 +45,7 @@ class OrderProperties(BaseModel, Generic[OPP, ORP]):
 class Order(Feature[Geometry, OrderProperties]):
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
-    id: StrictInt | StrictStr  # type: ignore
+    id: StrictInt | StrictStr
     type: Literal["Feature"] = "Feature"
     links: list[Link] = Field(default_factory=list)
 

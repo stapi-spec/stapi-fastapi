@@ -4,8 +4,9 @@ from itertools import product
 from pydantic import BaseModel, ValidationError
 from pyrfc3339.utils import timedelta_seconds, timezone
 from pytest import mark, raises
-from stapi_fastapi.types.datetime_interval import DatetimeInterval
 from zoneinfo import ZoneInfo
+
+from stapi_fastapi.types.datetime_interval import DatetimeInterval
 
 EUROPE_BERLIN = ZoneInfo("Europe/Berlin")
 
@@ -15,7 +16,7 @@ class Model(BaseModel):
 
 
 def rfc3339_strftime(dt: datetime, format: str) -> str:
-    tds = timedelta_seconds(dt.tzinfo.utcoffset(dt))
+    tds = timedelta_seconds(dt.tzinfo.utcoffset(dt))  # type: ignore
     long = timezone(tds)
     short = "Z"
 
