@@ -89,9 +89,6 @@ class ProductRouter(APIRouter):
             methods=["POST"],
             response_class=GeoJSONResponse,
             status_code=status.HTTP_201_CREATED,
-            # response_model=Order[
-            #     self.product.constraints, self.product.order_parameters
-            # ],
             summary="Create an order for the product",
             tags=["Products"],
         )
