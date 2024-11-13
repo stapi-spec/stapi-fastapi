@@ -2,7 +2,7 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from .utils import find_link
+from .shared import find_link
 
 
 def test_products_response(stapi_client: TestClient):

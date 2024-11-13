@@ -12,22 +12,12 @@ from geojson_pydantic.types import Position2D
 
 from stapi_fastapi.models.opportunity import (
     Opportunity,
-    OpportunityProperties,
 )
-from stapi_fastapi.models.order import OrderParameters, OrderRequest
 from stapi_fastapi.models.product import Product, Provider, ProviderRole
 from stapi_fastapi.routers.root_router import RootRouter
 
 from .backends import MockOrderDB, MockProductBackend, MockRootBackend
-from .utils import find_link
-
-
-class TestSpotlightProperties(OpportunityProperties):
-    off_nadir: int
-
-
-class TestSpotlightOrderParameters(OrderParameters):
-    s3_path: str | None = None
+from .shared import SpotlightOpportunityProperties, SpotlightOrderParameters, find_link
 
 
 @pytest.fixture(scope="session")
@@ -63,8 +53,8 @@ def mock_product_test_spotlight(
         keywords=["test", "satellite"],
         providers=[mock_provider],
         links=[],
-        constraints=TestSpotlightProperties,
-        order_parameters=TestSpotlightOrderParameters,
+        constraints=SpotlightOpportunityProperties,
+        order_parameters=SpotlightOrderParameters,
         backend=product_backend,
     )
 
@@ -141,26 +131,9 @@ def mock_test_spotlight_opportunities() -> list[Opportunity]:
                 type="Point",
                 coordinates=Position2D(longitude=0.0, latitude=0.0),
             ),
-            properties=TestSpotlightProperties(
+            properties=SpotlightOpportunityProperties(
                 datetime=(start, end),
                 off_nadir=20,
             ),
-        ),
-    ]
-
-
-@pytest.fixture
-def create_order_allowed_payloads() -> list[OrderRequest]:
-    return [
-        OrderRequest(
-            geometry=Point(
-                type="Point", coordinates=Position2D(longitude=13.4, latitude=52.5)
-            ),
-            datetime=(
-                datetime.fromisoformat("2024-11-11T18:55:33Z"),
-                datetime.fromisoformat("2024-11-15T18:55:33Z"),
-            ),
-            filter=None,
-            order_parameters=TestSpotlightOrderParameters(s3_path="BUCKET"),
         ),
     ]

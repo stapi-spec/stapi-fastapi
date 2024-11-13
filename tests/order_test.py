@@ -3,16 +3,35 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
+from geojson_pydantic import Point
+from geojson_pydantic.types import Position2D
 from httpx import Response
 
 from stapi_fastapi.models.order import OrderRequest
 
 from .backends import MockProductBackend
-from .utils import find_link
+from .shared import SpotlightOrderParameters, find_link
 
 NOW = datetime.now(UTC)
 START = NOW
 END = START + timedelta(days=5)
+
+
+@pytest.fixture
+def create_order_allowed_payloads() -> list[OrderRequest]:
+    return [
+        OrderRequest(
+            geometry=Point(
+                type="Point", coordinates=Position2D(longitude=13.4, latitude=52.5)
+            ),
+            datetime=(
+                datetime.fromisoformat("2024-11-11T18:55:33Z"),
+                datetime.fromisoformat("2024-11-15T18:55:33Z"),
+            ),
+            filter=None,
+            order_parameters=SpotlightOrderParameters(s3_path="BUCKET"),
+        ),
+    ]
 
 
 @pytest.fixture
