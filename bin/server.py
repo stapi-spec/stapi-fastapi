@@ -13,6 +13,7 @@ from stapi_fastapi.models.opportunity import (
 )
 from stapi_fastapi.models.order import Order, OrderCollection
 from stapi_fastapi.models.product import (
+    OrderParameters,
     Product,
     Provider,
     ProviderRole,
@@ -82,6 +83,10 @@ class TestSpotlightProperties(OpportunityPropertiesBase):
     off_nadir: int
 
 
+class TestSpotlightOrderParameters(OrderParameters):
+    delivery_mechanism: str | None = None
+
+
 order_db = MockOrderDB()
 product_backend = MockProductBackend(order_db)
 root_backend = MockRootBackend(order_db)
@@ -102,6 +107,7 @@ product = Product(
     providers=[provider],
     links=[],
     constraints=TestSpotlightProperties,
+    order_parameters=TestSpotlightOrderParameters,
     backend=product_backend,
 )
 

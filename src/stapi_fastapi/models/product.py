@@ -4,7 +4,7 @@ from copy import deepcopy
 from enum import Enum
 from typing import TYPE_CHECKING, Literal, Optional, Self
 
-from pydantic import AnyHttpUrl, BaseModel, Field
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field
 
 from stapi_fastapi.models.opportunity import OpportunityPropertiesBase
 from stapi_fastapi.models.shared import Link
@@ -32,6 +32,10 @@ class Provider(BaseModel):
         super().__init__(url=url, **kwargs)
 
 
+class OrderParameters(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
 class Product(BaseModel):
     type_: Literal["Product"] = Field(default="Product", alias="type")
     conformsTo: list[str] = Field(default_factory=list)
@@ -45,6 +49,7 @@ class Product(BaseModel):
 
     # we don't want to include these in the model fields
     _constraints: type[OpportunityPropertiesBase]
+    _order_parameters: type[OrderParameters]
     _backend: ProductBackend
 
     def __init__(
@@ -52,11 +57,13 @@ class Product(BaseModel):
         *args,
         backend: ProductBackend,
         constraints: type[OpportunityPropertiesBase],
+        order_parameters: type[OrderParameters],
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         self._backend = backend
         self._constraints = constraints
+        self._order_parameters = order_parameters
 
     @property
     def backend(self: Self) -> ProductBackend:
@@ -65,6 +72,10 @@ class Product(BaseModel):
     @property
     def constraints(self: Self) -> type[OpportunityPropertiesBase]:
         return self._constraints
+
+    @property
+    def order_parameters(self: Self) -> type[OrderParameters]:
+        return self._order_parameters
 
     def with_links(self: Self, links: list[Link] | None = None) -> Self:
         if not links:
