@@ -32,7 +32,6 @@ class OrderRequest(BaseModel, Generic[ORP]):
 class OrderProperties(BaseModel, Generic[OPP, ORP]):
     product_id: str
     datetime: DatetimeInterval
-    geometry: Geometry
     # TODO: validate the CQL2 filter?
     filter: CQL2Filter | None = None
 
