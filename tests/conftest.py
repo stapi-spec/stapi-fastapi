@@ -26,7 +26,7 @@ from .shared import SpotlightOpportunityProperties, SpotlightOrderParameters, fi
 
 
 class TestSpotlightOrderParameters(OrderParameters):
-    delivery_mechanism: str | None = None
+    s3_path: str | None = None
 
 
 @pytest.fixture(scope="session")

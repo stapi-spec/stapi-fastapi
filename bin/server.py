@@ -96,7 +96,7 @@ class MyOpportunityProperties(OpportunityProperties):
 
 
 class MyOrderParameters(OrderParameters):
-    delivery_mechanism: str | None = None
+    s3_path: str | None = None
 
 
 order_db = MockOrderDB()
