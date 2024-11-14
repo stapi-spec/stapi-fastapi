@@ -15,7 +15,12 @@ from stapi_fastapi.models.opportunity import (
     OpportunityPropertiesBase,
     OpportunityRequest,
 )
-from stapi_fastapi.models.product import Product, Provider, ProviderRole
+from stapi_fastapi.models.product import (
+    OrderParameters,
+    Product,
+    Provider,
+    ProviderRole,
+)
 from stapi_fastapi.routers.root_router import RootRouter
 
 from .backends import MockOrderDB, MockProductBackend, MockRootBackend
@@ -24,6 +29,10 @@ from .utils import find_link
 
 class TestSpotlightProperties(OpportunityPropertiesBase):
     off_nadir: int
+
+
+class TestSpotlightOrderParameters(OrderParameters):
+    delivery_mechanism: str | None = None
 
 
 @pytest.fixture(scope="session")
@@ -60,6 +69,7 @@ def mock_product_test_spotlight(
         providers=[mock_provider],
         links=[],
         constraints=TestSpotlightProperties,
+        order_parameters=TestSpotlightOrderParameters,
         backend=product_backend,
     )
 

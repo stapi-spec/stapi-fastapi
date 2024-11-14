@@ -64,6 +64,15 @@ class ProductRouter(APIRouter):
         )
 
         self.add_api_route(
+            path="/order-parameters",
+            endpoint=self.get_product_order_parameters,
+            name=f"{self.root_router.name}:{self.product.id}:get-order-parameters",
+            methods=["GET"],
+            summary="Get order parameters for the product",
+            tags=["Products"],
+        )
+
+        self.add_api_route(
             path="/order",
             endpoint=self.create_order,
             name=f"{self.root_router.name}:{self.product.id}:create-order",
@@ -86,6 +95,42 @@ class ProductRouter(APIRouter):
                     rel="self",
                     type=TYPE_JSON,
                 ),
+                Link(
+                    href=str(
+                        request.url_for(
+                            f"{self.root_router.name}:{self.product.id}:get-constraints",
+                        ),
+                    ),
+                    rel="constraints",
+                    type=TYPE_JSON,
+                ),
+                Link(
+                    href=str(
+                        request.url_for(
+                            f"{self.root_router.name}:{self.product.id}:get-order-parameters",
+                        ),
+                    ),
+                    rel="order-parameters",
+                    type=TYPE_JSON,
+                ),
+                Link(
+                    href=str(
+                        request.url_for(
+                            f"{self.root_router.name}:{self.product.id}:search-opportunities",
+                        ),
+                    ),
+                    rel="opportunities",
+                    type=TYPE_JSON,
+                ),
+                Link(
+                    href=str(
+                        request.url_for(
+                            f"{self.root_router.name}:{self.product.id}:create-order",
+                        ),
+                    ),
+                    rel="create-order",
+                    type=TYPE_JSON,
+                ),
             ],
         )
 
@@ -102,13 +147,32 @@ class ProductRouter(APIRouter):
         except ConstraintsException as exc:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
 
-        return OpportunityCollection(features=opportunities)
+        return OpportunityCollection(
+            features=opportunities,
+            links=[
+                Link(
+                    href=str(
+                        request.url_for(
+                            f"{self.root_router.name}:{self.product.id}:create-order",
+                        ),
+                    ),
+                    rel="create-order",
+                    type=TYPE_JSON,
+                ),
+            ],
+        )
 
     async def get_product_constraints(self: Self) -> JsonSchemaModel:
         """
         Return supported constraints of a specific product
         """
         return self.product.constraints
+
+    async def get_product_order_parameters(self: Self) -> JsonSchemaModel:
+        """
+        Return supported constraints of a specific product
+        """
+        return self.product.order_parameters
 
     async def create_order(
         self, payload: OpportunityRequest, request: Request, response: Response
