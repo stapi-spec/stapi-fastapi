@@ -9,6 +9,7 @@ from stapi_fastapi.types.datetime_interval import DatetimeInterval
 
 
 class OrderProperties(BaseModel):
+    product_id: str
     datetime: DatetimeInterval
     model_config = ConfigDict(extra="allow")
 
