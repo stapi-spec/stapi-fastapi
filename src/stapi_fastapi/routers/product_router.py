@@ -71,6 +71,13 @@ class ProductRouter(APIRouter):
             summary="Get order parameters for the product",
         )
 
+        # This wraps `self.create_order` to explicitly parameterize `OrderRequest`
+        # for this Product. This must be done programmatically instead of with a type
+        # annotation because it's setting the type dynamically instead of statically, and
+        # pydantic needs this type annotation when doing object conversion. This cannot be done
+        # directly to `self.create_order` because doing it there changes
+        # the annotation on every `ProductRouter` instance's `create_order`, not just
+        # this one's.
         async def _create_order(
             payload: OrderRequest,
             request: Request,
@@ -79,7 +86,10 @@ class ProductRouter(APIRouter):
             return await self.create_order(payload, request, response)
 
         _create_order.__annotations__["payload"] = OrderRequest[
-            product.order_parameters  # type: ignore
+            self.product.order_parameters  # type: ignore
+        ]
+        _create_order.__annotations__["return"] = Order[
+            self.product.constraints, self.product.order_parameters  # type: ignore
         ]
 
         self.add_api_route(
@@ -88,6 +98,9 @@ class ProductRouter(APIRouter):
             name=f"{self.root_router.name}:{self.product.id}:create-order",
             methods=["POST"],
             response_class=GeoJSONResponse,
+            response_model=Order[
+                self.product.constraints, self.product.order_parameters  # type: ignore
+            ],
             status_code=status.HTTP_201_CREATED,
             summary="Create an order for the product",
             tags=["Products"],

@@ -70,7 +70,7 @@ class MockProductBackend(ProductBackend):
         """
         Create a new order.
         """
-        order = Order(
+        order = Order[MyOpportunityProperties, MyOrderParameters](
             id=str(uuid4()),
             geometry=payload.geometry,
             properties={
@@ -91,11 +91,11 @@ class MockProductBackend(ProductBackend):
         return order
 
 
-class TestSpotlightProperties(OpportunityProperties):
+class MyOpportunityProperties(OpportunityProperties):
     off_nadir: int
 
 
-class TestOrderParameters(OrderParameters):
+class MyOrderParameters(OrderParameters):
     s3_path: str
 
 
@@ -118,8 +118,8 @@ product = Product(
     keywords=["test", "satellite"],
     providers=[provider],
     links=[],
-    constraints=TestSpotlightProperties,
-    order_parameters=TestOrderParameters,
+    constraints=MyOpportunityProperties,
+    order_parameters=MyOrderParameters,
     backend=product_backend,
 )
 

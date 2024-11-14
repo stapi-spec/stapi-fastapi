@@ -14,6 +14,7 @@ fastapi = "^0.115.0"
 pydantic = "^2.9.2"
 geojson-pydantic = "^1.1.1"
 pygeofilter = "^0.2.4"
+cql2 = "^0.3.1"
 
 [tool.poetry.group.dev]
 optional = true

@@ -9,6 +9,8 @@ from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stapi_fastapi.models.order import Order, OrderCollection, OrderRequest
 from stapi_fastapi.routers.product_router import ProductRouter
 
+from .shared import SpotlightOpportunityProperties, SpotlightOrderParameters
+
 
 class MockOrderDB(dict[int | str, Order]):
     pass
@@ -58,7 +60,7 @@ class MockProductBackend(ProductBackend):
         Create a new order.
         """
         if any(allowed == payload for allowed in self._allowed_payloads):
-            order = Order(
+            order = Order[SpotlightOpportunityProperties, SpotlightOrderParameters](
                 id=str(uuid4()),
                 geometry=payload.geometry,
                 properties={

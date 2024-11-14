@@ -1,4 +1,4 @@
-from typing import Generic, Literal, TypeVar
+from typing import Any, Generic, Literal, TypeVar
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
@@ -11,11 +11,11 @@ from stapi_fastapi.types.filter import CQL2Filter
 
 
 class OrderParameters(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
 
-ORP = TypeVar("ORP", bound=OrderParameters)
 OPP = TypeVar("OPP", bound=OpportunityProperties)
+ORP = TypeVar("ORP", bound=OrderParameters)
 
 
 class OrderRequest(BaseModel, Generic[ORP]):
@@ -24,7 +24,7 @@ class OrderRequest(BaseModel, Generic[ORP]):
     # TODO: validate the CQL2 filter?
     filter: CQL2Filter | None = None
 
-    order_parameters: ORP
+    order_parameters: dict[str, Any]
 
     model_config = ConfigDict(strict=True)
 
@@ -41,7 +41,7 @@ class OrderProperties(BaseModel, Generic[OPP, ORP]):
     model_config = ConfigDict(extra="allow")
 
 
-class Order(Feature[Geometry, OrderProperties]):
+class Order(Feature[Geometry, OrderProperties[OPP, ORP]]):
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
     id: StrictInt | StrictStr
@@ -49,6 +49,6 @@ class Order(Feature[Geometry, OrderProperties]):
     links: list[Link] = Field(default_factory=list)
 
 
-class OrderCollection(FeatureCollection[Order]):
+class OrderCollection(FeatureCollection[Order[OPP, ORP]]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
     links: list[Link] = Field(default_factory=list)
