@@ -2,8 +2,6 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from .shared import find_link
-
 
 def test_products_response(stapi_client: TestClient):
     res = stapi_client.get("/products")
@@ -21,17 +19,22 @@ def test_products_response(stapi_client: TestClient):
 def test_product_response_self_link(
     product_id: str,
     stapi_client: TestClient,
-    url_for,
+    assert_link,
 ):
     res = stapi_client.get(f"/products/{product_id}")
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
 
-    data = res.json()
-    link = find_link(data["links"], "self")
-    assert link, "GET /products Link[rel=self] should exist"
-    assert link["type"] == "application/json"
-    assert link["href"] == url_for(f"/products/{product_id}")
+    body = res.json()
+
+    url = "GET /products"
+    assert_link(url, body, "self", f"/products/{product_id}")
+    assert_link(url, body, "constraints", f"/products/{product_id}/constraints")
+    assert_link(
+        url, body, "order-parameters", f"/products/{product_id}/order-parameters"
+    )
+    assert_link(url, body, "opportunities", f"/products/{product_id}/opportunities")
+    assert_link(url, body, "create-order", f"/products/{product_id}/order")
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
@@ -43,7 +46,21 @@ def test_product_constraints_response(
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/json"
 
-    data = res.json()
-    assert "properties" in data
-    assert "datetime" in data["properties"]
-    assert "off_nadir" in data["properties"]
+    json_schema = res.json()
+    assert "properties" in json_schema
+    assert "datetime" in json_schema["properties"]
+    assert "off_nadir" in json_schema["properties"]
+
+
+@pytest.mark.parametrize("product_id", ["test-spotlight"])
+def test_product_order_parameters_response(
+    product_id: str,
+    stapi_client: TestClient,
+):
+    res = stapi_client.get(f"/products/{product_id}/order-parameters")
+    assert res.status_code == status.HTTP_200_OK
+    assert res.headers["Content-Type"] == "application/json"
+
+    json_schema = res.json()
+    assert "properties" in json_schema
+    assert "delivery_mechanism" in json_schema["properties"]

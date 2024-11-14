@@ -13,11 +13,20 @@ from geojson_pydantic.types import Position2D
 from stapi_fastapi.models.opportunity import (
     Opportunity,
 )
-from stapi_fastapi.models.product import Product, Provider, ProviderRole
+from stapi_fastapi.models.product import (
+    OrderParameters,
+    Product,
+    Provider,
+    ProviderRole,
+)
 from stapi_fastapi.routers.root_router import RootRouter
 
 from .backends import MockOrderDB, MockProductBackend, MockRootBackend
 from .shared import SpotlightOpportunityProperties, SpotlightOrderParameters, find_link
+
+
+class TestSpotlightOrderParameters(OrderParameters):
+    delivery_mechanism: str | None = None
 
 
 @pytest.fixture(scope="session")
@@ -132,6 +141,7 @@ def mock_test_spotlight_opportunities() -> list[Opportunity]:
                 coordinates=Position2D(longitude=0.0, latitude=0.0),
             ),
             properties=SpotlightOpportunityProperties(
+                product_id="xyz123",
                 datetime=(start, end),
                 off_nadir=20,
             ),
