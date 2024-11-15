@@ -60,7 +60,7 @@ class OrderSearchParameters(BaseModel):
     filter: CQL2Filter | None = None
 
 
-class OrderProperties(BaseModel, Generic[OPP, ORP]):
+class OrderProperties(BaseModel):
     product_id: str
     created: AwareDatetime
     status: OrderStatus
@@ -72,7 +72,7 @@ class OrderProperties(BaseModel, Generic[OPP, ORP]):
     model_config = ConfigDict(extra="allow")
 
 
-class Order(Feature[Geometry, OrderProperties[OPP, ORP]]):
+class Order(Feature[Geometry, OrderProperties]):
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
     id: StrictInt | StrictStr
@@ -80,6 +80,6 @@ class Order(Feature[Geometry, OrderProperties[OPP, ORP]]):
     links: list[Link] = Field(default_factory=list)
 
 
-class OrderCollection(FeatureCollection[Order[OPP, ORP]]):
+class OrderCollection(FeatureCollection[Order]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
     links: list[Link] = Field(default_factory=list)

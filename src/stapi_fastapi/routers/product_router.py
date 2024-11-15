@@ -89,9 +89,6 @@ class ProductRouter(APIRouter):
         _create_order.__annotations__["payload"] = OrderRequest[
             self.product.order_parameters  # type: ignore
         ]
-        _create_order.__annotations__["return"] = Order[
-            self.product.constraints, self.product.order_parameters  # type: ignore
-        ]
 
         self.add_api_route(
             path="/order",
@@ -99,9 +96,6 @@ class ProductRouter(APIRouter):
             name=f"{self.root_router.name}:{self.product.id}:create-order",
             methods=["POST"],
             response_class=GeoJSONResponse,
-            response_model=Order[
-                self.product.constraints, self.product.order_parameters  # type: ignore
-            ],
             status_code=status.HTTP_201_CREATED,
             summary="Create an order for the product",
             tags=["Products"],

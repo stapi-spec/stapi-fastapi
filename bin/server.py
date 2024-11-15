@@ -73,7 +73,7 @@ class MockProductBackend(ProductBackend):
         """
         Create a new order.
         """
-        order = Order[MyOpportunityProperties, MyOrderParameters](
+        order = Order(
             id=str(uuid4()),
             geometry=payload.geometry,
             properties={
