@@ -10,7 +10,7 @@ from httpx import Response
 from stapi_fastapi.models.order import OrderRequest
 
 from .backends import MockProductBackend
-from .shared import find_link
+from .shared import SpotlightOrderParameters, find_link
 
 NOW = datetime.now(UTC)
 START = NOW
@@ -29,7 +29,7 @@ def create_order_allowed_payloads() -> list[OrderRequest]:
                 datetime.fromisoformat("2024-11-15T18:55:33Z"),
             ),
             filter=None,
-            order_parameters={"s3_path": "BUCKET"},
+            order_parameters=SpotlightOrderParameters(s3_path="s3://my-bucket"),
         ),
     ]
 
@@ -86,7 +86,12 @@ def test_get_order_properties(
         "coordinates": list(create_order_allowed_payloads[0].geometry.coordinates),
     }
 
+    assert order["properties"]["search_parameters"]["geometry"] == {
+        "type": "Point",
+        "coordinates": list(create_order_allowed_payloads[0].geometry.coordinates),
+    }
+
     assert (
-        order["properties"]["datetime"]
+        order["properties"]["search_parameters"]["datetime"]
         == create_order_allowed_payloads[0].model_dump()["datetime"]
     )

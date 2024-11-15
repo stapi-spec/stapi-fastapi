@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
@@ -16,6 +17,8 @@ from stapi_fastapi.models.order import (
     OrderCollection,
     OrderParameters,
     OrderRequest,
+    OrderStatus,
+    OrderStatusCode,
 )
 from stapi_fastapi.models.product import (
     Product,
@@ -75,10 +78,17 @@ class MockProductBackend(ProductBackend):
             geometry=payload.geometry,
             properties={
                 "product_id": product_router.product.id,
-                "datetime": payload.datetime,
-                "geometry": payload.geometry,
-                "filter": payload.filter,
-                "order_parameters": payload.order_parameters,
+                "created": datetime.now(timezone.utc),
+                "status": OrderStatus(
+                    timestamp=datetime.now(timezone.utc),
+                    status_code=OrderStatusCode.accepted,
+                ),
+                "search_parameters": {
+                    "geometry": payload.geometry,
+                    "datetime": payload.datetime,
+                    "filter": payload.filter,
+                },
+                "order_parameters": payload.order_parameters.model_dump(),
                 "opportunity_properties": {
                     "datetime": "2024-01-29T12:00:00Z/2024-01-30T12:00:00Z",
                     "off_nadir": 10,

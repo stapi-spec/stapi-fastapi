@@ -1,8 +1,16 @@
-from typing import Any, Generic, Literal, TypeVar
+from enum import Enum
+from typing import Any, Generic, Literal, Optional, TypeVar
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from pydantic import (
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictInt,
+    StrictStr,
+)
 
 from stapi_fastapi.models.opportunity import OpportunityProperties
 from stapi_fastapi.models.shared import Link
@@ -24,19 +32,42 @@ class OrderRequest(BaseModel, Generic[ORP]):
     # TODO: validate the CQL2 filter?
     filter: CQL2Filter | None = None
 
-    order_parameters: dict[str, Any]
+    order_parameters: ORP
 
     model_config = ConfigDict(strict=True)
 
 
-class OrderProperties(BaseModel, Generic[OPP, ORP]):
-    product_id: str
+class OrderStatusCode(str, Enum):
+    received = "received"
+    accepted = "accepted"
+    rejected = "rejected"
+    completed = "completed"
+    canceled = "canceled"
+
+
+class OrderStatus(BaseModel):
+    timestamp: AwareDatetime
+    status_code: OrderStatusCode
+    reason_code: Optional[str] = None
+    reason_text: Optional[str] = None
+    links: list[Link] = Field(default_factory=list)
+
+
+class OrderSearchParameters(BaseModel):
     datetime: DatetimeInterval
+    geometry: Geometry
     # TODO: validate the CQL2 filter?
     filter: CQL2Filter | None = None
 
-    opportunity_properties: OPP
-    order_parameters: ORP
+
+class OrderProperties(BaseModel, Generic[OPP, ORP]):
+    product_id: str
+    created: AwareDatetime
+    status: OrderStatus
+
+    search_parameters: OrderSearchParameters
+    opportunity_properties: dict[str, Any]
+    order_parameters: dict[str, Any]
 
     model_config = ConfigDict(extra="allow")
 

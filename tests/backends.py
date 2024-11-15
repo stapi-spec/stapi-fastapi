@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import Request
@@ -6,7 +7,13 @@ from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
-from stapi_fastapi.models.order import Order, OrderCollection, OrderRequest
+from stapi_fastapi.models.order import (
+    Order,
+    OrderCollection,
+    OrderRequest,
+    OrderStatus,
+    OrderStatusCode,
+)
 from stapi_fastapi.routers.product_router import ProductRouter
 
 from .shared import SpotlightOpportunityProperties, SpotlightOrderParameters
@@ -60,15 +67,24 @@ class MockProductBackend(ProductBackend):
         Create a new order.
         """
         if any(allowed == payload for allowed in self._allowed_payloads):
-            order = Order[SpotlightOpportunityProperties, SpotlightOrderParameters](
+            order = Order[
+                SpotlightOpportunityProperties, SpotlightOrderParameters
+            ](
                 id=str(uuid4()),
-                geometry=payload.geometry,
+                geometry=payload.geometry,  # maybe set to a different value by opportunity resolution process
                 properties={
                     "product_id": product_router.product.id,
-                    "datetime": payload.datetime,
-                    "geometry": payload.geometry,
-                    "filter": payload.filter,
-                    "order_parameters": payload.order_parameters,
+                    "created": datetime.now(timezone.utc),
+                    "status": OrderStatus(
+                        timestamp=datetime.now(timezone.utc),
+                        status_code=OrderStatusCode.accepted,
+                    ),
+                    "search_parameters": {
+                        "geometry": payload.geometry,
+                        "datetime": payload.datetime,
+                        "filter": payload.filter,
+                    },
+                    "order_parameters": payload.order_parameters.model_dump(),
                     "opportunity_properties": {
                         "datetime": "2024-01-29T12:00:00Z/2024-01-30T12:00:00Z",
                         "off_nadir": 10,
