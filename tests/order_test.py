@@ -3,12 +3,14 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
+from geojson_pydantic import Point
+from geojson_pydantic.types import Position2D
 from httpx import Response
 
-from stapi_fastapi.models.opportunity import OpportunityRequest
+from stapi_fastapi.models.order import OrderRequest
 
 from .backends import MockProductBackend
-from .utils import find_link
+from .shared import SpotlightOrderParameters, find_link
 
 NOW = datetime.now(UTC)
 START = NOW
@@ -16,20 +18,37 @@ END = START + timedelta(days=5)
 
 
 @pytest.fixture
+def create_order_allowed_payloads() -> list[OrderRequest]:
+    return [
+        OrderRequest(
+            geometry=Point(
+                type="Point", coordinates=Position2D(longitude=13.4, latitude=52.5)
+            ),
+            datetime=(
+                datetime.fromisoformat("2024-11-11T18:55:33Z"),
+                datetime.fromisoformat("2024-11-15T18:55:33Z"),
+            ),
+            filter=None,
+            order_parameters=SpotlightOrderParameters(s3_path="s3://my-bucket"),
+        ),
+    ]
+
+
+@pytest.fixture
 def new_order_response(
     product_id: str,
     product_backend: MockProductBackend,
     stapi_client: TestClient,
-    allowed_payloads: list[OpportunityRequest],
+    create_order_allowed_payloads: list[OrderRequest],
 ) -> Response:
-    product_backend._allowed_payloads = allowed_payloads
+    product_backend._allowed_payloads = create_order_allowed_payloads
 
     res = stapi_client.post(
         f"products/{product_id}/order",
-        json=allowed_payloads[0].model_dump(),
+        json=create_order_allowed_payloads[0].model_dump(),
     )
 
-    assert res.status_code == status.HTTP_201_CREATED
+    assert res.status_code == status.HTTP_201_CREATED, res.text
     assert res.headers["Content-Type"] == "application/geo+json"
     return res
 
@@ -57,14 +76,22 @@ def get_order_response(
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
-def test_get_order_properties(get_order_response: Response, allowed_payloads) -> None:
+def test_get_order_properties(
+    get_order_response: Response, create_order_allowed_payloads
+) -> None:
     order = get_order_response.json()
 
     assert order["geometry"] == {
         "type": "Point",
-        "coordinates": list(allowed_payloads[0].geometry.coordinates),
+        "coordinates": list(create_order_allowed_payloads[0].geometry.coordinates),
+    }
+
+    assert order["properties"]["search_parameters"]["geometry"] == {
+        "type": "Point",
+        "coordinates": list(create_order_allowed_payloads[0].geometry.coordinates),
     }
 
     assert (
-        order["properties"]["datetime"] == allowed_payloads[0].model_dump()["datetime"]
+        order["properties"]["search_parameters"]["datetime"]
+        == create_order_allowed_payloads[0].model_dump()["datetime"]
     )

@@ -10,8 +10,7 @@ from stapi_fastapi.types.filter import CQL2Filter
 
 
 # Copied and modified from https://github.com/stac-utils/stac-pydantic/blob/main/stac_pydantic/item.py#L11
-class OpportunityPropertiesBase(BaseModel):
-    product_id: str
+class OpportunityProperties(BaseModel):
     datetime: DatetimeInterval
     model_config = ConfigDict(extra="allow")
 
@@ -25,7 +24,7 @@ class OpportunityRequest(BaseModel):
 
 
 G = TypeVar("G", bound=Geometry)
-P = TypeVar("P", bound=OpportunityPropertiesBase)
+P = TypeVar("P", bound=OpportunityProperties)
 
 
 class Opportunity(Feature[G, P]):

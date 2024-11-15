@@ -68,7 +68,7 @@ class RootRouter(APIRouter):
             methods=["GET"],
             name=f"{self.name}:list-orders",
             response_class=GeoJSONResponse,
-            tags=["Order"],
+            tags=["Orders"],
         )
 
         self.add_api_route(

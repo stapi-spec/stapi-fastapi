@@ -1,23 +1,31 @@
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
 
 from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.backends.root_backend import RootBackend
-from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
+from stapi_fastapi.exceptions import NotFoundException
 from stapi_fastapi.models.conformance import CORE
 from stapi_fastapi.models.opportunity import (
     Opportunity,
-    OpportunityPropertiesBase,
+    OpportunityProperties,
     OpportunityRequest,
 )
-from stapi_fastapi.models.order import Order, OrderCollection
-from stapi_fastapi.models.product import (
+from stapi_fastapi.models.order import (
+    Order,
+    OrderCollection,
     OrderParameters,
+    OrderRequest,
+    OrderStatus,
+    OrderStatusCode,
+)
+from stapi_fastapi.models.product import (
     Product,
     Provider,
     ProviderRole,
 )
+from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_fastapi.routers.root_router import RootRouter
 
 
@@ -48,43 +56,57 @@ class MockRootBackend(RootBackend):
 class MockProductBackend(ProductBackend):
     def __init__(self, orders: MockOrderDB) -> None:
         self._opportunities: list[Opportunity] = []
-        self._allowed_payloads: list[OpportunityRequest] = []
+        self._allowed_payloads: list[OrderRequest] = []
         self._orders: MockOrderDB = orders
 
     async def search_opportunities(
-        self, product: Product, search: OpportunityRequest, request: Request
+        self,
+        product_router: ProductRouter,
+        search: OpportunityRequest,
+        request: Request,
     ) -> list[Opportunity]:
         return [o.model_copy(update=search.model_dump()) for o in self._opportunities]
 
     async def create_order(
-        self, product: Product, payload: OpportunityRequest, request: Request
+        self, product_router: ProductRouter, payload: OrderRequest, request: Request
     ) -> Order:
         """
         Create a new order.
         """
-        allowed: bool = any(allowed == payload for allowed in self._allowed_payloads)
-        if allowed:
-            order = Order(
-                id=str(uuid4()),
-                geometry=payload.geometry,
-                properties={
-                    "filter": payload.filter,
+        order = Order(
+            id=str(uuid4()),
+            geometry=payload.geometry,
+            properties={
+                "product_id": product_router.product.id,
+                "created": datetime.now(timezone.utc),
+                "status": OrderStatus(
+                    timestamp=datetime.now(timezone.utc),
+                    status_code=OrderStatusCode.accepted,
+                ),
+                "search_parameters": {
+                    "geometry": payload.geometry,
                     "datetime": payload.datetime,
-                    "product_id": product.id,
+                    "filter": payload.filter,
                 },
-                links=[],
-            )
-            self._orders[order.id] = order
-            return order
-        raise ConstraintsException("not allowed")
+                "order_parameters": payload.order_parameters.model_dump(),
+                "opportunity_properties": {
+                    "datetime": "2024-01-29T12:00:00Z/2024-01-30T12:00:00Z",
+                    "off_nadir": 10,
+                },
+            },
+            links=[],
+        )
+
+        self._orders[order.id] = order
+        return order
 
 
-class TestSpotlightProperties(OpportunityPropertiesBase):
+class MyOpportunityProperties(OpportunityProperties):
     off_nadir: int
 
 
-class TestSpotlightOrderParameters(OrderParameters):
-    delivery_mechanism: str | None = None
+class MyOrderParameters(OrderParameters):
+    s3_path: str | None = None
 
 
 order_db = MockOrderDB()
@@ -106,8 +128,8 @@ product = Product(
     keywords=["test", "satellite"],
     providers=[provider],
     links=[],
-    constraints=TestSpotlightProperties,
-    order_parameters=TestSpotlightOrderParameters,
+    constraints=MyOpportunityProperties,
+    order_parameters=MyOrderParameters,
     backend=product_backend,
 )
 

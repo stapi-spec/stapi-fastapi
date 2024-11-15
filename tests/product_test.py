@@ -63,4 +63,4 @@ def test_product_order_parameters_response(
 
     json_schema = res.json()
     assert "properties" in json_schema
-    assert "delivery_mechanism" in json_schema["properties"]
+    assert "s3_path" in json_schema["properties"]

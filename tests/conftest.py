@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 from urllib.parse import urljoin
 from uuid import uuid4
@@ -12,8 +12,6 @@ from geojson_pydantic.types import Position2D
 
 from stapi_fastapi.models.opportunity import (
     Opportunity,
-    OpportunityPropertiesBase,
-    OpportunityRequest,
 )
 from stapi_fastapi.models.product import (
     OrderParameters,
@@ -24,15 +22,11 @@ from stapi_fastapi.models.product import (
 from stapi_fastapi.routers.root_router import RootRouter
 
 from .backends import MockOrderDB, MockProductBackend, MockRootBackend
-from .utils import find_link
-
-
-class TestSpotlightProperties(OpportunityPropertiesBase):
-    off_nadir: int
+from .shared import SpotlightOpportunityProperties, SpotlightOrderParameters, find_link
 
 
 class TestSpotlightOrderParameters(OrderParameters):
-    delivery_mechanism: str | None = None
+    s3_path: str | None = None
 
 
 @pytest.fixture(scope="session")
@@ -68,8 +62,8 @@ def mock_product_test_spotlight(
         keywords=["test", "satellite"],
         providers=[mock_provider],
         links=[],
-        constraints=TestSpotlightProperties,
-        order_parameters=TestSpotlightOrderParameters,
+        constraints=SpotlightOpportunityProperties,
+        order_parameters=SpotlightOrderParameters,
         backend=product_backend,
     )
 
@@ -146,23 +140,10 @@ def mock_test_spotlight_opportunities() -> list[Opportunity]:
                 type="Point",
                 coordinates=Position2D(longitude=0.0, latitude=0.0),
             ),
-            properties=TestSpotlightProperties(
+            properties=SpotlightOpportunityProperties(
                 product_id="xyz123",
                 datetime=(start, end),
                 off_nadir=20,
             ),
-        ),
-    ]
-
-
-@pytest.fixture
-def allowed_payloads() -> list[OpportunityRequest]:
-    return [
-        OpportunityRequest(
-            geometry=Point(
-                type="Point", coordinates=Position2D(longitude=13.4, latitude=52.5)
-            ),
-            datetime=(datetime.now(UTC), datetime.now(UTC)),
-            filter={},
         ),
     ]

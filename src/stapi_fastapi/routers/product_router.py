@@ -11,7 +11,7 @@ from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
     OpportunityRequest,
 )
-from stapi_fastapi.models.order import Order
+from stapi_fastapi.models.order import Order, OrderRequest
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.responses import GeoJSONResponse
@@ -72,9 +72,27 @@ class ProductRouter(APIRouter):
             tags=["Products"],
         )
 
+        # This wraps `self.create_order` to explicitly parameterize `OrderRequest`
+        # for this Product. This must be done programmatically instead of with a type
+        # annotation because it's setting the type dynamically instead of statically, and
+        # pydantic needs this type annotation when doing object conversion. This cannot be done
+        # directly to `self.create_order` because doing it there changes
+        # the annotation on every `ProductRouter` instance's `create_order`, not just
+        # this one's.
+        async def _create_order(
+            payload: OrderRequest,
+            request: Request,
+            response: Response,
+        ) -> Order:
+            return await self.create_order(payload, request, response)
+
+        _create_order.__annotations__["payload"] = OrderRequest[
+            self.product.order_parameters  # type: ignore
+        ]
+
         self.add_api_route(
             path="/order",
-            endpoint=self.create_order,
+            endpoint=_create_order,
             name=f"{self.root_router.name}:{self.product.id}:create-order",
             methods=["POST"],
             response_class=GeoJSONResponse,
@@ -162,20 +180,20 @@ class ProductRouter(APIRouter):
             ],
         )
 
-    async def get_product_constraints(self: Self) -> JsonSchemaModel:
+    def get_product_constraints(self: Self) -> JsonSchemaModel:
         """
         Return supported constraints of a specific product
         """
         return self.product.constraints
 
-    async def get_product_order_parameters(self: Self) -> JsonSchemaModel:
+    def get_product_order_parameters(self: Self) -> JsonSchemaModel:
         """
         Return supported constraints of a specific product
         """
         return self.product.order_parameters
 
     async def create_order(
-        self, payload: OpportunityRequest, request: Request, response: Response
+        self, payload: OrderRequest, request: Request, response: Response
     ) -> Order:
         """
         Create a new order.
