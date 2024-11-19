@@ -13,7 +13,7 @@ none
 
 ### Changed
 
-none
+- Create Order endpoint from `.../order` to `.../orders`
 
 ### Deprecated
 

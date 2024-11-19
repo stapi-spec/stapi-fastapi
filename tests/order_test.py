@@ -44,7 +44,7 @@ def new_order_response(
     product_backend._allowed_payloads = create_order_allowed_payloads
 
     res = stapi_client.post(
-        f"products/{product_id}/order",
+        f"products/{product_id}/orders",
         json=create_order_allowed_payloads[0].model_dump(),
     )
 
