@@ -946,6 +946,24 @@ files = [
 ]
 
 [[package]]
+name = "returns"
+version = "0.23.0"
+description = "Make your functions return something meaningful, typed, and safe!"
+optional = false
+python-versions = "<4.0,>=3.9"
+files = [
+    {file = "returns-0.23.0-py3-none-any.whl", hash = "sha256:278aa6168072b24574ad14be32f7123d1b835928473dd40bc506f47c8b25859a"},
+    {file = "returns-0.23.0.tar.gz", hash = "sha256:27594c28e5fc338e052d27ddf77fe1da82db4472f6d59901e7e9165be35a5256"},
+]
+
+[package.dependencies]
+typing-extensions = ">=4.0,<5.0"
+
+[package.extras]
+check-laws = ["hypothesis (>=6.98,<7.0)", "pytest (>=8.0,<9.0)"]
+compatible-mypy = ["mypy (>=1.10,<1.11)"]
+
+[[package]]
 name = "ruff"
 version = "0.7.4"
 description = "An extremely fast Python linter and code formatter, written in Rust."
@@ -996,13 +1014,13 @@ files = [
 
 [[package]]
 name = "starlette"
-version = "0.41.2"
+version = "0.41.3"
 description = "The little ASGI library that shines."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "starlette-0.41.2-py3-none-any.whl", hash = "sha256:fbc189474b4731cf30fcef52f18a8d070e3f3b46c6a04c97579e85e6ffca942d"},
-    {file = "starlette-0.41.2.tar.gz", hash = "sha256:9834fd799d1a87fd346deb76158668cfa0b0d56f85caefe8268e2d97c3468b62"},
+    {file = "starlette-0.41.3-py3-none-any.whl", hash = "sha256:44cedb2b7c77a9de33a8b74b2b90e9f50d11fcf25d8270ea525ad71a25374ff7"},
+    {file = "starlette-0.41.3.tar.gz", hash = "sha256:0e4ab3d16522a255be6b28260b938eae2482f98ce5cc934cb08dce8dc3ba5835"},
 ]
 
 [package.dependencies]
@@ -1091,4 +1109,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "3.12.*"
-content-hash = "210cbc2b7c50d1ab114bead6193ea27e1462044e573351319d4ed6391445b4ae"
+content-hash = "5849f419d247226954bf25ab537b576fd239088c97f0fc0ec8113a23d67eaa4f"

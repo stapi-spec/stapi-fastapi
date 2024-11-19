@@ -13,7 +13,7 @@ none
 
 ### Changed
 
-none
+- RootBackend protocol uses `returns` library types Result and Maybe instead of exceptions.
 
 ### Deprecated
 

@@ -2,10 +2,12 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import Request
+from returns.maybe import Maybe, Nothing
+from returns.result import Failure, Result, Success
 
 from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.backends.root_backend import RootBackend
-from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
+from stapi_fastapi.exceptions import ConstraintsException
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stapi_fastapi.models.order import (
     Order,
@@ -31,14 +33,16 @@ class MockRootBackend(RootBackend):
         """
         return OrderCollection(features=list(self._orders.values()))
 
-    async def get_order(self, order_id: str, request: Request) -> Order:
+    async def get_order(
+        self, order_id: str, request: Request
+    ) -> Result[Order, Maybe[Exception]]:
         """
         Show details for order with `order_id`.
         """
-        try:
-            return self._orders[order_id]
-        except KeyError:
-            raise NotFoundException()
+        if order := self._orders.get(order_id):
+            return Success(order)
+
+        return Failure(Nothing)
 
 
 class MockProductBackend(ProductBackend):

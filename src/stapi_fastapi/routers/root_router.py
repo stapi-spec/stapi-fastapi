@@ -1,10 +1,14 @@
+import logging
 from typing import Self
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.datastructures import URL
+from returns.maybe import Some
+from returns.result import Failure, Success
 
 from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
+from stapi_fastapi.exceptions import NotFoundException
 from stapi_fastapi.models.conformance import CORE, Conformance
 from stapi_fastapi.models.order import Order, OrderCollection
 from stapi_fastapi.models.product import Product, ProductsCollection
@@ -152,9 +156,22 @@ class RootRouter(APIRouter):
         """
         Get details for order with `order_id`.
         """
-        order = await self.backend.get_order(order_id, request)
-        order.links.append(Link(href=str(request.url), rel="self", type=TYPE_GEOJSON))
-        return order
+        match await self.backend.get_order(order_id, request):
+            case Success(order):
+                order.links.append(
+                    Link(href=str(request.url), rel="self", type=TYPE_GEOJSON)
+                )
+                return order
+            case Failure(Some(e)):
+                logging.exception(
+                    f"An error occurred while retrieving order '{order_id}'", e
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error finding Order",
+                )
+            case _:
+                raise NotFoundException("Order not found")
 
     def add_product(self: Self, product: Product) -> None:
         # Give the include a prefix from the product router
