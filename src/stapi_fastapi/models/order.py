@@ -8,7 +8,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    StrictInt,
     StrictStr,
 )
 
@@ -75,7 +74,7 @@ class OrderProperties(BaseModel):
 class Order(Feature[Geometry, OrderProperties]):
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
-    id: StrictInt | StrictStr
+    id: StrictStr
     type: Literal["Feature"] = "Feature"
     links: list[Link] = Field(default_factory=list)
 
