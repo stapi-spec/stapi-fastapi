@@ -91,7 +91,7 @@ class ProductRouter(APIRouter):
         ]
 
         self.add_api_route(
-            path="/order",
+            path="/orders",
             endpoint=_create_order,
             name=f"{self.root_router.name}:{self.product.id}:create-order",
             methods=["POST"],
