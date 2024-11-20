@@ -13,7 +13,9 @@ none
 
 ### Changed
 
-none
+- Order field `id` must be a string, instead of previously allowing int. This is because while an
+  order ID may an integral numeric value, it is not a "number" in the sense that math will be performed
+  order ID values, so string represents this better.
 
 ### Deprecated
 
