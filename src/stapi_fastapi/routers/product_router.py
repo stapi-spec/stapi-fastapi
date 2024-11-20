@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Self
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
@@ -179,8 +180,10 @@ class ProductRouter(APIRouter):
             case Failure(Some(e)) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(Some(e)):
+                logging.exception("An error occurred while searching opportunities", e)
                 raise HTTPException(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e.detail
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error searching opportunities",
                 )
             case Failure(Maybe.empty):
                 raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -218,8 +221,10 @@ class ProductRouter(APIRouter):
             case Failure(Some(e)) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(Some(e)):
+                logging.exception("An error occurred while creating order", e)
                 raise HTTPException(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e.detail
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error creating order",
                 )
             case Failure(Maybe.empty):
                 raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)

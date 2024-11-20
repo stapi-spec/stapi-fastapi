@@ -138,19 +138,31 @@ class RootRouter(APIRouter):
         )
 
     async def get_orders(self, request: Request) -> OrderCollection:
-        orders = await self.backend.get_orders(request)
-        for order in orders:
-            order.links.append(
-                Link(
-                    href=str(
-                        request.url_for(f"{self.name}:get-order", order_id=order.id)
-                    ),
-                    rel="self",
-                    type=TYPE_JSON,
+        match await self.backend.get_orders(request):
+            case Success(orders):
+                for order in orders:
+                    order.links.append(
+                        Link(
+                            href=str(
+                                request.url_for(
+                                    f"{self.name}:get-order", order_id=order.id
+                                )
+                            ),
+                            rel="self",
+                            type=TYPE_JSON,
+                        )
+                    )
+                return orders
+            case Failure(Maybe.empty):
+                raise NotFoundException("Orders not found")
+            case Failure(Some(e)):
+                logging.exception("An error occurred while retrieving orders", e)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error finding Orders",
                 )
-            )
-
-        return orders
+            case _:
+                raise AssertionError("Expected code to be unreachable")
 
     async def get_order(self: Self, order_id: str, request: Request) -> Order:
         """
