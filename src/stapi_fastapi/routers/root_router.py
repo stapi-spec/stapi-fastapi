@@ -3,7 +3,7 @@ from typing import Self
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.datastructures import URL
-from returns.maybe import Some
+from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 
 from stapi_fastapi.backends.root_backend import RootBackend
@@ -162,6 +162,8 @@ class RootRouter(APIRouter):
                     Link(href=str(request.url), rel="self", type=TYPE_GEOJSON)
                 )
                 return order
+            case Failure(Maybe.empty):
+                raise NotFoundException("Order not found")
             case Failure(Some(e)):
                 logging.exception(
                     f"An error occurred while retrieving order '{order_id}'", e
@@ -171,7 +173,7 @@ class RootRouter(APIRouter):
                     detail="Error finding Order",
                 )
             case _:
-                raise NotFoundException("Order not found")
+                raise AssertionError("Expected code to be unreachable")
 
     def add_product(self: Self, product: Product) -> None:
         # Give the include a prefix from the product router
