@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Self
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from geojson_pydantic.geometries import Geometry
+from returns.maybe import Maybe, Some
+from returns.result import Failure, Success
 
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.exceptions import ConstraintsException
@@ -158,27 +160,32 @@ class ProductRouter(APIRouter):
         """
         Explore the opportunities available for a particular set of constraints
         """
-        try:
-            opportunities = await self.product.backend.search_opportunities(
-                self, search, request
-            )
-        except ConstraintsException as exc:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
-
-        return OpportunityCollection(
-            features=opportunities,
-            links=[
-                Link(
-                    href=str(
-                        request.url_for(
-                            f"{self.root_router.name}:{self.product.id}:create-order",
+        match await self.product.backend.search_opportunities(self, search, request):
+            case Success(features):
+                return OpportunityCollection(
+                    features=features,
+                    links=[
+                        Link(
+                            href=str(
+                                request.url_for(
+                                    f"{self.root_router.name}:{self.product.id}:create-order",
+                                ),
+                            ),
+                            rel="create-order",
+                            type=TYPE_JSON,
                         ),
-                    ),
-                    rel="create-order",
-                    type=TYPE_JSON,
-                ),
-            ],
-        )
+                    ],
+                )
+            case Failure(Some(e)) if isinstance(e, ConstraintsException):
+                raise e
+            case Failure(Some(e)):
+                raise HTTPException(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e.detail
+                )
+            case Failure(Maybe.empty):
+                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
+            case x:
+                raise AssertionError(f"Expected code to be unreachable {x}")
 
     def get_product_constraints(self: Self) -> JsonSchemaModel:
         """
@@ -198,16 +205,23 @@ class ProductRouter(APIRouter):
         """
         Create a new order.
         """
-        try:
-            order = await self.product.backend.create_order(
-                self,
-                payload,
-                request,
-            )
-        except ConstraintsException as exc:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.detail)
-
-        location = str(self.root_router.generate_order_href(request, order.id))
-        order.links.append(Link(href=location, rel="self", type=TYPE_GEOJSON))
-        response.headers["Location"] = location
-        return order
+        match await self.product.backend.create_order(
+            self,
+            payload,
+            request,
+        ):
+            case Success(order):
+                location = str(self.root_router.generate_order_href(request, order.id))
+                order.links.append(Link(href=location, rel="self", type=TYPE_GEOJSON))
+                response.headers["Location"] = location
+                return order
+            case Failure(Some(e)) if isinstance(e, ConstraintsException):
+                raise e
+            case Failure(Some(e)):
+                raise HTTPException(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e.detail
+                )
+            case Failure(Maybe.empty):
+                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
+            case x:
+                raise AssertionError(f"Expected code to be unreachable {x}")

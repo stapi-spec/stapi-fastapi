@@ -36,6 +36,9 @@ dev = "stapi_fastapi.__dev__:cli"
 [tool.ruff]
 line-length = 88
 
+[tool.ruff.format]
+quote-style = 'double'
+
 [tool.ruff.lint]
 extend-ignore = ["E501", "UP007", "UP034"]
 select = [

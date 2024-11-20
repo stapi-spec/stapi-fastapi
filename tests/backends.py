@@ -27,11 +27,13 @@ class MockRootBackend(RootBackend):
     def __init__(self, orders: MockOrderDB) -> None:
         self._orders = orders
 
-    async def get_orders(self, request: Request) -> OrderCollection:
+    async def get_orders(
+        self, request: Request
+    ) -> Result[OrderCollection, Maybe[Exception]]:
         """
         Show all orders.
         """
-        return OrderCollection(features=list(self._orders.values()))
+        return Success(OrderCollection(features=list(self._orders.values())))
 
     async def get_order(
         self, order_id: str, request: Request
@@ -56,15 +58,17 @@ class MockProductBackend(ProductBackend):
         product_router: ProductRouter,
         search: OpportunityRequest,
         request: Request,
-    ) -> list[Opportunity]:
-        return [o.model_copy(update=search.model_dump()) for o in self._opportunities]
+    ) -> Result[list[Opportunity], Maybe[Exception]]:
+        return Success(
+            [o.model_copy(update=search.model_dump()) for o in self._opportunities]
+        )
 
     async def create_order(
         self,
         product_router: ProductRouter,
         payload: OrderRequest,
         request: Request,
-    ) -> Order:
+    ) -> Result[Order, Maybe[Exception]]:
         """
         Create a new order.
         """
@@ -93,8 +97,10 @@ class MockProductBackend(ProductBackend):
                 links=[],
             )
             self._orders[order.id] = order
-            return order
+            return Success(order)
         else:
-            raise ConstraintsException(
-                f"not allowed: payload {payload.model_dump_json()} not in {[p.model_dump_json() for p in self._allowed_payloads]}"
+            return Failure(
+                ConstraintsException(
+                    f"not allowed: payload {payload.model_dump_json()} not in {[p.model_dump_json() for p in self._allowed_payloads]}"
+                )
             )

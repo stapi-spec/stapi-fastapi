@@ -8,7 +8,9 @@ from stapi_fastapi.models.order import Order, OrderCollection
 
 
 class RootBackend(Protocol):  # pragma: nocover
-    async def get_orders(self, request: Request) -> OrderCollection:
+    async def get_orders(
+        self, request: Request
+    ) -> Result[OrderCollection, Maybe[Exception]]:
         """
         Return a list of existing orders.
         """
