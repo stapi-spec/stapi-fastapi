@@ -58,4 +58,4 @@ def test_search_opportunities_response(
     except Exception as _:
         pytest.fail("response is not an opportunity collection")
 
-    assert_link(f"POST {url}", body, "create-order", f"/products/{product_id}/order")
+    assert_link(f"POST {url}", body, "create-order", f"/products/{product_id}/orders")
