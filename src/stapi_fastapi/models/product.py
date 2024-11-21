@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from enum import Enum
 from typing import TYPE_CHECKING, Literal, Optional, Self
 
@@ -78,7 +77,7 @@ class Product(BaseModel):
         if not links:
             return self
 
-        new = deepcopy(self)
+        new = self.model_copy(deep=True)
         new.links.extend(links)
         return new
 
