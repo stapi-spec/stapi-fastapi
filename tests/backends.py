@@ -7,7 +7,7 @@ from returns.result import Failure, Result, Success
 
 from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.backends.root_backend import RootBackend
-from stapi_fastapi.exceptions import ConstraintsException
+from stapi_fastapi.exceptions import ConstraintsException, failure_with
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stapi_fastapi.models.order import (
     Order,
@@ -99,7 +99,7 @@ class MockProductBackend(ProductBackend):
             self._orders[order.id] = order
             return Success(order)
         else:
-            return Failure(
+            return failure_with(
                 ConstraintsException(
                     f"not allowed: payload {payload.model_dump_json()} not in {[p.model_dump_json() for p in self._allowed_payloads]}"
                 )

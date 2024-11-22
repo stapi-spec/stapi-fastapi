@@ -7,6 +7,7 @@ from returns.result import Failure, Result, Success
 
 from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.backends.root_backend import RootBackend
+from stapi_fastapi.exceptions import failure_with
 from stapi_fastapi.models.conformance import CORE
 from stapi_fastapi.models.opportunity import (
     Opportunity,
@@ -75,7 +76,7 @@ class MockProductBackend(ProductBackend):
                 [o.model_copy(update=search.model_dump()) for o in self._opportunities]
             )
         except Exception as e:
-            return Failure(e)
+            return failure_with(e)
 
     async def create_order(
         self, product_router: ProductRouter, payload: OrderRequest, request: Request
@@ -111,7 +112,7 @@ class MockProductBackend(ProductBackend):
             self._orders[order.id] = order
             return Success(order)
         except Exception as e:
-            return Failure(e)
+            return failure_with(e)
 
 
 class MyOpportunityProperties(OpportunityProperties):
