@@ -17,6 +17,8 @@ none
 - Order field `id` must be a string, instead of previously allowing int. This is because while an
   order ID may an integral numeric value, it is not a "number" in the sense that math will be performed
   order ID values, so string represents this better.
+- Order and OrderCollection extend _GeoJsonBase instead of Feature and FeatureCollection, to allow for tighter
+  constraints on fields
 
 ### Deprecated
 
