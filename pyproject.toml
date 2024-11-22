@@ -29,6 +29,7 @@ pytest-coverage = "^0.0"
 pyrfc3339 = "^1.1"
 pre-commit = "^3.7.0"
 nox = "^2024.4.15"
+mypy = "^1.13.0"
 
 [tool.poetry.scripts]
 dev = "stapi_fastapi.__dev__:cli"
@@ -78,3 +79,10 @@ build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.poetry-dynamic-versioning]
 enable = true
+
+[[tool.mypy.overrides]]
+module = "pygeofilter.parsers.*"
+ignore_missing_imports = true
+
+# [tool.mypy]
+#plugins = ['pydantic.mypy']

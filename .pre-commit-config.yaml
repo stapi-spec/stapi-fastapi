@@ -19,6 +19,11 @@ repos:
     rev: v1.13.0
     hooks:
       - id: mypy
-        files: ".*\\.py$"
+        args: []  # override default of [--strict, --ignore-missing-imports]
+        files: src/
         additional_dependencies:
           - types-pyRFC3339~=1.1.1
+          - pydantic~=2.9.2
+          - returns~=0.23.0
+          - fastapi~=0.115.0
+          - geojson_pydantic~=1.1.1

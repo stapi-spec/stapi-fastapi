@@ -8,7 +8,7 @@ from pydantic import (
 )
 
 
-def validate(v: Any):
+def validate(v: Any) -> Any:
     if not issubclass(v, BaseModel):
         raise RuntimeError("BaseModel class required")
     return v

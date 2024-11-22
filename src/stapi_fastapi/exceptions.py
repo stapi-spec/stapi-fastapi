@@ -1,12 +1,6 @@
 from typing import Any, Optional
 
 from fastapi import HTTPException, status
-from returns.maybe import Some
-from returns.result import Failure
-
-
-def failure_with(e: Exception) -> Failure[Some[Exception]]:
-    return Failure(Some(e))
 
 
 class StapiException(HTTPException):
