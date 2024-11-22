@@ -11,7 +11,7 @@ packages = [{include = "stapi_fastapi", from="src"}]
 [tool.poetry.dependencies]
 python = "3.12.*"
 fastapi = "^0.115.0"
-pydantic = "^2.9.2"
+pydantic = "^2.10.1"
 geojson-pydantic = "^1.1.1"
 pygeofilter = "^0.2.4"
 returns = "^0.23.0"
