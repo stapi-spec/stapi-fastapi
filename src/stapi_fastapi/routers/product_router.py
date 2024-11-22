@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Self
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from geojson_pydantic.geometries import Geometry
-from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
@@ -177,16 +176,14 @@ class ProductRouter(APIRouter):
                         ),
                     ],
                 )
-            case Failure(Some(e)) if isinstance(e, ConstraintsException):
+            case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
-            case Failure(Some(e)):
+            case Failure(e):
                 logging.exception("An error occurred while searching opportunities", e)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Error searching opportunities",
                 )
-            case Failure(Maybe.empty):
-                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")
 
@@ -218,15 +215,13 @@ class ProductRouter(APIRouter):
                 order.links.append(Link(href=location, rel="self", type=TYPE_GEOJSON))
                 response.headers["Location"] = location
                 return order
-            case Failure(Some(e)) if isinstance(e, ConstraintsException):
+            case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
-            case Failure(Some(e)):
+            case Failure(e):
                 logging.exception("An error occurred while creating order", e)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Error creating order",
                 )
-            case Failure(Maybe.empty):
-                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR)
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")

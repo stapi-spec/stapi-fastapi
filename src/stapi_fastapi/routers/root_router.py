@@ -153,9 +153,7 @@ class RootRouter(APIRouter):
                         )
                     )
                 return orders
-            case Failure(Maybe.empty):
-                raise NotFoundException("Orders not found")
-            case Failure(Some(e)):
+            case Failure(e):
                 logging.exception("An error occurred while retrieving orders", e)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -169,14 +167,14 @@ class RootRouter(APIRouter):
         Get details for order with `order_id`.
         """
         match await self.backend.get_order(order_id, request):
-            case Success(order):
+            case Success(Some(order)):
                 order.links.append(
                     Link(href=str(request.url), rel="self", type=TYPE_GEOJSON)
                 )
                 return order
-            case Failure(Maybe.empty):
+            case Success(Maybe.empty):
                 raise NotFoundException("Order not found")
-            case Failure(Some(e)):
+            case Failure(e):
                 logging.exception(
                     f"An error occurred while retrieving order '{order_id}'", e
                 )
