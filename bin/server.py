@@ -2,10 +2,11 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
+from returns.maybe import Maybe
+from returns.result import Failure, Result, Success
 
 from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.backends.root_backend import RootBackend
-from stapi_fastapi.exceptions import NotFoundException
 from stapi_fastapi.models.conformance import CORE
 from stapi_fastapi.models.opportunity import (
     Opportunity,
@@ -37,20 +38,20 @@ class MockRootBackend(RootBackend):
     def __init__(self, orders: MockOrderDB) -> None:
         self._orders: MockOrderDB = orders
 
-    async def get_orders(self, request: Request) -> OrderCollection:
+    async def get_orders(self, request: Request) -> Result[OrderCollection, Exception]:
         """
         Show all orders.
         """
-        return OrderCollection(features=list(self._orders.values()))
+        return Success(OrderCollection(features=list(self._orders.values())))
 
-    async def get_order(self, order_id: str, request: Request) -> Order:
+    async def get_order(
+        self, order_id: str, request: Request
+    ) -> Result[Maybe[Order], Exception]:
         """
         Show details for order with `order_id`.
         """
-        try:
-            return self._orders[order_id]
-        except KeyError:
-            raise NotFoundException()
+
+        return Success(Maybe.from_optional(self._orders.get(order_id)))
 
 
 class MockProductBackend(ProductBackend):
@@ -64,41 +65,49 @@ class MockProductBackend(ProductBackend):
         product_router: ProductRouter,
         search: OpportunityRequest,
         request: Request,
-    ) -> list[Opportunity]:
-        return [o.model_copy(update=search.model_dump()) for o in self._opportunities]
+    ) -> Result[list[Opportunity], Exception]:
+        try:
+            return Success(
+                [o.model_copy(update=search.model_dump()) for o in self._opportunities]
+            )
+        except Exception as e:
+            return Failure(e)
 
     async def create_order(
         self, product_router: ProductRouter, payload: OrderRequest, request: Request
-    ) -> Order:
+    ) -> Result[Order, Exception]:
         """
         Create a new order.
         """
-        order = Order(
-            id=str(uuid4()),
-            geometry=payload.geometry,
-            properties={
-                "product_id": product_router.product.id,
-                "created": datetime.now(timezone.utc),
-                "status": OrderStatus(
-                    timestamp=datetime.now(timezone.utc),
-                    status_code=OrderStatusCode.accepted,
-                ),
-                "search_parameters": {
-                    "geometry": payload.geometry,
-                    "datetime": payload.datetime,
-                    "filter": payload.filter,
+        try:
+            order = Order(
+                id=str(uuid4()),
+                geometry=payload.geometry,
+                properties={
+                    "product_id": product_router.product.id,
+                    "created": datetime.now(timezone.utc),
+                    "status": OrderStatus(
+                        timestamp=datetime.now(timezone.utc),
+                        status_code=OrderStatusCode.accepted,
+                    ),
+                    "search_parameters": {
+                        "geometry": payload.geometry,
+                        "datetime": payload.datetime,
+                        "filter": payload.filter,
+                    },
+                    "order_parameters": payload.order_parameters.model_dump(),
+                    "opportunity_properties": {
+                        "datetime": "2024-01-29T12:00:00Z/2024-01-30T12:00:00Z",
+                        "off_nadir": 10,
+                    },
                 },
-                "order_parameters": payload.order_parameters.model_dump(),
-                "opportunity_properties": {
-                    "datetime": "2024-01-29T12:00:00Z/2024-01-30T12:00:00Z",
-                    "off_nadir": 10,
-                },
-            },
-            links=[],
-        )
+                links=[],
+            )
 
-        self._orders[order.id] = order
-        return order
+            self._orders[order.id] = order
+            return Success(order)
+        except Exception as e:
+            return Failure(e)
 
 
 class MyOpportunityProperties(OpportunityProperties):
