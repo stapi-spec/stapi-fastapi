@@ -9,8 +9,9 @@ from httpx import Response
 
 from stapi_fastapi.models.order import OrderRequest
 
+from .application import MyOrderParameters
 from .backends import MockProductBackend
-from .shared import SpotlightOrderParameters, find_link
+from .shared import find_link
 
 NOW = datetime.now(UTC)
 START = NOW
@@ -29,7 +30,7 @@ def create_order_allowed_payloads() -> list[OrderRequest]:
                 datetime.fromisoformat("2024-11-15T18:55:33Z"),
             ),
             filter=None,
-            order_parameters=SpotlightOrderParameters(s3_path="s3://my-bucket"),
+            order_parameters=MyOrderParameters(s3_path="s3://my-bucket"),
         ),
     ]
 

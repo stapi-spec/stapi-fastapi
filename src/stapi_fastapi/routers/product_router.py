@@ -51,7 +51,10 @@ class ProductRouter(APIRouter):
             methods=["POST"],
             response_class=GeoJSONResponse,
             # unknown why mypy can't see the constraints property on Product, ignoring
-            response_model=OpportunityCollection[Geometry, self.product.constraints],  # type: ignore
+            response_model=OpportunityCollection[
+                Geometry,
+                self.product.opportunity_properties,  # type: ignore
+            ],
             summary="Search Opportunities for the product",
             tags=["Products"],
         )

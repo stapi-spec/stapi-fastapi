@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     from stapi_fastapi.backends.product_backend import ProductBackend
 
 
+type Constraints = BaseModel
+
+
 class ProviderRole(str, Enum):
     licensor = "licensor"
     producer = "producer"
@@ -28,7 +31,7 @@ class Provider(BaseModel):
 
     # redefining init is a hack to get str type to validate for `url`,
     # as str is ultimately coerced into an AnyHttpUrl automatically anyway
-    def __init__(self, url: AnyHttpUrl | str, **kwargs):
+    def __init__(self, url: AnyHttpUrl | str, **kwargs) -> None:
         super().__init__(url=url, **kwargs)
 
 
@@ -44,7 +47,8 @@ class Product(BaseModel):
     links: list[Link] = Field(default_factory=list)
 
     # we don't want to include these in the model fields
-    _constraints: type[OpportunityProperties]
+    _constraints: type[Constraints]
+    _opportunity_properties: type[OpportunityProperties]
     _order_parameters: type[OrderParameters]
     _backend: ProductBackend
 
@@ -52,13 +56,15 @@ class Product(BaseModel):
         self,
         *args,
         backend: ProductBackend,
-        constraints: type[OpportunityProperties],
+        constraints: type[Constraints],
+        opportunity_properties: type[OpportunityProperties],
         order_parameters: type[OrderParameters],
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         self._backend = backend
         self._constraints = constraints
+        self._opportunity_properties = opportunity_properties
         self._order_parameters = order_parameters
 
     @property
@@ -66,8 +72,12 @@ class Product(BaseModel):
         return self._backend
 
     @property
-    def constraints(self: Self) -> type[OpportunityProperties]:
+    def constraints(self: Self) -> type[Constraints]:
         return self._constraints
+
+    @property
+    def opportunity_properties(self: Self) -> type[OpportunityProperties]:
+        return self._opportunity_properties
 
     @property
     def order_parameters(self: Self) -> type[OrderParameters]:

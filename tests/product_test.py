@@ -48,7 +48,6 @@ def test_product_constraints_response(
 
     json_schema = res.json()
     assert "properties" in json_schema
-    assert "datetime" in json_schema["properties"]
     assert "off_nadir" in json_schema["properties"]
 
 

@@ -14,19 +14,21 @@ from stapi_fastapi.models.opportunity import (
     Opportunity,
 )
 from stapi_fastapi.models.product import (
-    OrderParameters,
     Product,
     Provider,
     ProviderRole,
 )
 from stapi_fastapi.routers.root_router import RootRouter
 
-from .backends import MockOrderDB, MockProductBackend, MockRootBackend
-from .shared import SpotlightOpportunityProperties, SpotlightOrderParameters, find_link
-
-
-class TestSpotlightOrderParameters(OrderParameters):
-    s3_path: str | None = None
+from .application import (
+    MockOrderDB,
+    MockProductBackend,
+    MockRootBackend,
+    MyOpportunityProperties,
+    MyOrderParameters,
+    MyProductConstraints,
+)
+from .shared import find_link
 
 
 @pytest.fixture(scope="session")
@@ -62,8 +64,9 @@ def mock_product_test_spotlight(
         keywords=["test", "satellite"],
         providers=[mock_provider],
         links=[],
-        constraints=SpotlightOpportunityProperties,
-        order_parameters=SpotlightOrderParameters,
+        constraints=MyProductConstraints,
+        opportunity_properties=MyOpportunityProperties,
+        order_parameters=MyOrderParameters,
         backend=product_backend,
     )
 
@@ -140,10 +143,13 @@ def mock_test_spotlight_opportunities() -> list[Opportunity]:
                 type="Point",
                 coordinates=Position2D(longitude=0.0, latitude=0.0),
             ),
-            properties=SpotlightOpportunityProperties(
+            properties=MyOpportunityProperties(
                 product_id="xyz123",
                 datetime=(start, end),
-                off_nadir=20,
+                off_nadir={"minimum": 20, "maximum": 22},
+                vehicle_id=[1],
+                platform="platform_id",
+                other_thing="abcd1234",
             ),
         ),
     ]
