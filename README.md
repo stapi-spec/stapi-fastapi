@@ -36,12 +36,12 @@ command `pytest`.
 
 This project cannot be run on its own because it does not have any backend
 implementations. However, a minimal test implementation is provided in
-[`./bin/server.py`](./bin/server.py). It can be run with `uvicorn` as a way to
-interact with the API and to view the OpenAPI documentation. Run it like so
-from the project root:
+[`./tests/application.py`](./tests/application.py). It can be run with
+`uvicorn` as a way to interact with the API and to view the OpenAPI
+documentation. Run it like so from the project root:
 
 ```commandline
-uvicorn server:app --app-dir ./bin --reload
+uvicorn application:app --app-dir ./tests --reload
 ```
 
 With the `uvicorn` defaults the app should be accessible at

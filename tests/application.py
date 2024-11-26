@@ -1,7 +1,9 @@
 from datetime import datetime, timezone
+from typing import Literal, Self
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
+from pydantic import BaseModel, Field, model_validator
 from returns.maybe import Maybe
 from returns.result import Failure, Result, Success
 
@@ -110,8 +112,25 @@ class MockProductBackend(ProductBackend):
             return Failure(e)
 
 
-class MyOpportunityProperties(OpportunityProperties):
+class MyProductConstraints(BaseModel):
     off_nadir: int
+
+
+class OffNadirRange(BaseModel):
+    minimum: int = Field(ge=0, le=45)
+    maximum: int = Field(ge=0, le=45)
+
+    @model_validator(mode="after")
+    def validate_range(self) -> Self:
+        if self.minimum > self.maximum:
+            raise ValueError("range minimum cannot be greater than maximum")
+        return self
+
+
+class MyOpportunityProperties(OpportunityProperties):
+    off_nadir: OffNadirRange
+    vehicle_id: list[Literal[1, 2, 5, 7, 8]]
+    platform: Literal["platform_id"]
 
 
 class MyOrderParameters(OrderParameters):
@@ -137,7 +156,8 @@ product = Product(
     keywords=["test", "satellite"],
     providers=[provider],
     links=[],
-    constraints=MyOpportunityProperties,
+    constraints=MyProductConstraints,
+    opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
     backend=product_backend,
 )
