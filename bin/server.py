@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from returns.maybe import Maybe
-from returns.result import Failure, Result, Success
+from returns.result import Failure, ResultE, Success
 
 from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.backends.root_backend import RootBackend
@@ -38,15 +38,13 @@ class MockRootBackend(RootBackend):
     def __init__(self, orders: MockOrderDB) -> None:
         self._orders: MockOrderDB = orders
 
-    async def get_orders(self, request: Request) -> Result[OrderCollection, Exception]:
+    async def get_orders(self, request: Request) -> ResultE[OrderCollection]:
         """
         Show all orders.
         """
         return Success(OrderCollection(features=list(self._orders.values())))
 
-    async def get_order(
-        self, order_id: str, request: Request
-    ) -> Result[Maybe[Order], Exception]:
+    async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:
         """
         Show details for order with `order_id`.
         """
@@ -65,7 +63,7 @@ class MockProductBackend(ProductBackend):
         product_router: ProductRouter,
         search: OpportunityRequest,
         request: Request,
-    ) -> Result[list[Opportunity], Exception]:
+    ) -> ResultE[list[Opportunity]]:
         try:
             return Success(
                 [o.model_copy(update=search.model_dump()) for o in self._opportunities]
@@ -75,7 +73,7 @@ class MockProductBackend(ProductBackend):
 
     async def create_order(
         self, product_router: ProductRouter, payload: OrderRequest, request: Request
-    ) -> Result[Order, Exception]:
+    ) -> ResultE[Order]:
         """
         Create a new order.
         """

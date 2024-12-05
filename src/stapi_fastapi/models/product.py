@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, Literal, Optional, Self
 
 from pydantic import AnyHttpUrl, BaseModel, Field
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from stapi_fastapi.backends.product_backend import ProductBackend
 
 
-class ProviderRole(str, Enum):
+class ProviderRole(StrEnum):
     licensor = "licensor"
     producer = "producer"
     processor = "processor"

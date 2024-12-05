@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Generic, Literal, Optional, TypeVar
 
 from geojson_pydantic import Feature, FeatureCollection
@@ -36,7 +36,7 @@ class OrderRequest(BaseModel, Generic[ORP]):
     model_config = ConfigDict(strict=True)
 
 
-class OrderStatusCode(str, Enum):
+class OrderStatusCode(StrEnum):
     received = "received"
     accepted = "accepted"
     rejected = "rejected"

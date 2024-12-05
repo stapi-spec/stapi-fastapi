@@ -2,21 +2,19 @@ from typing import Protocol
 
 from fastapi import Request
 from returns.maybe import Maybe
-from returns.result import Result
+from returns.result import ResultE
 
 from stapi_fastapi.models.order import Order, OrderCollection
 
 
 class RootBackend(Protocol):  # pragma: nocover
-    async def get_orders(self, request: Request) -> Result[OrderCollection, Exception]:
+    async def get_orders(self, request: Request) -> ResultE[OrderCollection]:
         """
         Return a list of existing orders.
         """
         ...
 
-    async def get_order(
-        self, order_id: str, request: Request
-    ) -> Result[Maybe[Order], Exception]:
+    async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:
         """
         Get details for order with `order_id`.
 
