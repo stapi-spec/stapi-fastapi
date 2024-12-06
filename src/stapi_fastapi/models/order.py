@@ -1,7 +1,7 @@
 from enum import StrEnum
-from typing import Any, Generic, Literal, Optional, TypeVar
+from typing import Any, Dict, Generic, Iterator, Literal, Optional, TypeVar, Union
 
-from geojson_pydantic import Feature, FeatureCollection
+from geojson_pydantic.base import _GeoJsonBase
 from geojson_pydantic.geometries import Geometry
 from pydantic import (
     AwareDatetime,
@@ -9,12 +9,16 @@ from pydantic import (
     ConfigDict,
     Field,
     StrictStr,
+    field_validator,
 )
 
 from stapi_fastapi.models.opportunity import OpportunityProperties
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.types.datetime_interval import DatetimeInterval
 from stapi_fastapi.types.filter import CQL2Filter
+
+Props = TypeVar("Props", bound=Union[Dict[str, Any], BaseModel])
+Geom = TypeVar("Geom", bound=Geometry)
 
 
 class OrderParameters(BaseModel):
@@ -71,14 +75,43 @@ class OrderProperties(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-class Order(Feature[Geometry, OrderProperties]):
+# derived from geojson_pydantic.Feature
+class Order(_GeoJsonBase):
     # We need to enforce that orders have an id defined, as that is required to
     # retrieve them via the API
     id: StrictStr
     type: Literal["Feature"] = "Feature"
+
+    geometry: Geometry = Field(...)
+    properties: OrderProperties = Field(...)
+
     links: list[Link] = Field(default_factory=list)
 
+    __geojson_exclude_if_none__ = {"bbox", "id"}
 
-class OrderCollection(FeatureCollection[Order]):
+    @field_validator("geometry", mode="before")
+    def set_geometry(cls, geometry: Any) -> Any:
+        """set geometry from geo interface or input"""
+        if hasattr(geometry, "__geo_interface__"):
+            return geometry.__geo_interface__
+
+        return geometry
+
+
+# derived from geojson_pydantic.FeatureCollection
+class OrderCollection(_GeoJsonBase):
     type: Literal["FeatureCollection"] = "FeatureCollection"
+    features: list[Order]
     links: list[Link] = Field(default_factory=list)
+
+    def __iter__(self) -> Iterator[Order]:  # type: ignore [override]
+        """iterate over features"""
+        return iter(self.features)
+
+    def __len__(self) -> int:
+        """return features length"""
+        return len(self.features)
+
+    def __getitem__(self, index: int) -> Order:
+        """get feature at a given index"""
+        return self.features[index]
