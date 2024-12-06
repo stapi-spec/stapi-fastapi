@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Dict, Generic, Iterator, Literal, Optional, TypeVar, Union
 
 from geojson_pydantic.base import _GeoJsonBase
@@ -40,7 +40,7 @@ class OrderRequest(BaseModel, Generic[ORP]):
     model_config = ConfigDict(strict=True)
 
 
-class OrderStatusCode(str, Enum):
+class OrderStatusCode(StrEnum):
     received = "received"
     accepted = "accepted"
     rejected = "rejected"
@@ -82,8 +82,8 @@ class Order(_GeoJsonBase):
     id: StrictStr
     type: Literal["Feature"] = "Feature"
 
-    geometry: Geometry | None = Field(...)
-    properties: OrderProperties | None = Field(...)
+    geometry: Geometry = Field(...)
+    properties: OrderProperties = Field(...)
 
     links: list[Link] = Field(default_factory=list)
 

@@ -2,10 +2,12 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import Request
+from returns.maybe import Maybe
+from returns.result import Failure, ResultE, Success
 
 from stapi_fastapi.backends.product_backend import ProductBackend
 from stapi_fastapi.backends.root_backend import RootBackend
-from stapi_fastapi.exceptions import ConstraintsException, NotFoundException
+from stapi_fastapi.exceptions import ConstraintsException
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stapi_fastapi.models.order import (
     Order,
@@ -25,20 +27,17 @@ class MockRootBackend(RootBackend):
     def __init__(self, orders: MockOrderDB) -> None:
         self._orders = orders
 
-    async def get_orders(self, request: Request) -> OrderCollection:
+    async def get_orders(self, request: Request) -> ResultE[OrderCollection]:
         """
         Show all orders.
         """
-        return OrderCollection(features=list(self._orders.values()))
+        return Success(OrderCollection(features=list(self._orders.values())))
 
-    async def get_order(self, order_id: str, request: Request) -> Order:
+    async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:
         """
         Show details for order with `order_id`.
         """
-        try:
-            return self._orders[order_id]
-        except KeyError:
-            raise NotFoundException()
+        return Success(Maybe.from_optional(self._orders.get(order_id)))
 
 
 class MockProductBackend(ProductBackend):
@@ -52,15 +51,17 @@ class MockProductBackend(ProductBackend):
         product_router: ProductRouter,
         search: OpportunityRequest,
         request: Request,
-    ) -> list[Opportunity]:
-        return [o.model_copy(update=search.model_dump()) for o in self._opportunities]
+    ) -> ResultE[list[Opportunity]]:
+        return Success(
+            [o.model_copy(update=search.model_dump()) for o in self._opportunities]
+        )
 
     async def create_order(
         self,
         product_router: ProductRouter,
         payload: OrderRequest,
         request: Request,
-    ) -> Order:
+    ) -> ResultE[Order]:
         """
         Create a new order.
         """
@@ -89,8 +90,10 @@ class MockProductBackend(ProductBackend):
                 links=[],
             )
             self._orders[order.id] = order
-            return order
+            return Success(order)
         else:
-            raise ConstraintsException(
-                f"not allowed: payload {payload.model_dump_json()} not in {[p.model_dump_json() for p in self._allowed_payloads]}"
+            return Failure(
+                ConstraintsException(
+                    f"not allowed: payload {payload.model_dump_json()} not in {[p.model_dump_json() for p in self._allowed_payloads]}"
+                )
             )

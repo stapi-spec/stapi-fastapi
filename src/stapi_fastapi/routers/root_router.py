@@ -1,10 +1,14 @@
+import logging
 from typing import Self
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.datastructures import URL
+from returns.maybe import Maybe, Some
+from returns.result import Failure, Success
 
 from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
+from stapi_fastapi.exceptions import NotFoundException
 from stapi_fastapi.models.conformance import CORE, Conformance
 from stapi_fastapi.models.order import Order, OrderCollection
 from stapi_fastapi.models.product import Product, ProductsCollection
@@ -134,27 +138,52 @@ class RootRouter(APIRouter):
         )
 
     async def get_orders(self, request: Request) -> OrderCollection:
-        orders = await self.backend.get_orders(request)
-        for order in orders:
-            order.links.append(
-                Link(
-                    href=str(
-                        request.url_for(f"{self.name}:get-order", order_id=order.id)
-                    ),
-                    rel="self",
-                    type=TYPE_JSON,
+        match await self.backend.get_orders(request):
+            case Success(orders):
+                for order in orders:
+                    order.links.append(
+                        Link(
+                            href=str(
+                                request.url_for(
+                                    f"{self.name}:get-order", order_id=order.id
+                                )
+                            ),
+                            rel="self",
+                            type=TYPE_JSON,
+                        )
+                    )
+                return orders
+            case Failure(e):
+                logging.exception("An error occurred while retrieving orders", e)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error finding Orders",
                 )
-            )
-
-        return orders
+            case _:
+                raise AssertionError("Expected code to be unreachable")
 
     async def get_order(self: Self, order_id: str, request: Request) -> Order:
         """
         Get details for order with `order_id`.
         """
-        order = await self.backend.get_order(order_id, request)
-        order.links.append(Link(href=str(request.url), rel="self", type=TYPE_GEOJSON))
-        return order
+        match await self.backend.get_order(order_id, request):
+            case Success(Some(order)):
+                order.links.append(
+                    Link(href=str(request.url), rel="self", type=TYPE_GEOJSON)
+                )
+                return order
+            case Success(Maybe.empty):
+                raise NotFoundException("Order not found")
+            case Failure(e):
+                logging.exception(
+                    f"An error occurred while retrieving order '{order_id}'", e
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error finding Order",
+                )
+            case _:
+                raise AssertionError("Expected code to be unreachable")
 
     def add_product(self: Self, product: Product) -> None:
         # Give the include a prefix from the product router
