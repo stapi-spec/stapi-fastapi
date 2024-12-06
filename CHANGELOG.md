@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+
+### Added
+
+none
+
+### Changed
+
+- OrderStatusCode and ProviderRole are now StrEnum instead of (str, Enum)
+- All types using `Result[A, Exception]` have been replace with the equivalent type `ResultE[A]`
+
+### Deprecated
+
+none
+
+### Removed
+
+none
+
+### Fixed
+
+none
+
+### Security
+
+none
+
 ## [v0.2.0] - 2024-11-23
 
 ### Added
