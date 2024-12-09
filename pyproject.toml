@@ -59,8 +59,7 @@ show_missing = true
 skip_empty = true
 sort = "Cover"
 omit = [
-    "**/*_test.py",
-    "**/conftest.py",
+    "tests/**/*.py",
     "stapi_fastapi/__dev__.py",
 ]
 
