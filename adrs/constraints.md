@@ -20,11 +20,11 @@ JSON Schema is a well-defined specification language that can support this type 
 
 The geometry is not one of the fields that will be expressed as a schema constraint, since this is part of the Opportunity/Item/Feature top-level. The Opportunity geometry will express both uncertainty about the actual capture area and a “maximum extent” of capture, e.g., a small area within a larger data strip – this is intentionally vague so it can be used to express whatever semantics the provider wants.
 
-The ranges of predicted Opportunity values can be expressed using JSON in the following way: 
+The ranges of predicted Opportunity values can be expressed using JSON in the following way:
 
 - numeric value - number with const, enum, or minimum/maximum/exclusiveMinimum/exclusiveMaximum
 - string value - string with const or enum
-- datetime - type string using format date-time. The limitation wit this is that these values are not treated with JSON Schema as temporal, but rather a string pattern. As such, there is no formal way to define a temporal interval that the instance value must be within. Instead, we will repurpose the description field as a datetime interval in the same format as a search datetime field, e.g., 2024-01-01T00:00:00Z/2024-01-07T00:00:00Z.  Optionally, the pattern field can be defined if the valid datetime values also match a regular expression, e.g., 2024-01-0[123456]T.*, which while not as useful semantically as the description interval does provide a formal validation of the resulting object, which waving hand might be useful in some way waving hand . 
+- datetime - type string using format date-time. The limitation wit this is that these values are not treated with JSON Schema as temporal, but rather a string pattern. As such, there is no formal way to define a temporal interval that the instance value must be within. Instead, we will repurpose the description field as a datetime interval in the same format as a search datetime field, e.g., 2024-01-01T00:00:00Z/2024-01-07T00:00:00Z.  Optionally, the pattern field can be defined if the valid datetime values also match a regular expression, e.g., 2024-01-0[123456]T.*, which while not as useful semantically as the description interval does provide a formal validation of the resulting object, which waving hand might be useful in some way waving hand .
 
 ```json
 {
@@ -98,4 +98,3 @@ The Item that fulfills and Order placed on this Opportunity might be like:
   }
 }
 ```
-
