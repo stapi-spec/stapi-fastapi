@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
 
 from .backends import MockProductBackend
-from .datetime_interval_test import rfc3339_strftime
+from .test_datetime_interval import rfc3339_strftime
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])

@@ -1,6 +1,6 @@
 # STAPI FastAPI - Sensor Tasking API with FastAPI
 
-WARNING: The whole [STAPI spec] is very much work in progress, so things are
+WARNING: The whole [STAPI spec] is very much a work in progress, so things are
 guaranteed to be not correct.
 
 ## Usage

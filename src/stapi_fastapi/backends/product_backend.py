@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from fastapi import Request
-from returns.result import Result
+from returns.result import ResultE
 
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
 from stapi_fastapi.models.order import Order, OrderRequest
@@ -16,7 +16,7 @@ class ProductBackend(Protocol):  # pragma: nocover
         product_router: ProductRouter,
         search: OpportunityRequest,
         request: Request,
-    ) -> Result[list[Opportunity], Exception]:
+    ) -> ResultE[list[Opportunity]]:
         """
         Search for ordering opportunities for the  given search parameters.
 
@@ -29,7 +29,7 @@ class ProductBackend(Protocol):  # pragma: nocover
         product_router: ProductRouter,
         search: OrderRequest,
         request: Request,
-    ) -> Result[Order, Exception]:
+    ) -> ResultE[Order]:
         """
         Create a new order.
 
