@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+
+## [unreleased]
+
+### Added
+
+none
+
+### Changed
+
+- The concepts of Opportunity search Constraint and Opportunity search result Opportunity Properties are now separate,
+  recognizing that they have related attributes, but not neither the same attributes or the same values for those attributes.
+
+### Deprecated
+
+none
+
+### Removed
+
+none
+
+### Fixed
+
+none
+
+### Security
+
+none
+
+
 ## [0.3.0] - 2024-12-6
 
 ### Added
