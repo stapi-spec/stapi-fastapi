@@ -8,6 +8,11 @@ guaranteed to be not correct.
 STAPI FastAPI provides an `fastapi.APIRouter` which must be included in
 `fastapi.FastAPI` instance.
 
+
+## ADRs
+
+ADRs can be found in in the [adrs](./adrs/README.md) directory.
+
 ## Development
 
 It's 2024 and we still need to pick our poison for a 2024 dependency management
