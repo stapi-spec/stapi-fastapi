@@ -6,7 +6,7 @@ from fastapi import Request
 from returns.result import ResultE
 
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
-from stapi_fastapi.models.order import Order, OrderRequest
+from stapi_fastapi.models.order import Order, OrderPayload
 from stapi_fastapi.routers.product_router import ProductRouter
 
 
@@ -27,7 +27,7 @@ class ProductBackend(Protocol):  # pragma: nocover
     async def create_order(
         self,
         product_router: ProductRouter,
-        search: OrderRequest,
+        search: OrderPayload,
         request: Request,
     ) -> ResultE[Order]:
         """

@@ -29,17 +29,6 @@ OPP = TypeVar("OPP", bound=OpportunityProperties)
 ORP = TypeVar("ORP", bound=OrderParameters)
 
 
-class OrderRequest(BaseModel, Generic[ORP]):
-    datetime: DatetimeInterval
-    geometry: Geometry
-    # TODO: validate the CQL2 filter?
-    filter: CQL2Filter | None = None
-
-    order_parameters: ORP
-
-    model_config = ConfigDict(strict=True)
-
-
 class OrderStatusCode(StrEnum):
     received = "received"
     accepted = "accepted"
@@ -53,6 +42,11 @@ class OrderStatus(BaseModel):
     status_code: OrderStatusCode
     reason_code: Optional[str] = None
     reason_text: Optional[str] = None
+    links: list[Link] = Field(default_factory=list)
+
+
+class OrderStatuses(BaseModel):
+    statuses: list[OrderStatus]
     links: list[Link] = Field(default_factory=list)
 
 
@@ -115,3 +109,22 @@ class OrderCollection(_GeoJsonBase):
     def __getitem__(self, index: int) -> Order:
         """get feature at a given index"""
         return self.features[index]
+
+
+class OrderPayload(BaseModel, Generic[ORP]):
+    datetime: DatetimeInterval
+    geometry: Geometry
+    # TODO: validate the CQL2 filter?
+    filter: CQL2Filter | None = None
+
+    order_parameters: ORP
+
+    model_config = ConfigDict(strict=True)
+
+
+class OrderStatusPayload(BaseModel):
+    status_code: OrderStatusCode
+    reason_code: Optional[str] = None
+    reason_text: Optional[str] = None
+
+    model_config = ConfigDict(strict=True)

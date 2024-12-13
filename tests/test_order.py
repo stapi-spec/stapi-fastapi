@@ -7,7 +7,7 @@ from geojson_pydantic import Point
 from geojson_pydantic.types import Position2D
 from httpx import Response
 
-from stapi_fastapi.models.order import OrderRequest
+from stapi_fastapi.models.order import OrderPayload
 
 from .application import MyOrderParameters
 from .backends import MockProductBackend
@@ -19,9 +19,9 @@ END = START + timedelta(days=5)
 
 
 @pytest.fixture
-def create_order_allowed_payloads() -> list[OrderRequest]:
+def create_order_allowed_payloads() -> list[OrderPayload]:
     return [
-        OrderRequest(
+        OrderPayload(
             geometry=Point(
                 type="Point", coordinates=Position2D(longitude=13.4, latitude=52.5)
             ),
@@ -40,7 +40,7 @@ def new_order_response(
     product_id: str,
     product_backend: MockProductBackend,
     stapi_client: TestClient,
-    create_order_allowed_payloads: list[OrderRequest],
+    create_order_allowed_payloads: list[OrderPayload],
 ) -> Response:
     product_backend._allowed_payloads = create_order_allowed_payloads
 
@@ -96,3 +96,57 @@ def test_get_order_properties(
         order["properties"]["search_parameters"]["datetime"]
         == create_order_allowed_payloads[0].model_dump()["datetime"]
     )
+
+
+@pytest.mark.parametrize("product_id", ["test-spotlight"])
+def test_order_status_after_create(
+    get_order_response: Response, assert_link, stapi_client: TestClient
+) -> None:
+    body = get_order_response.json()
+    assert_link(
+        f"GET /orders/{body['id']}", body, "monitor", f"/orders/{body['id']}/statuses"
+    )
+
+    link = find_link(body["links"], "monitor")
+
+    res = stapi_client.get(link["href"])
+    assert res.status_code == status.HTTP_200_OK
+    assert res.headers["Content-Type"] == "application/json"
+    assert len(res.json()["statuses"]) == 1
+
+
+@pytest.mark.parametrize("product_id", ["test-spotlight"])
+def test_order_status_after_update(
+    get_order_response: Response, stapi_client: TestClient
+) -> None:
+    body = get_order_response.json()
+    statuses_url = find_link(body["links"], "monitor")["href"]
+
+    res = stapi_client.post(
+        statuses_url,
+        json={
+            "status_code": "accepted",
+            "reason_code": "REASON1",
+            "reason_text": "some reason",
+        },
+    )
+
+    assert res.status_code == status.HTTP_202_ACCEPTED
+
+    res = stapi_client.get(statuses_url)
+    assert res.status_code == status.HTTP_200_OK
+    assert res.headers["Content-Type"] == "application/json"
+    body = res.json()
+    assert len(body["statuses"]) == 2
+
+    s = body["statuses"][0]
+    assert s["reason_code"] == "REASON1"
+    assert s["reason_text"] == "some reason"
+    assert s["status_code"] == "accepted"
+    assert s["timestamp"]
+
+    s = body["statuses"][1]
+    assert s["reason_code"] is None
+    assert s["reason_text"] is None
+    assert s["status_code"] == "received"
+    assert s["timestamp"]
