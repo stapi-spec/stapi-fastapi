@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, Response, status
 from geojson_pydantic.geometries import Geometry
 from returns.result import Failure, Success
 
-from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
+from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.exceptions import ConstraintsException
 from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
@@ -214,8 +214,8 @@ class ProductRouter(APIRouter):
             request,
         ):
             case Success(order):
+                self.root_router.add_order_links(order, request)
                 location = str(self.root_router.generate_order_href(request, order.id))
-                order.links.append(Link(href=location, rel="self", type=TYPE_GEOJSON))
                 response.headers["Location"] = location
                 return order
             case Failure(e) if isinstance(e, ConstraintsException):

@@ -190,21 +190,7 @@ class RootRouter(APIRouter):
         """
         match await self.backend.get_order(order_id, request):
             case Success(Some(order)):
-                order.links.extend(
-                    [
-                        Link(href=str(request.url), rel="self", type=TYPE_GEOJSON),
-                        Link(
-                            href=str(
-                                request.url_for(
-                                    f"{self.name}:list-order-statuses",
-                                    order_id=order_id,
-                                )
-                            ),
-                            rel="monitor",
-                            type=TYPE_JSON,
-                        ),
-                    ]
-                )
+                self.add_order_links(order, request)
                 return order
             case Success(Maybe.empty):
                 raise NotFoundException("Order not found")
@@ -262,8 +248,8 @@ class RootRouter(APIRouter):
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Error setting Order Status",
                 )
-            case _:
-                raise AssertionError("Expected code to be unreachable")
+            case x:
+                raise AssertionError(f"Expected code to be unreachable {x}")
 
     def add_product(self: Self, product: Product) -> None:
         # Give the include a prefix from the product router
@@ -271,5 +257,26 @@ class RootRouter(APIRouter):
         self.include_router(product_router, prefix=f"/products/{product.id}")
         self.product_routers[product.id] = product_router
 
-    def generate_order_href(self: Self, request: Request, order_id: int | str) -> URL:
+    def generate_order_href(self: Self, request: Request, order_id: str) -> URL:
         return request.url_for(f"{self.name}:get-order", order_id=order_id)
+
+    def generate_order_statuses_href(
+        self: Self, request: Request, order_id: str
+    ) -> URL:
+        return request.url_for(f"{self.name}:list-order-statuses", order_id=order_id)
+
+    def add_order_links(self, order: Order, request: Request):
+        order.links.append(
+            Link(
+                href=str(self.generate_order_href(request, order.id)),
+                rel="self",
+                type=TYPE_GEOJSON,
+            )
+        )
+        order.links.append(
+            Link(
+                href=str(self.generate_order_statuses_href(request, order.id)),
+                rel="monitor",
+                type=TYPE_JSON,
+            ),
+        )

@@ -64,6 +64,25 @@ def test_new_order_location_header_matches_self_link(
     assert new_order_response.headers["Location"] == str(link["href"])
 
 
+@pytest.mark.parametrize("product_id", ["test-spotlight"])
+def test_new_order_links(new_order_response: Response, assert_link) -> None:
+    order = new_order_response.json()
+    assert_link(
+        f"GET /orders/{order['id']}",
+        order,
+        "monitor",
+        f"/orders/{order['id']}/statuses",
+    )
+
+    assert_link(
+        f"GET /orders/{order['id']}",
+        order,
+        "self",
+        f"/orders/{order['id']}",
+        media_type="application/geo+json",
+    )
+
+
 @pytest.fixture
 def get_order_response(
     stapi_client: TestClient, new_order_response: Response
@@ -100,13 +119,12 @@ def test_get_order_properties(
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
 def test_order_status_after_create(
-    get_order_response: Response, assert_link, stapi_client: TestClient
+    get_order_response: Response, stapi_client: TestClient, assert_link
 ) -> None:
     body = get_order_response.json()
     assert_link(
         f"GET /orders/{body['id']}", body, "monitor", f"/orders/{body['id']}/statuses"
     )
-
     link = find_link(body["links"], "monitor")
 
     res = stapi_client.get(link["href"])
