@@ -6,14 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 
-## [0.4.0] - 2024-12-11
+## [unreleased]
 
 ### Added
 
 - Endpoint `/orders/{order_id}/statuses` supporting `GET` for retrieving statuses. The entity returned by this conforms
   to the change proposed in [stapi-spec#239](https://github.com/stapi-spec/stapi-spec/pull/239).
-
 - Endpoint `/orders/{order_id}/statuses` supporting `POST` for updating current status
+- RootBackend has new methods `get_order_statuses` and `set_order_status`
 
 ### Changed
 
