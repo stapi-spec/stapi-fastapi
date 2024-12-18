@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 
+## [unreleased]
+
+### Added
+
+- Endpoint `/orders/{order_id}/statuses` supporting `GET` for retrieving statuses. The entity returned by this conforms
+  to the change proposed in [stapi-spec#239](https://github.com/stapi-spec/stapi-spec/pull/239).
+- Endpoint `/orders/{order_id}/statuses` supporting `POST` for updating current status
+- RootBackend has new methods `get_order_statuses` and `set_order_status`
+
+### Changed
+
+- OrderRequest renamed to OrderPayload
+
+### Deprecated
+
+none
+
+### Removed
+
+none
+
+### Fixed
+
+none
+
+### Security
+
+none
+
 ## [0.4.0] - 2024-12-11
 
 ### Added
@@ -44,6 +73,8 @@ none
 
 - OrderStatusCode and ProviderRole are now StrEnum instead of (str, Enum)
 - All types using `Result[A, Exception]` have been replace with the equivalent type `ResultE[A]`
+- Order and OrderCollection extend _GeoJsonBase instead of Feature and FeatureCollection, to allow for tighter
+  constraints on fields
 
 ### Deprecated
 
@@ -75,8 +106,6 @@ none
 - Order field `id` must be a string, instead of previously allowing int. This is because while an
   order ID may an integral numeric value, it is not a "number" in the sense that math will be performed
   order ID values, so string represents this better.
-- Order and OrderCollection extend _GeoJsonBase instead of Feature and FeatureCollection, to allow for tighter
-  constraints on fields
 
 ### Deprecated
 
