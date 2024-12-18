@@ -44,6 +44,8 @@ class OrderStatus(BaseModel):
     reason_text: Optional[str] = None
     links: list[Link] = Field(default_factory=list)
 
+    model_config = ConfigDict(extra="allow")
+
 
 class OrderStatuses(BaseModel):
     statuses: list[OrderStatus]
