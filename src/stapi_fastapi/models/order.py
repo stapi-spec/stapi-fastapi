@@ -47,8 +47,8 @@ class OrderStatus(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-class OrderStatuses(BaseModel):
-    statuses: list[OrderStatus]
+class OrderStatuses[T: OrderStatus](BaseModel):
+    statuses: list[T]
     links: list[Link] = Field(default_factory=list)
 
 
@@ -59,10 +59,10 @@ class OrderSearchParameters(BaseModel):
     filter: CQL2Filter | None = None
 
 
-class OrderProperties(BaseModel):
+class OrderProperties[T: OrderStatus](BaseModel):
     product_id: str
     created: AwareDatetime
-    status: OrderStatus
+    status: T
 
     search_parameters: OrderSearchParameters
     opportunity_properties: dict[str, Any]
@@ -125,8 +125,9 @@ class OrderPayload(BaseModel, Generic[ORP]):
 
 
 class OrderStatusPayload(BaseModel):
-    status_code: OrderStatusCode
-    reason_code: Optional[str] = None
-    reason_text: Optional[str] = None
+    status_code: OrderStatusCode | None = None
+    reason_code: str | None = None
+    reason_text: str | None = None
 
-    model_config = ConfigDict(strict=True)
+    # todo: rework generic types to allow subclasses to be used correctly, and remove extra=allow
+    model_config = ConfigDict(strict=True, extra="allow")

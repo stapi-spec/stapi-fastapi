@@ -237,7 +237,7 @@ class RootRouter(APIRouter):
                 raise AssertionError("Expected code to be unreachable")
 
     async def set_order_status(
-        self: Self, order_id: str, payload: OrderStatusPayload, request: Request
+        self, order_id: str, payload: OrderStatusPayload, request: Request
     ) -> Response:
         match await self.backend.set_order_status(order_id, payload, request):
             case Success(_):

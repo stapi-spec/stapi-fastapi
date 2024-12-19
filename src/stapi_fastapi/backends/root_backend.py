@@ -12,7 +12,7 @@ from stapi_fastapi.models.order import (
 )
 
 
-class RootBackend(Protocol):  # pragma: nocover
+class RootBackend[T: OrderStatusPayload, U: OrderStatus](Protocol):  # pragma: nocover
     async def get_orders(self, request: Request) -> ResultE[OrderCollection]:
         """
         Return a list of existing orders.
@@ -48,15 +48,14 @@ class RootBackend(Protocol):  # pragma: nocover
         ...
 
     async def set_order_status(
-        self, order_id: str, payload: OrderStatusPayload, request: Request
-    ) -> ResultE[bool]:
+        self, order_id: str, payload: T, request: Request
+    ) -> ResultE[U]:
         """
-        Get statuses for order with `order_id`.
+        Set statuses for order with `order_id`.
 
-        Should return returns.results.Success[list[OrderStatus]] if order is found.
+        Should return returns.results.Success[OrderStatus] if successful.
 
-        Should return returns.results.Failure[Exception] if the order is
-        not found or if access is denied.
+        Should return returns.results.Failure[Exception] if the status was not able to be set.
 
         A Failure[Exception] will result in a 500.
         """

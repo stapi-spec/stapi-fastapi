@@ -63,13 +63,13 @@ class MockRootBackend(RootBackend):
 
     async def set_order_status(
         self, order_id: str, payload: OrderStatusPayload, request: Request
-    ) -> ResultE[bool]:
+    ) -> ResultE[OrderStatus]:
         input = payload.model_dump()
         input["timestamp"] = datetime.now(UTC)
         order_status = OrderStatus.model_validate(input)
         self._orders_db._orders[order_id].properties.status = order_status
         self._orders_db._statuses[order_id].insert(0, order_status)
-        return Success(True)
+        return Success(order_status)
 
 
 class MockProductBackend(ProductBackend):
