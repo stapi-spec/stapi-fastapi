@@ -3,6 +3,7 @@ from typing import Self
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.datastructures import URL
+from fastapi.responses import Response
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 
@@ -10,7 +11,12 @@ from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.exceptions import NotFoundException
 from stapi_fastapi.models.conformance import CORE, Conformance
-from stapi_fastapi.models.order import Order, OrderCollection
+from stapi_fastapi.models.order import (
+    Order,
+    OrderCollection,
+    OrderStatuses,
+    OrderStatusPayload,
+)
 from stapi_fastapi.models.product import Product, ProductsCollection
 from stapi_fastapi.models.root import RootResponse
 from stapi_fastapi.models.shared import Link
@@ -81,6 +87,22 @@ class RootRouter(APIRouter):
             methods=["GET"],
             name=f"{self.name}:get-order",
             response_class=GeoJSONResponse,
+            tags=["Orders"],
+        )
+
+        self.add_api_route(
+            "/orders/{order_id}/statuses",
+            self.get_order_statuses,
+            methods=["GET"],
+            name=f"{self.name}:list-order-statuses",
+            tags=["Orders"],
+        )
+
+        self.add_api_route(
+            "/orders/{order_id}/statuses",
+            self.set_order_status,
+            methods=["POST"],
+            name=f"{self.name}:set-order-status",
             tags=["Orders"],
         )
 
@@ -168,9 +190,7 @@ class RootRouter(APIRouter):
         """
         match await self.backend.get_order(order_id, request):
             case Success(Some(order)):
-                order.links.append(
-                    Link(href=str(request.url), rel="self", type=TYPE_GEOJSON)
-                )
+                self.add_order_links(order, request)
                 return order
             case Success(Maybe.empty):
                 raise NotFoundException("Order not found")
@@ -185,11 +205,78 @@ class RootRouter(APIRouter):
             case _:
                 raise AssertionError("Expected code to be unreachable")
 
+    async def get_order_statuses(
+        self: Self, order_id: str, request: Request
+    ) -> OrderStatuses:
+        match await self.backend.get_order_statuses(order_id, request):
+            case Success(statuses):
+                return OrderStatuses(
+                    statuses=statuses,
+                    links=[
+                        Link(
+                            href=str(
+                                request.url_for(
+                                    f"{self.name}:list-order-statuses",
+                                    order_id=order_id,
+                                )
+                            ),
+                            rel="self",
+                            type=TYPE_JSON,
+                        )
+                    ],
+                )
+            case Failure(e):
+                logging.exception(
+                    "An error occurred while retrieving order statuses", e
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error finding Order Statuses",
+                )
+            case _:
+                raise AssertionError("Expected code to be unreachable")
+
+    async def set_order_status(
+        self, order_id: str, payload: OrderStatusPayload, request: Request
+    ) -> Response:
+        match await self.backend.set_order_status(order_id, payload, request):
+            case Success(_):
+                return Response(status_code=status.HTTP_202_ACCEPTED)
+            case Failure(e):
+                logging.exception("An error occurred while setting order status", e)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error setting Order Status",
+                )
+            case x:
+                raise AssertionError(f"Expected code to be unreachable {x}")
+
     def add_product(self: Self, product: Product) -> None:
         # Give the include a prefix from the product router
         product_router = ProductRouter(product, self)
         self.include_router(product_router, prefix=f"/products/{product.id}")
         self.product_routers[product.id] = product_router
 
-    def generate_order_href(self: Self, request: Request, order_id: int | str) -> URL:
+    def generate_order_href(self: Self, request: Request, order_id: str) -> URL:
         return request.url_for(f"{self.name}:get-order", order_id=order_id)
+
+    def generate_order_statuses_href(
+        self: Self, request: Request, order_id: str
+    ) -> URL:
+        return request.url_for(f"{self.name}:list-order-statuses", order_id=order_id)
+
+    def add_order_links(self, order: Order, request: Request):
+        order.links.append(
+            Link(
+                href=str(self.generate_order_href(request, order.id)),
+                rel="self",
+                type=TYPE_GEOJSON,
+            )
+        )
+        order.links.append(
+            Link(
+                href=str(self.generate_order_statuses_href(request, order.id)),
+                rel="monitor",
+                type=TYPE_JSON,
+            ),
+        )

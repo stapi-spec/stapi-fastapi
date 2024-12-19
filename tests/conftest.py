@@ -21,7 +21,7 @@ from stapi_fastapi.models.product import (
 from stapi_fastapi.routers.root_router import RootRouter
 
 from .application import (
-    MockOrderDB,
+    InMemoryOrderDB,
     MockProductBackend,
     MockRootBackend,
     MyOpportunityProperties,
@@ -37,17 +37,17 @@ def base_url() -> Iterator[str]:
 
 
 @pytest.fixture
-def order_db() -> MockOrderDB:
-    return MockOrderDB()
+def order_db() -> InMemoryOrderDB:
+    return InMemoryOrderDB()
 
 
 @pytest.fixture
-def product_backend(order_db: MockOrderDB) -> MockProductBackend:
+def product_backend(order_db: InMemoryOrderDB) -> MockProductBackend:
     return MockProductBackend(order_db)
 
 
 @pytest.fixture
-def root_backend(order_db: MockOrderDB) -> MockRootBackend:
+def root_backend(order_db: InMemoryOrderDB) -> MockRootBackend:
     return MockRootBackend(order_db)
 
 

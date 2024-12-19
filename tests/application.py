@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from collections import defaultdict
+from datetime import UTC, datetime, timezone
 from typing import Literal, Self
 from uuid import uuid4
 
@@ -19,9 +20,10 @@ from stapi_fastapi.models.order import (
     Order,
     OrderCollection,
     OrderParameters,
-    OrderRequest,
+    OrderPayload,
     OrderStatus,
     OrderStatusCode,
+    OrderStatusPayload,
 )
 from stapi_fastapi.models.product import (
     Product,
@@ -32,33 +34,49 @@ from stapi_fastapi.routers.product_router import ProductRouter
 from stapi_fastapi.routers.root_router import RootRouter
 
 
-class MockOrderDB(dict[int | str, Order]):
-    pass
+class InMemoryOrderDB:
+    _orders: dict[str, Order] = {}
+    _statuses: dict[str, list[OrderStatus]] = defaultdict(list)
 
 
 class MockRootBackend(RootBackend):
-    def __init__(self, orders: MockOrderDB) -> None:
-        self._orders: MockOrderDB = orders
+    def __init__(self, orders: InMemoryOrderDB) -> None:
+        self._orders_db: InMemoryOrderDB = orders
 
     async def get_orders(self, request: Request) -> ResultE[OrderCollection]:
         """
         Show all orders.
         """
-        return Success(OrderCollection(features=list(self._orders.values())))
+        return Success(OrderCollection(features=list(self._orders_db._orders.values())))
 
     async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:
         """
         Show details for order with `order_id`.
         """
 
-        return Success(Maybe.from_optional(self._orders.get(order_id)))
+        return Success(Maybe.from_optional(self._orders_db._orders.get(order_id)))
+
+    async def get_order_statuses(
+        self, order_id: str, request: Request
+    ) -> ResultE[list[OrderStatus]]:
+        return Success(self._orders_db._statuses[order_id])
+
+    async def set_order_status(
+        self, order_id: str, payload: OrderStatusPayload, request: Request
+    ) -> ResultE[OrderStatus]:
+        input = payload.model_dump()
+        input["timestamp"] = datetime.now(UTC)
+        order_status = OrderStatus.model_validate(input)
+        self._orders_db._orders[order_id].properties.status = order_status
+        self._orders_db._statuses[order_id].insert(0, order_status)
+        return Success(order_status)
 
 
 class MockProductBackend(ProductBackend):
-    def __init__(self, orders: MockOrderDB) -> None:
+    def __init__(self, orders: InMemoryOrderDB) -> None:
         self._opportunities: list[Opportunity] = []
-        self._allowed_payloads: list[OrderRequest] = []
-        self._orders: MockOrderDB = orders
+        self._allowed_payloads: list[OrderPayload] = []
+        self._orders_db: InMemoryOrderDB = orders
 
     async def search_opportunities(
         self,
@@ -74,22 +92,23 @@ class MockProductBackend(ProductBackend):
             return Failure(e)
 
     async def create_order(
-        self, product_router: ProductRouter, payload: OrderRequest, request: Request
+        self, product_router: ProductRouter, payload: OrderPayload, request: Request
     ) -> ResultE[Order]:
         """
         Create a new order.
         """
         try:
+            status = OrderStatus(
+                timestamp=datetime.now(timezone.utc),
+                status_code=OrderStatusCode.received,
+            )
             order = Order(
                 id=str(uuid4()),
                 geometry=payload.geometry,
                 properties={
                     "product_id": product_router.product.id,
                     "created": datetime.now(timezone.utc),
-                    "status": OrderStatus(
-                        timestamp=datetime.now(timezone.utc),
-                        status_code=OrderStatusCode.accepted,
-                    ),
+                    "status": status,
                     "search_parameters": {
                         "geometry": payload.geometry,
                         "datetime": payload.datetime,
@@ -104,7 +123,8 @@ class MockProductBackend(ProductBackend):
                 links=[],
             )
 
-            self._orders[order.id] = order
+            self._orders_db._orders[order.id] = order
+            self._orders_db._statuses[order.id].insert(0, status)
             return Success(order)
         except Exception as e:
             return Failure(e)
@@ -135,7 +155,7 @@ class MyOrderParameters(OrderParameters):
     s3_path: str | None = None
 
 
-order_db = MockOrderDB()
+order_db = InMemoryOrderDB()
 product_backend = MockProductBackend(order_db)
 root_backend = MockRootBackend(order_db)
 

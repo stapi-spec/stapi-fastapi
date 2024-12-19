@@ -2,48 +2,29 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import Request
-from returns.maybe import Maybe
 from returns.result import Failure, ResultE, Success
 
 from stapi_fastapi.backends.product_backend import ProductBackend
-from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.exceptions import ConstraintsException
-from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
+from stapi_fastapi.models.opportunity import (
+    Opportunity,
+    OpportunityRequest,
+)
 from stapi_fastapi.models.order import (
     Order,
-    OrderCollection,
-    OrderRequest,
+    OrderPayload,
     OrderStatus,
     OrderStatusCode,
 )
 from stapi_fastapi.routers.product_router import ProductRouter
 
-
-class MockOrderDB(dict[int | str, Order]):
-    pass
-
-
-class MockRootBackend(RootBackend):
-    def __init__(self, orders: MockOrderDB) -> None:
-        self._orders = orders
-
-    async def get_orders(self, request: Request) -> ResultE[OrderCollection]:
-        """
-        Show all orders.
-        """
-        return Success(OrderCollection(features=list(self._orders.values())))
-
-    async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:
-        """
-        Show details for order with `order_id`.
-        """
-        return Success(Maybe.from_optional(self._orders.get(order_id)))
+from .application import InMemoryOrderDB
 
 
 class MockProductBackend(ProductBackend):
-    def __init__(self, orders: MockOrderDB) -> None:
+    def __init__(self, orders: InMemoryOrderDB) -> None:
         self._opportunities: list[Opportunity] = []
-        self._allowed_payloads: list[OrderRequest] = []
+        self._allowed_payloads: list[OrderPayload] = []
         self._orders = orders
 
     async def search_opportunities(
@@ -59,7 +40,7 @@ class MockProductBackend(ProductBackend):
     async def create_order(
         self,
         product_router: ProductRouter,
-        payload: OrderRequest,
+        payload: OrderPayload,
         request: Request,
     ) -> ResultE[Order]:
         """

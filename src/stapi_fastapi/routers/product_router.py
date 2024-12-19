@@ -7,13 +7,13 @@ from fastapi import APIRouter, HTTPException, Request, Response, status
 from geojson_pydantic.geometries import Geometry
 from returns.result import Failure, Success
 
-from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
+from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.exceptions import ConstraintsException
 from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
     OpportunityRequest,
 )
-from stapi_fastapi.models.order import Order, OrderRequest
+from stapi_fastapi.models.order import Order, OrderPayload
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.responses import GeoJSONResponse
@@ -85,13 +85,13 @@ class ProductRouter(APIRouter):
         # the annotation on every `ProductRouter` instance's `create_order`, not just
         # this one's.
         async def _create_order(
-            payload: OrderRequest,
+            payload: OrderPayload,
             request: Request,
             response: Response,
         ) -> Order:
             return await self.create_order(payload, request, response)
 
-        _create_order.__annotations__["payload"] = OrderRequest[
+        _create_order.__annotations__["payload"] = OrderPayload[
             self.product.order_parameters  # type: ignore
         ]
 
@@ -203,7 +203,7 @@ class ProductRouter(APIRouter):
         return self.product.order_parameters
 
     async def create_order(
-        self, payload: OrderRequest, request: Request, response: Response
+        self, payload: OrderPayload, request: Request, response: Response
     ) -> Order:
         """
         Create a new order.
@@ -214,8 +214,8 @@ class ProductRouter(APIRouter):
             request,
         ):
             case Success(order):
+                self.root_router.add_order_links(order, request)
                 location = str(self.root_router.generate_order_href(request, order.id))
-                order.links.append(Link(href=location, rel="self", type=TYPE_GEOJSON))
                 response.headers["Location"] = location
                 return order
             case Failure(e) if isinstance(e, ConstraintsException):
