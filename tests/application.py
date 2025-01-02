@@ -43,7 +43,9 @@ class MockRootBackend(RootBackend):
     def __init__(self, orders: InMemoryOrderDB) -> None:
         self._orders_db: InMemoryOrderDB = orders
 
-    async def get_orders(self, request: Request) -> ResultE[OrderCollection]:
+    async def get_orders(
+        self, request: Request, next_token: str, limit: int
+    ) -> ResultE[OrderCollection]:
         """
         Show all orders.
         """

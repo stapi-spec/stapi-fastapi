@@ -13,7 +13,9 @@ from stapi_fastapi.models.order import (
 
 
 class RootBackend[T: OrderStatusPayload, U: OrderStatus](Protocol):  # pragma: nocover
-    async def get_orders(self, request: Request) -> ResultE[OrderCollection]:
+    async def get_orders(
+        self, request: Request, next_token: str, limit: int
+    ) -> ResultE[OrderCollection]:
         """
         Return a list of existing orders.
         """

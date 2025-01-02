@@ -168,3 +168,59 @@ def test_order_status_after_update(
     assert s["reason_text"] is None
     assert s["status_code"] == "received"
     assert s["timestamp"]
+
+
+@pytest.fixture
+def create_second_order_allowed_payloads() -> list[OrderPayload]:
+    return [
+        OrderPayload(
+            geometry=Point(
+                type="Point", coordinates=Position2D(longitude=14.4, latitude=56.5)
+            ),
+            datetime=(
+                datetime.fromisoformat("2024-10-09T18:55:33Z"),
+                datetime.fromisoformat("2024-10-12T18:55:33Z"),
+            ),
+            filter=None,
+            order_parameters=MyOrderParameters(s3_path="s3://my-bucket"),
+        ),
+    ]
+
+
+@pytest.mark.parametrize("product_id", ["test-spotlight"])
+def test_order_pagination(
+    product_id: str,
+    product_backend: MockProductBackend,
+    stapi_client: TestClient,
+    create_order_allowed_payloads: list[OrderPayload],
+    create_second_order_allowed_payloads: list[OrderPayload],
+) -> None:
+    product_backend._allowed_payloads = create_order_allowed_payloads
+
+    # check empty
+    res = stapi_client.get("/orders", params={"next_token": "a", "limit": 10})
+    default_orders = {"type": "FeatureCollection", "features": [], "links": []}
+
+    assert res.status_code == status.HTTP_200_OK
+    assert res.headers["Content-Type"] == "application/geo+json"
+    assert res.json() == default_orders
+
+    # add order to product
+    res = stapi_client.post(
+        f"products/{product_id}/orders",
+        json=create_order_allowed_payloads[0].model_dump(),
+    )
+
+    assert res.status_code == status.HTTP_201_CREATED, res.text
+    assert res.headers["Content-Type"] == "application/geo+json"
+
+    res = stapi_client.post(
+        f"products/{product_id}/orders",
+        json=create_second_order_allowed_payloads[0].model_dump(),
+    )
+
+    # call all orders
+    res = stapi_client.get("/orders", params={"next_token": "a", "limit": 1})
+    assert res.status_code == status.HTTP_200_OK
+    assert res.headers["Content-Type"] == "application/geo+json"
+    print("hold")

@@ -159,8 +159,10 @@ class RootRouter(APIRouter):
             ],
         )
 
-    async def get_orders(self, request: Request) -> OrderCollection:
-        match await self.backend.get_orders(request):
+    async def get_orders(
+        self, request: Request, next_token: str, limit: int
+    ) -> OrderCollection:
+        match await self.backend.get_orders(request, next_token, limit):
             case Success(orders):
                 for order in orders:
                     order.links.append(
