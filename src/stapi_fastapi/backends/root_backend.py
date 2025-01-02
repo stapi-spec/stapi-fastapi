@@ -6,7 +6,7 @@ from returns.result import ResultE
 
 from stapi_fastapi.models.order import (
     Order,
-    OrderCollection,
+    Orders,
     OrderStatus,
     OrderStatusPayload,
 )
@@ -15,7 +15,7 @@ from stapi_fastapi.models.order import (
 class RootBackend[T: OrderStatusPayload, U: OrderStatus](Protocol):  # pragma: nocover
     async def get_orders(
         self, request: Request, next_token: str, limit: int
-    ) -> ResultE[OrderCollection]:
+    ) -> ResultE[Orders]:
         """
         Return a list of existing orders.
         """

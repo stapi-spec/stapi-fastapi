@@ -198,7 +198,7 @@ def test_order_pagination(
     product_backend._allowed_payloads = create_order_allowed_payloads
 
     # check empty
-    res = stapi_client.get("/orders", params={"next_token": "a", "limit": 10})
+    res = stapi_client.get("/orders", params={"next_token": "a", "limit": 1})
     default_orders = {"type": "FeatureCollection", "features": [], "links": []}
 
     assert res.status_code == status.HTTP_200_OK
@@ -221,6 +221,8 @@ def test_order_pagination(
 
     # call all orders
     res = stapi_client.get("/orders", params={"next_token": "a", "limit": 1})
+    checker = res.json()
+
     assert res.status_code == status.HTTP_200_OK
-    assert res.headers["Content-Type"] == "application/geo+json"
-    print("hold")
+    assert len(checker["features"]) == 1
+    assert checker["links"] != []

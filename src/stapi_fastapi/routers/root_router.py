@@ -164,7 +164,7 @@ class RootRouter(APIRouter):
     ) -> OrderCollection:
         match await self.backend.get_orders(request, next_token, limit):
             case Success(orders):
-                for order in orders:
+                for order in orders.collection:
                     order.links.append(
                         Link(
                             href=str(
@@ -176,7 +176,7 @@ class RootRouter(APIRouter):
                             type=TYPE_JSON,
                         )
                     )
-                return orders
+                return orders.collection
             case Failure(e):
                 logging.exception("An error occurred while retrieving orders", e)
                 raise HTTPException(

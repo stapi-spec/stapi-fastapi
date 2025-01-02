@@ -21,6 +21,7 @@ from stapi_fastapi.models.order import (
     OrderCollection,
     OrderParameters,
     OrderPayload,
+    Orders,
     OrderStatus,
     OrderStatusCode,
     OrderStatusPayload,
@@ -45,11 +46,18 @@ class MockRootBackend(RootBackend):
 
     async def get_orders(
         self, request: Request, next_token: str, limit: int
-    ) -> ResultE[OrderCollection]:
+    ) -> ResultE[Orders]:
         """
         Show all orders.
         """
-        return Success(OrderCollection(features=list(self._orders_db._orders.values())))
+        return Success(
+            Orders(
+                collection=OrderCollection(
+                    features=list(self._orders_db._orders.values())
+                ),
+                token="a",
+            )
+        )
 
     async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:
         """
