@@ -47,16 +47,13 @@ class MockRootBackend(RootBackend):
         self, request: Request, next: str | None = None, limit: int | None = None
     ) -> ResultE[tuple[OrderCollection, str]]:
         """
-        Show all orders.
+        Return orders from backend.  Handle pagination/limit if applicable
         """
-        # it limit does NOT reach the last index in the db list THEN we return token
+        features = list(self._orders_db._orders.values())
+        if limit and not next:
+            return Success((OrderCollection(features=features[:limit]), ""))
+        if next:
 
-        # if no limit - no token since getting all records - return no token
-        # backend determines if we return a token
-        if next:  # initial implementation - if given a token, assume we continue pagination and return a new token
-            features = list(self._orders_db._orders.values())
-
-            # get records based on limit
             def token_processor(next: str) -> tuple[str, int]:
                 """process token to return new token and start loc"""
                 return "new_token", 0
@@ -68,28 +65,12 @@ class MockRootBackend(RootBackend):
                 else:
                     features = features[start:limit]
                 return Success((OrderCollection(features=features), token))
-            else:  # if no limit with token
+            else:  # token and no limit
                 return Success((OrderCollection(features=features[start:]), ""))
-        else:  # no input token means give us everything and return no token
+        else:
             return Success(
                 (OrderCollection(features=list(self._orders_db._orders.values())), "")
             )
-        # need to be agnostic to token here.  If we have MORE records we COULD return - i.e. final index found by limit, then we return a token.  If we return the last record THEN return EMPTY token.
-        # token = ''
-        # if not limit:
-        #     limit = 0
-        # # parse token here and do stuff to get starting index
-        # start_index = 0
-        # end_index = start_index + limit
-        # if not limit:
-        #     collection = OrderCollection(features=list(self._orders_db._orders.values()))
-        # else:
-        #     all_orders = list(self._orders_db._orders.values())
-        #     features = [all_orders[i] for i in indicies if 0 <= i < len(lst)]
-        #     collection =
-        return Success(
-            (OrderCollection(features=list(self._orders_db._orders.values())), "")
-        )
 
     async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:
         """

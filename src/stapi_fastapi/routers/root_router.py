@@ -176,13 +176,13 @@ class RootRouter(APIRouter):
                             type=TYPE_JSON,
                         )
                     )
-                if token:  # only return pagination link if backend returns token
+                if token:  # pagination link if backend returns token
                     query = request.url.components.query
                     params = {
                         param.split("=")[0]: param.split("=")[1]
                         for param in query.split("&")
                     }
-                    params["next"] = token  # replace/add token
+                    params["next"] = token
                     updated_url = request.url.replace_query_params(**params)
                     collections.links.append(
                         Link(href=str(updated_url), rel="next", type=TYPE_JSON)
