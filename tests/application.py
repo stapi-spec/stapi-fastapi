@@ -21,7 +21,6 @@ from stapi_fastapi.models.order import (
     OrderCollection,
     OrderParameters,
     OrderPayload,
-    Orders,
     OrderStatus,
     OrderStatusCode,
     OrderStatusPayload,
@@ -45,18 +44,51 @@ class MockRootBackend(RootBackend):
         self._orders_db: InMemoryOrderDB = orders
 
     async def get_orders(
-        self, request: Request, next_token: str, limit: int
-    ) -> ResultE[Orders]:
+        self, request: Request, next: str | None = None, limit: int | None = None
+    ) -> ResultE[tuple[OrderCollection, str]]:
         """
         Show all orders.
         """
-        return Success(
-            Orders(
-                collection=OrderCollection(
-                    features=list(self._orders_db._orders.values())
-                ),
-                token="a",
+        # it limit does NOT reach the last index in the db list THEN we return token
+
+        # if no limit - no token since getting all records - return no token
+        # backend determines if we return a token
+        if next:  # initial implementation - if given a token, assume we continue pagination and return a new token
+            features = list(self._orders_db._orders.values())
+
+            # get records based on limit
+            def token_processor(next: str) -> tuple[str, int]:
+                """process token to return new token and start loc"""
+                return "new_token", 0
+
+            token, start = token_processor(next)
+            if limit:
+                if start + limit > len(features):
+                    features = features[start:]
+                else:
+                    features = features[start:limit]
+                return Success((OrderCollection(features=features), token))
+            else:  # if no limit with token
+                return Success((OrderCollection(features=features[start:]), ""))
+        else:  # no input token means give us everything and return no token
+            return Success(
+                (OrderCollection(features=list(self._orders_db._orders.values())), "")
             )
+        # need to be agnostic to token here.  If we have MORE records we COULD return - i.e. final index found by limit, then we return a token.  If we return the last record THEN return EMPTY token.
+        # token = ''
+        # if not limit:
+        #     limit = 0
+        # # parse token here and do stuff to get starting index
+        # start_index = 0
+        # end_index = start_index + limit
+        # if not limit:
+        #     collection = OrderCollection(features=list(self._orders_db._orders.values()))
+        # else:
+        #     all_orders = list(self._orders_db._orders.values())
+        #     features = [all_orders[i] for i in indicies if 0 <= i < len(lst)]
+        #     collection =
+        return Success(
+            (OrderCollection(features=list(self._orders_db._orders.values())), "")
         )
 
     async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:

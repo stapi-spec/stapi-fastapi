@@ -222,13 +222,13 @@ def test_order_pagination(
     )
 
     # call all orders
-    res = stapi_client.get("/orders", params={"next_token": OLD_TOKEN, "limit": 1})
+    res = stapi_client.get("/orders", params={"next": OLD_TOKEN, "limit": 1})
     checker = res.json()
 
     assert res.status_code == status.HTTP_200_OK
 
     # temp check to make sure token link isn't added to inside collection
-    for link in checker["features"][1]["links"]:
+    for link in checker["features"][0]["links"]:
         assert link["rel"] != "next"
     assert checker["links"] != []
 
