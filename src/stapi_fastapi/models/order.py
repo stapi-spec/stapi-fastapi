@@ -113,11 +113,6 @@ class OrderCollection(_GeoJsonBase):
         return self.features[index]
 
 
-class Orders(BaseModel):
-    collection: OrderCollection
-    token: str
-
-
 class OrderPayload(BaseModel, Generic[ORP]):
     datetime: DatetimeInterval
     geometry: Geometry

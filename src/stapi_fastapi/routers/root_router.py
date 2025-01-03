@@ -160,11 +160,11 @@ class RootRouter(APIRouter):
         )
 
     async def get_orders(
-        self, request: Request, next_token: str, limit: int
+        self, request: Request, next_token: str | None = None, limit: int | None = None
     ) -> OrderCollection:
         match await self.backend.get_orders(request, next_token, limit):
-            case Success(orders):
-                for order in orders.collection:
+            case Success((collections, token)):
+                for order in collections:
                     order.links.append(
                         Link(
                             href=str(
@@ -176,7 +176,22 @@ class RootRouter(APIRouter):
                             type=TYPE_JSON,
                         )
                     )
-                return orders.collection
+                if next_token:
+                    query = request.url.components.query
+                    if query:  # check url for params
+                        params = {
+                            param.split("=")[0]: param.split("=")[1]
+                            for param in query.split("&")
+                        }
+                        params["next_token"] = token  # replace old token if exists
+                        updated_url = request.url.replace_query_params(**params)
+                    else:  # add if doesn't exist
+                        updated_url = request.url.include_query_params(token=token)
+
+                    collections.links.append(
+                        Link(href=str(updated_url), rel="next", type=TYPE_JSON)
+                    )
+                return collections
             case Failure(e):
                 logging.exception("An error occurred while retrieving orders", e)
                 raise HTTPException(

@@ -196,9 +196,11 @@ def test_order_pagination(
     create_second_order_allowed_payloads: list[OrderPayload],
 ) -> None:
     product_backend._allowed_payloads = create_order_allowed_payloads
+    OLD_TOKEN = "a_token"
 
     # check empty
-    res = stapi_client.get("/orders", params={"next_token": "a", "limit": 1})
+    res = stapi_client.get("/orders")
+
     default_orders = {"type": "FeatureCollection", "features": [], "links": []}
 
     assert res.status_code == status.HTTP_200_OK
@@ -220,9 +222,17 @@ def test_order_pagination(
     )
 
     # call all orders
-    res = stapi_client.get("/orders", params={"next_token": "a", "limit": 1})
+    res = stapi_client.get("/orders", params={"next_token": OLD_TOKEN, "limit": 1})
     checker = res.json()
 
     assert res.status_code == status.HTTP_200_OK
-    assert len(checker["features"]) == 1
+
+    # temp check to make sure token link isn't added to inside collection
+    for link in checker["features"][1]["links"]:
+        assert link["rel"] != "next"
     assert checker["links"] != []
+
+    # check to make sure new token in link
+    assert OLD_TOKEN not in checker["links"][0]["href"]
+
+    assert len(checker["features"]) == 1
