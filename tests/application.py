@@ -44,33 +44,35 @@ class MockRootBackend(RootBackend):
         self._orders_db: InMemoryOrderDB = orders
 
     async def get_orders(
-        self, request: Request, next: str | None = None, limit: int | None = None
+        self, request: Request, next: str | None, limit: int
     ) -> ResultE[tuple[OrderCollection, str]]:
         """
         Return orders from backend.  Handle pagination/limit if applicable
         """
-        features = list(self._orders_db._orders.values())
-        if limit and not next:
-            return Success((OrderCollection(features=features[:limit]), ""))
-        if next:
+        try:
+            start = 0
+            order_ids = sorted(self._orders_db._orders.keys())
+            if not order_ids:  # not data in db return empty
+                return Success(
+                    (
+                        OrderCollection(
+                            features=list(self._orders_db._orders.values())
+                        ),
+                        "",
+                    )
+                )
 
-            def token_processor(next: str) -> tuple[str, int]:
-                """process token to return new token and start loc"""
-                return "new_token", 0
+            if next:
+                start = [i for i, x in enumerate(order_ids) if x == next][0]
+            end = start + limit
+            ids = order_ids[start:end]
 
-            token, start = token_processor(next)
-            if limit:
-                if start + limit > len(features):
-                    features = features[start:]
-                else:
-                    features = features[start:limit]
-                return Success((OrderCollection(features=features), token))
-            else:  # token and no limit
-                return Success((OrderCollection(features=features[start:]), ""))
-        else:
-            return Success(
-                (OrderCollection(features=list(self._orders_db._orders.values())), "")
-            )
+            feats = [self._orders_db._orders[order_id] for order_id in ids]
+            next = self._orders_db._orders[order_ids[end]].id
+
+            return Success((OrderCollection(features=feats), next))
+        except Exception as e:
+            return Failure(e)
 
     async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:
         """

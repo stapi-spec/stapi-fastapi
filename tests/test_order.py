@@ -187,7 +187,7 @@ def create_second_order_allowed_payloads() -> list[OrderPayload]:
     ]
 
 
-@pytest.mark.parametrize("product_id", ["test-spotlight"])
+@pytest.mark.parametrize("product_id", [pytest.param("test-spotlight", id="base test")])
 def test_order_pagination(
     product_id: str,
     product_backend: MockProductBackend,
@@ -196,7 +196,6 @@ def test_order_pagination(
     create_second_order_allowed_payloads: list[OrderPayload],
 ) -> None:
     product_backend._allowed_payloads = create_order_allowed_payloads
-    OLD_TOKEN = "a_token"
 
     # check empty
     res = stapi_client.get("/orders")
@@ -220,9 +219,9 @@ def test_order_pagination(
         f"products/{product_id}/orders",
         json=create_second_order_allowed_payloads[0].model_dump(),
     )
-
     # call all orders
-    res = stapi_client.get("/orders", params={"next": OLD_TOKEN, "limit": 1})
+    next = res.json()["id"]
+    res = stapi_client.get("/orders", params={"next": next, "limit": 1})
     checker = res.json()
 
     assert res.status_code == status.HTTP_200_OK
@@ -233,6 +232,6 @@ def test_order_pagination(
     assert checker["links"] != []
 
     # check to make sure new token in link
-    assert OLD_TOKEN not in checker["links"][0]["href"]
+    assert next not in checker["links"][0]["href"]
 
     assert len(checker["features"]) == 1

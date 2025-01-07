@@ -160,7 +160,7 @@ class RootRouter(APIRouter):
         )
 
     async def get_orders(
-        self, request: Request, next: str | None = None, limit: int | None = None
+        self, request: Request, next: str | None = None, limit: int = 10
     ) -> OrderCollection:
         match await self.backend.get_orders(request, next, limit):
             case Success((collections, token)):
@@ -177,13 +177,7 @@ class RootRouter(APIRouter):
                         )
                     )
                 if token:  # pagination link if backend returns token
-                    query = request.url.components.query
-                    params = {
-                        param.split("=")[0]: param.split("=")[1]
-                        for param in query.split("&")
-                    }
-                    params["next"] = token
-                    updated_url = request.url.replace_query_params(**params)
+                    updated_url = request.url.include_query_params(next=token)
                     collections.links.append(
                         Link(href=str(updated_url), rel="next", type=TYPE_JSON)
                     )
