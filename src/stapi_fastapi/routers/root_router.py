@@ -178,7 +178,7 @@ class RootRouter(APIRouter):
                     )
                 return orders
             case Failure(e):
-                logger.exception(
+                logger.error(
                     "An error occurred while retrieving orders: %s",
                     traceback.format_exception(e),
                 )
@@ -200,7 +200,7 @@ class RootRouter(APIRouter):
             case Success(Maybe.empty):
                 raise NotFoundException("Order not found")
             case Failure(e):
-                logger.exception(
+                logger.error(
                     "An error occurred while retrieving order '%s': %s", order_id,
                     traceback.format_exception(e),
                 )
@@ -232,7 +232,7 @@ class RootRouter(APIRouter):
                     ],
                 )
             case Failure(e):
-                logger.exception(
+                logger.error(
                     "An error occurred while retrieving order statuses: %s",
                     traceback.format_exception(e),
                 )
@@ -250,7 +250,7 @@ class RootRouter(APIRouter):
             case Success(_):
                 return Response(status_code=status.HTTP_202_ACCEPTED)
             case Failure(e):
-                logger.exception(
+                logger.error(
                     "An error occurred while setting order status: %s",
                     traceback.format_exception(e),
                 )

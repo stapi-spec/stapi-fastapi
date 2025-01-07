@@ -184,7 +184,7 @@ class ProductRouter(APIRouter):
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):
-                logger.exception(
+                logger.error(
                     "An error occurred while searching opportunities: %s",
                     traceback.format_exception(e),
                 )
@@ -226,7 +226,7 @@ class ProductRouter(APIRouter):
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):
-                logger.exception(
+                logger.error(
                     "An error occurred while creating order: %s",
                     traceback.format_exception(e),
                 )
