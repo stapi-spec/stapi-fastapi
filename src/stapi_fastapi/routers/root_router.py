@@ -4,7 +4,6 @@ from typing import Self
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.datastructures import URL
-from fastapi.responses import Response
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 
@@ -16,7 +15,6 @@ from stapi_fastapi.models.order import (
     Order,
     OrderCollection,
     OrderStatuses,
-    OrderStatusPayload,
 )
 from stapi_fastapi.models.product import Product, ProductsCollection
 from stapi_fastapi.models.root import RootResponse
@@ -98,14 +96,6 @@ class RootRouter(APIRouter):
             self.get_order_statuses,
             methods=["GET"],
             name=f"{self.name}:list-order-statuses",
-            tags=["Orders"],
-        )
-
-        self.add_api_route(
-            "/orders/{order_id}/statuses",
-            self.set_order_status,
-            methods=["POST"],
-            name=f"{self.name}:set-order-status",
             tags=["Orders"],
         )
 
@@ -244,24 +234,6 @@ class RootRouter(APIRouter):
                 )
             case _:
                 raise AssertionError("Expected code to be unreachable")
-
-    async def set_order_status(
-        self, order_id: str, payload: OrderStatusPayload, request: Request
-    ) -> Response:
-        match await self.backend.set_order_status(order_id, payload, request):
-            case Success(_):
-                return Response(status_code=status.HTTP_202_ACCEPTED)
-            case Failure(e):
-                logger.error(
-                    "An error occurred while setting order status: %s",
-                    traceback.format_exception(e),
-                )
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Error setting Order Status",
-                )
-            case x:
-                raise AssertionError(f"Expected code to be unreachable {x}")
 
     def add_product(self: Self, product: Product) -> None:
         # Give the include a prefix from the product router

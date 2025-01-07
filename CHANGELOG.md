@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Endpoint `/orders/{order_id}/statuses` supporting `GET` for retrieving statuses. The entity returned by this conforms
   to the change proposed in [stapi-spec#239](https://github.com/stapi-spec/stapi-spec/pull/239).
-- Endpoint `/orders/{order_id}/statuses` supporting `POST` for updating current status
 - RootBackend has new methods `get_order_statuses` and `set_order_status`
 
 ### Changed
@@ -25,7 +24,8 @@ none
 
 ### Removed
 
-none
+- Endpoint `/orders/{order_id}/statuses` supporting `POST` for updating current status was added and then
+  removed prior to release
 
 ### Fixed
 

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import UTC, datetime, timezone
+from datetime import datetime, timezone
 from typing import Literal, Self
 from uuid import uuid4
 
@@ -23,7 +23,6 @@ from stapi_fastapi.models.order import (
     OrderPayload,
     OrderStatus,
     OrderStatusCode,
-    OrderStatusPayload,
 )
 from stapi_fastapi.models.product import (
     Product,
@@ -60,16 +59,6 @@ class MockRootBackend(RootBackend):
         self, order_id: str, request: Request
     ) -> ResultE[list[OrderStatus]]:
         return Success(self._orders_db._statuses[order_id])
-
-    async def set_order_status(
-        self, order_id: str, payload: OrderStatusPayload, request: Request
-    ) -> ResultE[OrderStatus]:
-        input = payload.model_dump()
-        input["timestamp"] = datetime.now(UTC)
-        order_status = OrderStatus.model_validate(input)
-        self._orders_db._orders[order_id].properties.status = order_status
-        self._orders_db._statuses[order_id].insert(0, order_status)
-        return Success(order_status)
 
 
 class MockProductBackend(ProductBackend):
