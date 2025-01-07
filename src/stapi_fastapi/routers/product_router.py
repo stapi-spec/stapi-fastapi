@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Self
 import traceback
+from typing import TYPE_CHECKING, Self
+
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from geojson_pydantic.geometries import Geometry
 from returns.result import Failure, Success

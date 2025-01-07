@@ -1,6 +1,7 @@
 import logging
-from typing import Self
 import traceback
+from typing import Self
+
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.datastructures import URL
 from fastapi.responses import Response
@@ -201,7 +202,8 @@ class RootRouter(APIRouter):
                 raise NotFoundException("Order not found")
             case Failure(e):
                 logger.error(
-                    "An error occurred while retrieving order '%s': %s", order_id,
+                    "An error occurred while retrieving order '%s': %s",
+                    order_id,
                     traceback.format_exception(e),
                 )
                 raise HTTPException(
