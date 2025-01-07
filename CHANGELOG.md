@@ -29,7 +29,7 @@ none
 
 ### Fixed
 
-none
+- Exception logging
 
 ### Security
 
