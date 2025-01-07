@@ -1,6 +1,6 @@
 import logging
 from typing import Self
-
+import traceback
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.datastructures import URL
 from fastapi.responses import Response
@@ -22,6 +22,8 @@ from stapi_fastapi.models.root import RootResponse
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.product_router import ProductRouter
+
+logger = logging.getLogger(__name__)
 
 
 class RootRouter(APIRouter):
@@ -176,7 +178,10 @@ class RootRouter(APIRouter):
                     )
                 return orders
             case Failure(e):
-                logging.exception("An error occurred while retrieving orders", e)
+                logger.exception(
+                    "An error occurred while retrieving orders: %s",
+                    traceback.format_exception(e),
+                )
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Error finding Orders",
@@ -195,8 +200,9 @@ class RootRouter(APIRouter):
             case Success(Maybe.empty):
                 raise NotFoundException("Order not found")
             case Failure(e):
-                logging.exception(
-                    f"An error occurred while retrieving order '{order_id}'", e
+                logger.exception(
+                    "An error occurred while retrieving order '%s': %s", order_id,
+                    traceback.format_exception(e),
                 )
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -226,8 +232,9 @@ class RootRouter(APIRouter):
                     ],
                 )
             case Failure(e):
-                logging.exception(
-                    "An error occurred while retrieving order statuses", e
+                logger.exception(
+                    "An error occurred while retrieving order statuses: %s",
+                    traceback.format_exception(e),
                 )
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -243,7 +250,10 @@ class RootRouter(APIRouter):
             case Success(_):
                 return Response(status_code=status.HTTP_202_ACCEPTED)
             case Failure(e):
-                logging.exception("An error occurred while setting order status", e)
+                logger.exception(
+                    "An error occurred while setting order status: %s",
+                    traceback.format_exception(e),
+                )
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Error setting Order Status",

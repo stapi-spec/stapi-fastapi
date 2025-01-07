@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING, Self
-
+import traceback
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from geojson_pydantic.geometries import Geometry
 from returns.result import Failure, Success
@@ -21,6 +21,8 @@ from stapi_fastapi.types.json_schema_model import JsonSchemaModel
 
 if TYPE_CHECKING:
     from stapi_fastapi.routers import RootRouter
+
+logger = logging.getLogger(__name__)
 
 
 class ProductRouter(APIRouter):
@@ -182,7 +184,10 @@ class ProductRouter(APIRouter):
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):
-                logging.exception("An error occurred while searching opportunities", e)
+                logger.exception(
+                    "An error occurred while searching opportunities: %s",
+                    traceback.format_exception(e),
+                )
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Error searching opportunities",
@@ -221,7 +226,10 @@ class ProductRouter(APIRouter):
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):
-                logging.exception("An error occurred while creating order", e)
+                logger.exception(
+                    "An error occurred while creating order: %s",
+                    traceback.format_exception(e),
+                )
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Error creating order",
