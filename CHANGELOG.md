@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 
-## [unreleased]
+## [v0.5.0] - 2025-01-08
 
 ### Added
 
@@ -36,7 +36,7 @@ none
 
 none
 
-## [0.4.0] - 2024-12-11
+## [v0.4.0] - 2024-12-11
 
 ### Added
 
@@ -64,7 +64,7 @@ none
 none
 
 
-## [0.3.0] - 2024-12-6
+## [v0.3.0] - 2024-12-6
 
 ### Added
 
@@ -138,7 +138,8 @@ Initial release
 - Add links `opportunities` and `create-order` to Product
 - Add link `create-order` to OpportunityCollection
 
-[unreleased]: https://github.com/stapi-spec/stapi-fastapi/compare/v0.4.0...main
+[unreleased]: https://github.com/stapi-spec/stapi-fastapi/compare/v0.5.0...main
+[v0.4.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.5.0
 [v0.4.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.4.0
 [v0.3.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.3.0
 [v0.2.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.2.0
