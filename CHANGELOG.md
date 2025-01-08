@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Endpoint `/orders/{order_id}/statuses` supporting `GET` for retrieving statuses. The entity returned by this conforms
   to the change proposed in [stapi-spec#239](https://github.com/stapi-spec/stapi-spec/pull/239).
 - RootBackend has new methods `get_order_statuses` and `set_order_status`
+- `*args`/`**kwargs` support in RootRouter's `add_product` allows to configure underlyinging ProductRouter
 
 ### Changed
 

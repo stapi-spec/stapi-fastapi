@@ -235,9 +235,9 @@ class RootRouter(APIRouter):
             case _:
                 raise AssertionError("Expected code to be unreachable")
 
-    def add_product(self: Self, product: Product) -> None:
+    def add_product(self: Self, product: Product, *args, **kwargs) -> None:
         # Give the include a prefix from the product router
-        product_router = ProductRouter(product, self)
+        product_router = ProductRouter(product, self, *args, **kwargs)
         self.include_router(product_router, prefix=f"/products/{product.id}")
         self.product_routers[product.id] = product_router
 
