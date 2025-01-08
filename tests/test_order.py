@@ -263,7 +263,7 @@ def prepare_order_pagination(
         ),
     ],
 )
-def test_order_pagination_hold(
+def test_order_pagination(
     prepare_order_pagination,
     stapi_client: TestClient,
     product_id: str,
