@@ -6,13 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 
-## [unreleased]
+## [v0.5.0] - 2025-01-08
 
 ### Added
 
 - Endpoint `/orders/{order_id}/statuses` supporting `GET` for retrieving statuses. The entity returned by this conforms
   to the change proposed in [stapi-spec#239](https://github.com/stapi-spec/stapi-spec/pull/239).
-- RootBackend has new methods `get_order_statuses` and `set_order_status`
+- RootBackend has new method `get_order_statuses`
 - `*args`/`**kwargs` support in RootRouter's `add_product` allows to configure underlyinging ProductRouter
 
 ### Changed
@@ -27,6 +27,7 @@ none
 
 - Endpoint `/orders/{order_id}/statuses` supporting `POST` for updating current status was added and then
   removed prior to release
+- RootBackend method `set_order_status` was added and then removed
 
 ### Fixed
 
@@ -36,7 +37,7 @@ none
 
 none
 
-## [0.4.0] - 2024-12-11
+## [v0.4.0] - 2024-12-11
 
 ### Added
 
@@ -64,7 +65,7 @@ none
 none
 
 
-## [0.3.0] - 2024-12-6
+## [v0.3.0] - 2024-12-6
 
 ### Added
 
@@ -138,7 +139,8 @@ Initial release
 - Add links `opportunities` and `create-order` to Product
 - Add link `create-order` to OpportunityCollection
 
-[unreleased]: https://github.com/stapi-spec/stapi-fastapi/compare/v0.4.0...main
+[unreleased]: https://github.com/stapi-spec/stapi-fastapi/compare/v0.5.0...main
+[v0.4.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.5.0
 [v0.4.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.4.0
 [v0.3.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.3.0
 [v0.2.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.2.0
