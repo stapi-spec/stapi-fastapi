@@ -122,12 +122,3 @@ class OrderPayload(BaseModel, Generic[ORP]):
     order_parameters: ORP
 
     model_config = ConfigDict(strict=True)
-
-
-class OrderStatusPayload(BaseModel):
-    status_code: OrderStatusCode | None = None
-    reason_code: str | None = None
-    reason_text: str | None = None
-
-    # todo: rework generic types to allow subclasses to be used correctly, and remove extra=allow
-    model_config = ConfigDict(strict=True, extra="allow")
