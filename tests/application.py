@@ -55,7 +55,7 @@ class MockRootBackend(RootBackend):
                 limit = 100
 
             order_ids = [*self._orders_db._orders.keys()]
-            if not order_ids:  # no data in db
+            if not order_ids and not next:  # no data in db
                 return Success(
                     (
                         OrderCollection(

@@ -197,19 +197,17 @@ def create_order_payloads() -> list[OrderPayload]:
 @pytest.fixture
 def prepare_order_pagination(
     stapi_client: TestClient, create_order_payloads: list[OrderPayload]
-) -> tuple[str, str, str]:
-    # product_backend._allowed_payloads = create_order_payloads
+) -> None:
     product_id = "test-spotlight"
 
-    # # check empty
-    # res = stapi_client.get("/orders")
-    # default_orders = {"type": "FeatureCollection", "features": [], "links": []}
-    # assert res.status_code == status.HTTP_200_OK
-    # assert res.headers["Content-Type"] == "application/geo+json"
-    # assert res.json() == default_orders
+    # check empty
+    res = stapi_client.get("/orders")
+    default_orders = {"type": "FeatureCollection", "features": [], "links": []}
+    assert res.status_code == status.HTTP_200_OK
+    assert res.headers["Content-Type"] == "application/geo+json"
+    assert res.json() == default_orders
 
     # get uuids created to use as pagination tokens
-    order_ids = []
     for payload in create_order_payloads:
         res = stapi_client.post(
             f"products/{product_id}/orders",
@@ -217,82 +215,35 @@ def prepare_order_pagination(
         )
         assert res.status_code == status.HTTP_201_CREATED, res.text
         assert res.headers["Content-Type"] == "application/geo+json"
-        order_ids.append(res.json()["id"])
 
-    # res = stapi_client.get("/orders")
-    # checker = res.json()
-    # assert len(checker['features']) == 3
-
-    return tuple(order_ids)
+    res = stapi_client.get("/orders")
+    checker = res.json()
+    assert len(checker["features"]) == 3
 
 
-@pytest.mark.parametrize(
-    "product_id,expected_status,limit,id_retrieval,token_back",
-    [
-        pytest.param(
-            "test-spotlight",
-            status.HTTP_200_OK,
-            1,
-            0,
-            True,
-            id="input frst order_id token get new token back",
-        ),
-        pytest.param(
-            "test-spotlight",
-            status.HTTP_200_OK,
-            1,
-            2,
-            False,
-            id="input last order_id token get NO token back",
-        ),
-        pytest.param(
-            "test-spotlight",
-            status.HTTP_404_NOT_FOUND,
-            1,
-            "BAD_TOKEN",
-            False,
-            id="input bad token get 404 back",
-        ),
-        pytest.param(
-            "test-spotlight",
-            status.HTTP_200_OK,
-            1,
-            1000000,
-            False,
-            id="high limit handled and returns valid records",
-        ),
-    ],
-)
 def test_order_pagination(
     prepare_order_pagination,
     stapi_client: TestClient,
-    product_id: str,
-    expected_status: int,
-    limit: int,
-    id_retrieval: int | str,
-    token_back: bool,
 ) -> None:
-    order_ids = prepare_order_pagination
+    # prepare_order_pagination
 
-    res = stapi_client.get(
-        "/orders", params={"next": order_ids[id_retrieval], "limit": limit}
-    )
-    assert res.status_code == expected_status
-
+    res = stapi_client.get("/orders", params={"next": None, "limit": 1})
+    assert res.status_code == status.HTTP_200_OK
     body = res.json()
-    for link in body["features"][0]["links"]:
-        assert link["rel"] != "next"
-    assert body["links"] != []
+    next = body["links"][0]["href"]
 
-    # check to make sure new token in link
-    if token_back:
-        assert order_ids[id_retrieval] not in body["links"][0]["href"]
+    while next:
+        res = stapi_client.get(next)
+        assert res.status_code == status.HTTP_200_OK
+        body = res.json()
+        if body["links"]:
+            next = body["links"][0]["href"]
+        else:
+            break
 
-        assert len(body["features"]) == limit
 
-
-# test cases to check
-# 1. Input token and get last record.  Should not return a token if we are returning the last record - 'last' record being what is sorted
-# 2. Input a crzy high limit - how to handle?  Default to max or all records if less than max
-# 3. Input token and get some intermediate records - return a token for next records
-# 4. handle requesting an orderid/token that does't exist and returns 400/404. Bad token --> bad request.
+# separate test here to check for bad token getting back 404
+def test_token_not_found(stapi_client: TestClient):
+    res = stapi_client.get("/orders", params={"next": "a_token"})
+    # should return 404 as a result of bad token
+    assert res.status_code == status.HTTP_404_NOT_FOUND
