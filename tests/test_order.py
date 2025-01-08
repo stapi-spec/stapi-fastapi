@@ -171,67 +171,128 @@ def test_order_status_after_update(
 
 
 @pytest.fixture
-def create_second_order_allowed_payloads() -> list[OrderPayload]:
-    return [
-        OrderPayload(
+def create_order_payloads() -> list[OrderPayload]:
+    datetimes = [
+        ("2024-10-09T18:55:33Z", "2024-10-12T18:55:33Z"),
+        ("2024-10-15T18:55:33Z", "2024-10-18T18:55:33Z"),
+        ("2024-10-20T18:55:33Z", "2024-10-23T18:55:33Z"),
+    ]
+    payloads = []
+    for start, end in datetimes:
+        payload = OrderPayload(
             geometry=Point(
                 type="Point", coordinates=Position2D(longitude=14.4, latitude=56.5)
             ),
             datetime=(
-                datetime.fromisoformat("2024-10-09T18:55:33Z"),
-                datetime.fromisoformat("2024-10-12T18:55:33Z"),
+                datetime.fromisoformat(start),
+                datetime.fromisoformat(end),
             ),
             filter=None,
             order_parameters=MyOrderParameters(s3_path="s3://my-bucket"),
+        )
+        payloads.append(payload)
+    return payloads
+
+
+@pytest.fixture
+def prepare_order_pagination(
+    stapi_client: TestClient, create_order_payloads: list[OrderPayload]
+) -> tuple[str, str, str]:
+    # product_backend._allowed_payloads = create_order_payloads
+    product_id = "test-spotlight"
+
+    # # check empty
+    # res = stapi_client.get("/orders")
+    # default_orders = {"type": "FeatureCollection", "features": [], "links": []}
+    # assert res.status_code == status.HTTP_200_OK
+    # assert res.headers["Content-Type"] == "application/geo+json"
+    # assert res.json() == default_orders
+
+    # get uuids created to use as pagination tokens
+    order_ids = []
+    for payload in create_order_payloads:
+        res = stapi_client.post(
+            f"products/{product_id}/orders",
+            json=payload.model_dump(),
+        )
+        assert res.status_code == status.HTTP_201_CREATED, res.text
+        assert res.headers["Content-Type"] == "application/geo+json"
+        order_ids.append(res.json()["id"])
+
+    # res = stapi_client.get("/orders")
+    # checker = res.json()
+    # assert len(checker['features']) == 3
+
+    return tuple(order_ids)
+
+
+@pytest.mark.parametrize(
+    "product_id,expected_status,limit,id_retrieval,token_back",
+    [
+        pytest.param(
+            "test-spotlight",
+            status.HTTP_200_OK,
+            1,
+            0,
+            True,
+            id="input frst order_id token get new token back",
         ),
-    ]
-
-
-@pytest.mark.parametrize("product_id", [pytest.param("test-spotlight", id="base test")])
-def test_order_pagination(
-    product_id: str,
-    product_backend: MockProductBackend,
+        pytest.param(
+            "test-spotlight",
+            status.HTTP_200_OK,
+            1,
+            2,
+            False,
+            id="input last order_id token get NO token back",
+        ),
+        pytest.param(
+            "test-spotlight",
+            status.HTTP_404_NOT_FOUND,
+            1,
+            "BAD_TOKEN",
+            False,
+            id="input bad token get 404 back",
+        ),
+        pytest.param(
+            "test-spotlight",
+            status.HTTP_200_OK,
+            1,
+            1000000,
+            False,
+            id="high limit handled and returns valid records",
+        ),
+    ],
+)
+def test_order_pagination_hold(
+    prepare_order_pagination,
     stapi_client: TestClient,
-    create_order_allowed_payloads: list[OrderPayload],
-    create_second_order_allowed_payloads: list[OrderPayload],
+    product_id: str,
+    expected_status: int,
+    limit: int,
+    id_retrieval: int | str,
+    token_back: bool,
 ) -> None:
-    product_backend._allowed_payloads = create_order_allowed_payloads
+    order_ids = prepare_order_pagination
 
-    # check empty
-    res = stapi_client.get("/orders")
-
-    default_orders = {"type": "FeatureCollection", "features": [], "links": []}
-
-    assert res.status_code == status.HTTP_200_OK
-    assert res.headers["Content-Type"] == "application/geo+json"
-    assert res.json() == default_orders
-
-    # add order to product
-    res = stapi_client.post(
-        f"products/{product_id}/orders",
-        json=create_order_allowed_payloads[0].model_dump(),
+    res = stapi_client.get(
+        "/orders", params={"next": order_ids[id_retrieval], "limit": limit}
     )
+    assert res.status_code == expected_status
 
-    assert res.status_code == status.HTTP_201_CREATED, res.text
-    assert res.headers["Content-Type"] == "application/geo+json"
-
-    res = stapi_client.post(
-        f"products/{product_id}/orders",
-        json=create_second_order_allowed_payloads[0].model_dump(),
-    )
-    # call all orders
-    next = res.json()["id"]
-    res = stapi_client.get("/orders", params={"next": next, "limit": 1})
-    checker = res.json()
-
-    assert res.status_code == status.HTTP_200_OK
-
-    # temp check to make sure token link isn't added to inside collection
-    for link in checker["features"][0]["links"]:
+    body = res.json()
+    for link in body["features"][0]["links"]:
         assert link["rel"] != "next"
-    assert checker["links"] != []
+    assert body["links"] != []
 
     # check to make sure new token in link
-    assert next not in checker["links"][0]["href"]
+    if token_back:
+        assert order_ids[id_retrieval] not in body["links"][0]["href"]
 
-    assert len(checker["features"]) == 1
+        assert len(body["features"]) == limit
+
+
+# test cases to check
+# 1. Input token and get last record.  Should not return a token if we are returning the last record - 'last' record being what is sorted
+# 2. Input a crzy high limit - how to handle?  Default to max or all records if less than max
+# 3. Input token and get some intermediate records - return a token for next records
+# 4. handle requesting an orderid/token that does't exist and returns 400/404. Bad token --> bad request.

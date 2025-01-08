@@ -183,11 +183,14 @@ class RootRouter(APIRouter):
                     )
                 return collections
             case Failure(e):
-                logging.exception("An error occurred while retrieving orders", e)
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Error finding Orders",
-                )
+                logging.exception(f"An error occurred while retrieving orders: {e}")
+                if isinstance(e, IndexError):
+                    raise NotFoundException(detail="Error finding pagination token")
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Error finding Orders",
+                    )
             case _:
                 raise AssertionError("Expected code to be unreachable")
 
