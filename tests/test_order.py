@@ -194,19 +194,19 @@ def create_order_payloads() -> list[OrderPayload]:
     return payloads
 
 
-@pytest.fixture
-def prepare_order_pagination(
-    stapi_client: TestClient, create_order_payloads: list[OrderPayload]
-) -> None:
-    product_id = "test-spotlight"
-
-    # check empty
+def test_empty_order(stapi_client: TestClient):
     res = stapi_client.get("/orders")
     default_orders = {"type": "FeatureCollection", "features": [], "links": []}
     assert res.status_code == status.HTTP_200_OK
     assert res.headers["Content-Type"] == "application/geo+json"
     assert res.json() == default_orders
 
+
+@pytest.fixture
+def prepare_order_pagination(
+    stapi_client: TestClient, create_order_payloads: list[OrderPayload]
+) -> None:
+    product_id = "test-spotlight"
     # get uuids created to use as pagination tokens
     for payload in create_order_payloads:
         res = stapi_client.post(

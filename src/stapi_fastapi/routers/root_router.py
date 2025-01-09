@@ -184,7 +184,7 @@ class RootRouter(APIRouter):
                 return collections
             case Failure(e):
                 logging.exception(f"An error occurred while retrieving orders: {e}")
-                if isinstance(e, IndexError):
+                if isinstance(e, ValueError):
                     raise NotFoundException(detail="Error finding pagination token")
                 else:
                     raise HTTPException(

@@ -55,18 +55,12 @@ class MockRootBackend(RootBackend):
                 limit = 100
 
             order_ids = [*self._orders_db._orders.keys()]
-            if not order_ids and not next:  # no data in db
-                return Success(
-                    (
-                        OrderCollection(
-                            features=list(self._orders_db._orders.values())
-                        ),
-                        "",
-                    )
-                )
 
             if next:
-                start = [i for i, x in enumerate(order_ids) if x == next][0]
+                start = order_ids.index(next)
+            if not order_ids and not next:  # no data in db
+                return Success((OrderCollection(features=[]), ""))
+
             end = start + limit
             ids = order_ids[start:end]
             feats = [self._orders_db._orders[order_id] for order_id in ids]
