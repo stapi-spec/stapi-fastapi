@@ -1,9 +1,9 @@
 import logging
+import traceback
 from typing import Self
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.datastructures import URL
-from fastapi.responses import Response
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 
@@ -15,13 +15,14 @@ from stapi_fastapi.models.order import (
     Order,
     OrderCollection,
     OrderStatuses,
-    OrderStatusPayload,
 )
 from stapi_fastapi.models.product import Product, ProductsCollection
 from stapi_fastapi.models.root import RootResponse
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.product_router import ProductRouter
+
+logger = logging.getLogger(__name__)
 
 
 class RootRouter(APIRouter):
@@ -95,14 +96,6 @@ class RootRouter(APIRouter):
             self.get_order_statuses,
             methods=["GET"],
             name=f"{self.name}:list-order-statuses",
-            tags=["Orders"],
-        )
-
-        self.add_api_route(
-            "/orders/{order_id}/statuses",
-            self.set_order_status,
-            methods=["POST"],
-            name=f"{self.name}:set-order-status",
             tags=["Orders"],
         )
 
@@ -205,8 +198,10 @@ class RootRouter(APIRouter):
             case Success(Maybe.empty):
                 raise NotFoundException("Order not found")
             case Failure(e):
-                logging.exception(
-                    f"An error occurred while retrieving order '{order_id}'", e
+                logger.error(
+                    "An error occurred while retrieving order '%s': %s",
+                    order_id,
+                    traceback.format_exception(e),
                 )
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -236,8 +231,9 @@ class RootRouter(APIRouter):
                     ],
                 )
             case Failure(e):
-                logging.exception(
-                    "An error occurred while retrieving order statuses", e
+                logger.error(
+                    "An error occurred while retrieving order statuses: %s",
+                    traceback.format_exception(e),
                 )
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -246,24 +242,9 @@ class RootRouter(APIRouter):
             case _:
                 raise AssertionError("Expected code to be unreachable")
 
-    async def set_order_status(
-        self, order_id: str, payload: OrderStatusPayload, request: Request
-    ) -> Response:
-        match await self.backend.set_order_status(order_id, payload, request):
-            case Success(_):
-                return Response(status_code=status.HTTP_202_ACCEPTED)
-            case Failure(e):
-                logging.exception("An error occurred while setting order status", e)
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Error setting Order Status",
-                )
-            case x:
-                raise AssertionError(f"Expected code to be unreachable {x}")
-
-    def add_product(self: Self, product: Product) -> None:
+    def add_product(self: Self, product: Product, *args, **kwargs) -> None:
         # Give the include a prefix from the product router
-        product_router = ProductRouter(product, self)
+        product_router = ProductRouter(product, self, *args, **kwargs)
         self.include_router(product_router, prefix=f"/products/{product.id}")
         self.product_routers[product.id] = product_router
 

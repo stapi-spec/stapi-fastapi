@@ -247,3 +247,4 @@ def test_token_not_found(stapi_client: TestClient):
     res = stapi_client.get("/orders", params={"next": "a_token"})
     # should return 404 as a result of bad token
     assert res.status_code == status.HTTP_404_NOT_FOUND
+
