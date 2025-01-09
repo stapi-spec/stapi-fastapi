@@ -11,7 +11,7 @@ from stapi_fastapi.models.order import (
 )
 
 
-class RootBackend[T: OrderStatusPayload, U: OrderStatus](Protocol):  # pragma: nocover
+class RootBackend[T: OrderStatus](Protocol):  # pragma: nocover
     async def get_orders(
         self, request: Request, next: str | None, limit: int
     ) -> ResultE[tuple[OrderCollection, str]]:

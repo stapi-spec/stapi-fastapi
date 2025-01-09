@@ -34,8 +34,9 @@ from stapi_fastapi.routers.root_router import RootRouter
 
 
 class InMemoryOrderDB:
-    _orders: dict[str, Order] = {}
-    _statuses: dict[str, list[OrderStatus]] = defaultdict(list)
+    def __init__(self) -> None:
+        self._orders: dict[str, Order] = {}
+        self._statuses: dict[str, list[OrderStatus]] = defaultdict(list)
 
 
 class MockRootBackend(RootBackend):
