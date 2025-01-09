@@ -18,6 +18,14 @@ START = NOW
 END = START + timedelta(days=5)
 
 
+def test_empty_order(stapi_client: TestClient):
+    res = stapi_client.get("/orders")
+    default_orders = {"type": "FeatureCollection", "features": [], "links": []}
+    assert res.status_code == status.HTTP_200_OK
+    assert res.headers["Content-Type"] == "application/geo+json"
+    assert res.json() == default_orders
+
+
 @pytest.fixture
 def create_order_allowed_payloads() -> list[OrderPayload]:
     return [
@@ -194,33 +202,6 @@ def create_order_payloads() -> list[OrderPayload]:
     return payloads
 
 
-def test_empty_order(stapi_client: TestClient):
-    res = stapi_client.get("/orders")
-    default_orders = {"type": "FeatureCollection", "features": [], "links": []}
-    assert res.status_code == status.HTTP_200_OK
-    assert res.headers["Content-Type"] == "application/geo+json"
-    assert res.json() == default_orders
-
-
-@pytest.fixture
-def prepare_order_pagination(
-    stapi_client: TestClient, create_order_payloads: list[OrderPayload]
-) -> None:
-    product_id = "test-spotlight"
-    # get uuids created to use as pagination tokens
-    for payload in create_order_payloads:
-        res = stapi_client.post(
-            f"products/{product_id}/orders",
-            json=payload.model_dump(),
-        )
-        assert res.status_code == status.HTTP_201_CREATED, res.text
-        assert res.headers["Content-Type"] == "application/geo+json"
-
-    res = stapi_client.get("/orders")
-    checker = res.json()
-    assert len(checker["features"]) == 3
-
-
 def test_order_pagination(
     prepare_order_pagination,
     stapi_client: TestClient,
@@ -247,4 +228,3 @@ def test_token_not_found(stapi_client: TestClient):
     res = stapi_client.get("/orders", params={"next": "a_token"})
     # should return 404 as a result of bad token
     assert res.status_code == status.HTTP_404_NOT_FOUND
-
