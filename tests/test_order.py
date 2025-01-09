@@ -161,8 +161,9 @@ def setup_pagination(stapi_client: TestClient, create_order_payloads) -> None:
         assert res.headers["Content-Type"] == "application/geo+json"
 
 
-def test_order_pagination(stapi_client: TestClient, setup_pagination) -> None:
-    res = stapi_client.get("/orders", params={"next": None, "limit": 1})
+@pytest.mark.parametrize("limit", [2])
+def test_order_pagination(stapi_client: TestClient, setup_pagination, limit) -> None:
+    res = stapi_client.get("/orders", params={"next": None, "limit": limit})
     assert res.status_code == status.HTTP_200_OK
     body = res.json()
     next = body["links"][0]["href"]
@@ -172,6 +173,7 @@ def test_order_pagination(stapi_client: TestClient, setup_pagination) -> None:
         assert res.status_code == status.HTTP_200_OK
         body = res.json()
         if body["links"]:
+            assert len(body["features"]) == limit
             next = body["links"][0]["href"]
         else:
             break
