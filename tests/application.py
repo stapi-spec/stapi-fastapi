@@ -80,9 +80,29 @@ class MockRootBackend(RootBackend):
         return Success(Maybe.from_optional(self._orders_db._orders.get(order_id)))
 
     async def get_order_statuses(
-        self, order_id: str, request: Request
-    ) -> ResultE[list[OrderStatus]]:
-        return Success(self._orders_db._statuses[order_id])
+        self, order_id: str, request: Request, next: str | None, limit: int
+    ) -> ResultE[tuple[list[OrderStatus], str]]:
+        try:
+            start = 0
+            if limit > 100:
+                limit = 100
+            statuses = self._orders_db._statuses[order_id]
+
+            if next:
+                start = int(next)
+            if not statuses and not next:
+                return Success(([], ""))
+
+            end = start + limit
+            stati = statuses[start:end]
+
+            next = ""
+            if end < len(statuses):
+                next = str(end)
+            return Success((stati, next))
+            # return Success(self._orders_db._statuses[order_id])
+        except Exception as e:
+            return Failure(e)
 
 
 class MockProductBackend(ProductBackend):

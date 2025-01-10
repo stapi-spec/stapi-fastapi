@@ -47,6 +47,10 @@ class ProductRouter(APIRouter):
             tags=["Products"],
         )
 
+        # Any paginated POST or requires a body needs the same POST body to be sent
+        # method property on Link object needs to be set to POST
+        # next link for GET can just include next token dont need to specify method or body
+        # where there's a POST body, have to include post body body property is request.body()
         self.add_api_route(
             path="/opportunities",
             endpoint=self.search_opportunities,
@@ -171,7 +175,7 @@ class ProductRouter(APIRouter):
                 return OpportunityCollection(
                     features=features,
                     links=[
-                        Link(
+                        Link(  # current bug is missing method set and setting body for
                             href=str(
                                 request.url_for(
                                     f"{self.root_router.name}:{self.product.id}:create-order",

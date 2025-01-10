@@ -35,8 +35,8 @@ class RootBackend[T: OrderStatus](Protocol):  # pragma: nocover
         ...
 
     async def get_order_statuses(
-        self, order_id: str, request: Request
-    ) -> ResultE[list[T]]:
+        self, order_id: str, request: Request, next: str | None, limit: int
+    ) -> ResultE[tuple[list[T], str]]:
         """
         Get statuses for order with `order_id`.
 
