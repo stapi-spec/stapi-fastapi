@@ -140,17 +140,47 @@ class RootRouter(APIRouter):
     def get_conformance(self, request: Request) -> Conformance:
         return Conformance(conforms_to=self.conformances)
 
-    def get_products(self, request: Request) -> ProductsCollection:
-        return ProductsCollection(
-            products=[pr.get_product(request) for pr in self.product_routers.values()],
-            links=[
+    def get_products(
+        self, request: Request, next: str | None = None, limit: int = 10
+    ) -> ProductsCollection:
+        try:
+            start = 0
+            product_ids = [*self.product_routers.keys()]
+            if next:
+                start = product_ids.index(next)
+            if not product_ids and not next:
+                ProductsCollection(
+                    products=[],
+                    links=[
+                        Link(
+                            href=str(request.url_for(f"{self.name}:list-products")),
+                            rel="self",
+                            type=TYPE_JSON,
+                        )
+                    ],
+                )
+            end = start + limit
+            ids = product_ids[start:end]
+            products = [
+                self.product_routers[product_id].get_product(request)
+                for product_id in ids
+            ]
+            links = [
                 Link(
                     href=str(request.url_for(f"{self.name}:list-products")),
                     rel="self",
                     type=TYPE_JSON,
-                )
-            ],
-        )
+                ),
+            ]
+            next = ""
+            if end < len(product_ids):
+                next = self.product_routers[product_ids[end]].product.id
+                updated_url = request.url.include_query_params(next=next)
+                links.append(Link(href=str(updated_url), rel="next", type=TYPE_JSON))
+            return ProductsCollection(products=products, links=links)
+        except ValueError as e:
+            logging.exception(f"An error occurred while retrieving orders: {e}")
+            raise NotFoundException(detail="Error finding pagination token")
 
     async def get_orders(
         self, request: Request, next: str | None = None, limit: int = 10

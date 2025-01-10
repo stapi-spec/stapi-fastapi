@@ -63,3 +63,36 @@ def test_product_order_parameters_response(
     json_schema = res.json()
     assert "properties" in json_schema
     assert "s3_path" in json_schema["properties"]
+
+
+@pytest.mark.parametrize("limit", [1])
+def test_product_pagination(stapi_client: TestClient, limit: int):
+    res = stapi_client.get("/products", params={"next": None, "limit": limit})
+    assert res.status_code == status.HTTP_200_OK
+    body = res.json()
+    assert len(body["products"]) == limit
+    for d in body["links"]:
+        if ("rel", "next") in d.items():
+            next = d["href"]
+
+    while len(body["links"]) > 1:
+        res = stapi_client.get(next)
+        assert res.status_code == status.HTTP_200_OK
+        body = res.json()
+        assert len(body["products"]) == limit
+        for d in body["links"]:
+            if ("rel", "next") in d.items():
+                next = body["links"][0]["href"]
+
+
+def test_token_not_found(stapi_client: TestClient) -> None:
+    res = stapi_client.get("/products", params={"next": "a_token"})
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_no_products(empty_stapi_client: TestClient):
+    res = empty_stapi_client.get("/products")
+    body = res.json()
+    print("hold")
+    assert res.status_code == status.HTTP_200_OK
+    assert len(body["products"]) == 0

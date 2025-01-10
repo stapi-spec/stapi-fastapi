@@ -72,11 +72,45 @@ def mock_product_test_spotlight(
 
 
 @pytest.fixture
+def mock_product_test_wolf_cola(
+    product_backend: MockProductBackend, mock_provider: Provider
+) -> Product:
+    """Fixture for a mock Wolf Cola product."""
+    return Product(
+        id="test-wolf-cola",
+        title="Test Wolf Cola Product",
+        description="Test product for Wolf Cola for testing GET /product pagination",
+        license="CC-BY-4.0",
+        keywords=["test", "satellite", "wolf-cola"],
+        providers=[mock_provider],
+        links=[],
+        constraints=MyProductConstraints,
+        opportunity_properties=MyOpportunityProperties,
+        order_parameters=MyOrderParameters,
+        backend=product_backend,
+    )
+
+
+@pytest.fixture
 def stapi_client(
-    root_backend, mock_product_test_spotlight, base_url: str
+    root_backend,
+    mock_product_test_spotlight,
+    mock_product_test_wolf_cola,
+    base_url: str,
 ) -> Iterator[TestClient]:
     root_router = RootRouter(root_backend)
     root_router.add_product(mock_product_test_spotlight)
+    root_router.add_product(mock_product_test_wolf_cola)
+    app = FastAPI()
+    app.include_router(root_router, prefix="")
+
+    with TestClient(app, base_url=f"{base_url}") as client:
+        yield client
+
+
+@pytest.fixture
+def empty_stapi_client(root_backend, base_url: str) -> Iterator[TestClient]:
+    root_router = RootRouter(root_backend)
     app = FastAPI()
     app.include_router(root_router, prefix="")
 

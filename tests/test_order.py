@@ -166,6 +166,7 @@ def test_order_pagination(stapi_client: TestClient, setup_pagination, limit) -> 
     res = stapi_client.get("/orders", params={"next": None, "limit": limit})
     assert res.status_code == status.HTTP_200_OK
     body = res.json()
+    assert len(body["features"]) == limit
     next = body["links"][0]["href"]
 
     while next:
@@ -179,7 +180,6 @@ def test_order_pagination(stapi_client: TestClient, setup_pagination, limit) -> 
             break
 
 
-def test_token_not_found(stapi_client: TestClient):
+def test_token_not_found(stapi_client: TestClient) -> None:
     res = stapi_client.get("/orders", params={"next": "a_token"})
-    # should return 404 as a result of bad token
     assert res.status_code == status.HTTP_404_NOT_FOUND
