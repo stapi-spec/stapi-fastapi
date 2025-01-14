@@ -149,9 +149,9 @@ class RootRouter(APIRouter):
         try:
             if next:
                 start = product_ids.index(next)
-        except ValueError as e:
+        except ValueError:
             logging.exception("An error occurred while retrieving orders")
-            raise NotFoundException(detail="Error finding pagination token") from e
+            raise NotFoundException(detail="Error finding pagination token") from None
 
         ids = product_ids[start:end]
         links = [
