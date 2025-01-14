@@ -145,14 +145,13 @@ class RootRouter(APIRouter):
     ) -> ProductsCollection:
         start = 0
         product_ids = [*self.product_routers.keys()]
-        end = min(start + limit, len(product_ids))
         try:
             if next:
                 start = product_ids.index(next)
         except ValueError:
             logging.exception("An error occurred while retrieving orders")
             raise NotFoundException(detail="Error finding pagination token") from None
-
+        end = min(start + limit, len(product_ids))
         ids = product_ids[start:end]
         links = [
             Link(

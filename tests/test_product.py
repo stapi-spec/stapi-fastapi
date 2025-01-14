@@ -71,17 +71,20 @@ def test_product_pagination(stapi_client: TestClient, limit: int):
     assert res.status_code == status.HTTP_200_OK
     body = res.json()
     assert len(body["products"]) == limit
+    links = body["links"]
     for d in body["links"]:
         if ("rel", "next") in d.items():
             next = d["href"]
 
-    while len(body["links"]) > 1:
+    while len(links) > 1:
         res = stapi_client.get(next)
         assert res.status_code == status.HTTP_200_OK
         body = res.json()
-        assert len(body["products"]) == limit
+        assert body["products"] != []
+        links = body["links"]
         for d in body["links"]:
             if ("rel", "next") in d.items():
+                assert len(body["products"]) == limit
                 next = body["links"][0]["href"]
 
 
