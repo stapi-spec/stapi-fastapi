@@ -105,10 +105,26 @@ class MockProductBackend(ProductBackend):
         product_router: ProductRouter,
         search: OpportunityRequest,
         request: Request,
-    ) -> ResultE[list[Opportunity]]:
+        next: str | None,
+        limit: int,
+    ) -> ResultE[tuple[list[Opportunity], str]]:
         try:
+            start = 0
+            if limit > 100:
+                limit = 100
+            if next:
+                start = self._opportunities.index(next)
+            end = min(start + limit, len(self._opportunities))
+            print(end)
+            # opportunities = self._opportunities.k
             return Success(
-                [o.model_copy(update=search.model_dump()) for o in self._opportunities]
+                (
+                    [
+                        o.model_copy(update=search.model_dump())
+                        for o in self._opportunities
+                    ],
+                    "",
+                )
             )
         except Exception as e:
             return Failure(e)
@@ -206,23 +222,3 @@ root_router = RootRouter(root_backend, conformances=[CORE])
 root_router.add_product(product)
 app: FastAPI = FastAPI()
 app.include_router(root_router, prefix="")
-
-TEST_STATUSES = {
-    "test_order_id": [
-        OrderStatus(
-            timestamp=datetime(2025, 1, 14, 2, 21, 48, 466726, tzinfo=timezone.utc),
-            status_code=OrderStatusCode.received,
-            links=[],
-        ),
-        OrderStatus(
-            timestamp=datetime(2025, 1, 15, 5, 20, 48, 466726, tzinfo=timezone.utc),
-            status_code=OrderStatusCode.accepted,
-            links=[],
-        ),
-        OrderStatus(
-            timestamp=datetime(2025, 1, 16, 10, 15, 32, 466726, tzinfo=timezone.utc),
-            status_code=OrderStatusCode.completed,
-            links=[],
-        ),
-    ]
-}

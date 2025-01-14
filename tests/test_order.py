@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 from fastapi import status
@@ -7,9 +7,9 @@ from geojson_pydantic import Point
 from geojson_pydantic.types import Position2D
 from httpx import Response
 
-from stapi_fastapi.models.order import OrderPayload
+from stapi_fastapi.models.order import OrderPayload, OrderStatus, OrderStatusCode
 
-from .application import MyOrderParameters
+from .application import InMemoryOrderDB, MyOrderParameters
 from .backends import MockProductBackend
 from .shared import find_link
 
@@ -188,13 +188,46 @@ def test_token_not_found(stapi_client: TestClient) -> None:
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_order_status_pagination(statuses_client: TestClient, limit: int = 2) -> None:
+@pytest.fixture
+def order_statuses() -> dict[str, list[OrderStatus]]:
+    statuses = {
+        "test_order_id": [
+            OrderStatus(
+                timestamp=datetime(2025, 1, 14, 2, 21, 48, 466726, tzinfo=timezone.utc),
+                status_code=OrderStatusCode.received,
+                links=[],
+            ),
+            OrderStatus(
+                timestamp=datetime(2025, 1, 15, 5, 20, 48, 466726, tzinfo=timezone.utc),
+                status_code=OrderStatusCode.accepted,
+                links=[],
+            ),
+            OrderStatus(
+                timestamp=datetime(
+                    2025, 1, 16, 10, 15, 32, 466726, tzinfo=timezone.utc
+                ),
+                status_code=OrderStatusCode.completed,
+                links=[],
+            ),
+        ]
+    }
+    return statuses
+
+
+def test_order_status_pagination(
+    stapi_client: TestClient,
+    order_db: InMemoryOrderDB,
+    order_statuses: dict[str, list[OrderStatus]],
+    limit: int = 2,
+) -> None:
+    order_db._statuses = order_statuses
+
     order_id = "test_order_id"
-    res = statuses_client.get(f"/orders/{order_id}/statuses")
+    res = stapi_client.get(f"/orders/{order_id}/statuses")
     assert res.status_code == status.HTTP_200_OK
 
     order_id = "test_order_id"
-    res = statuses_client.get(
+    res = stapi_client.get(
         f"/orders/{order_id}/statuses", params={"next": None, "limit": limit}
     )
     body = res.json()
@@ -205,7 +238,7 @@ def test_order_status_pagination(statuses_client: TestClient, limit: int = 2) ->
             next = link["href"]
 
     while len(links) > 1:
-        res = statuses_client.get(next)
+        res = stapi_client.get(next)
         assert res.status_code == status.HTTP_200_OK
         body = res.json()
         assert body["statuses"] != []
@@ -217,8 +250,13 @@ def test_order_status_pagination(statuses_client: TestClient, limit: int = 2) ->
 
 
 def test_get_order_statuses_bad_token(
-    statuses_client: TestClient, limit: int = 2
+    stapi_client: TestClient,
+    order_db: InMemoryOrderDB,
+    order_statuses: dict[str, list[OrderStatus]],
+    limit: int = 2,
 ) -> None:
+    order_db._statuses = order_statuses
+
     order_id = "non_existing_order_id"
-    res = statuses_client.get(f"/orders/{order_id}/statuses")
+    res = stapi_client.get(f"/orders/{order_id}/statuses")
     assert res.status_code == status.HTTP_404_NOT_FOUND
