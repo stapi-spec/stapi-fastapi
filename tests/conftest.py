@@ -186,3 +186,10 @@ def mock_test_spotlight_opportunities() -> list[Opportunity]:
             ),
         ),
     ]
+
+
+@pytest.fixture
+def mock_test_pagination_opportunities(
+    mock_test_spotlight_opportunities,
+) -> list[Opportunity]:
+    return [opp for opp in mock_test_spotlight_opportunities for __ in range(0, 3)]

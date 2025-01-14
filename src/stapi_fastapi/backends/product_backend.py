@@ -16,7 +16,9 @@ class ProductBackend(Protocol):  # pragma: nocover
         product_router: ProductRouter,
         search: OpportunityRequest,
         request: Request,
-    ) -> ResultE[list[Opportunity]]:
+        next: str | None,
+        limit: int,
+    ) -> ResultE[tuple[list[Opportunity], str]]:
         """
         Search for ordering opportunities for the  given search parameters.
 

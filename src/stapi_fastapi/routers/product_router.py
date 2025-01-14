@@ -165,27 +165,45 @@ class ProductRouter(APIRouter):
         )
 
     async def search_opportunities(
-        self, search: OpportunityRequest, request: Request
+        self,
+        search: OpportunityRequest,
+        request: Request,
+        next: str | None = None,
+        limit: int = 10,
     ) -> OpportunityCollection:
         """
         Explore the opportunities available for a particular set of constraints
         """
-        match await self.product.backend.search_opportunities(self, search, request):
-            case Success(features):
-                return OpportunityCollection(
-                    features=features,
-                    links=[
-                        Link(  # current bug is missing method set and setting body for
-                            href=str(
-                                request.url_for(
-                                    f"{self.root_router.name}:{self.product.id}:create-order",
-                                ),
+        match await self.product.backend.search_opportunities(
+            self, search, request, next, limit
+        ):
+            case Success((features, pagination_token)):
+                links = [
+                    Link(  # current bug is missing method set and setting body for
+                        href=str(
+                            request.url_for(
+                                f"{self.root_router.name}:{self.product.id}:create-order",
                             ),
-                            rel="create-order",
-                            type=TYPE_JSON,
                         ),
-                    ],
-                )
+                        rel="create-order",
+                        type=TYPE_JSON,
+                        method="POST",
+                    ),
+                ]
+                if pagination_token:
+                    links.append(
+                        Link(
+                            href=str(
+                                request.url.include_query_params(next=pagination_token)
+                            ),
+                            rel="next",
+                            type=TYPE_JSON,
+                            method="POST",
+                            body=search,
+                        )
+                    )
+                    return OpportunityCollection(features=features, links=links)
+                return OpportunityCollection(features=features, links=links)
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):

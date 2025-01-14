@@ -113,19 +113,15 @@ class MockProductBackend(ProductBackend):
             if limit > 100:
                 limit = 100
             if next:
-                start = self._opportunities.index(next)
+                start = int(next)
             end = min(start + limit, len(self._opportunities))
-            print(end)
-            # opportunities = self._opportunities.k
-            return Success(
-                (
-                    [
-                        o.model_copy(update=search.model_dump())
-                        for o in self._opportunities
-                    ],
-                    "",
-                )
-            )
+            opportunities = [
+                o.model_copy(update=search.model_dump())
+                for o in self._opportunities[start:end]
+            ]
+            if end < len(self._opportunities):
+                return Success((opportunities, str(end)))
+            return Success((opportunities, ""))
         except Exception as e:
             return Failure(e)
 
