@@ -148,7 +148,7 @@ def test_order_status_after_create(
 
 
 @pytest.fixture
-def setup_pagination(stapi_client: TestClient, create_order_payloads) -> None:
+def setup_orders_pagination(stapi_client: TestClient, create_order_payloads) -> None:
     product_id = "test-spotlight"
 
     for order in create_order_payloads:
@@ -162,7 +162,9 @@ def setup_pagination(stapi_client: TestClient, create_order_payloads) -> None:
 
 
 @pytest.mark.parametrize("limit", [2])
-def test_order_pagination(stapi_client: TestClient, setup_pagination, limit) -> None:
+def test_order_pagination(
+    stapi_client: TestClient, setup_orders_pagination, limit
+) -> None:
     res = stapi_client.get("/orders", params={"next": None, "limit": limit})
     assert res.status_code == status.HTTP_200_OK
     body = res.json()
@@ -173,6 +175,7 @@ def test_order_pagination(stapi_client: TestClient, setup_pagination, limit) -> 
         res = stapi_client.get(next)
         assert res.status_code == status.HTTP_200_OK
         body = res.json()
+        assert body["features"] != []
         if body["links"]:
             assert len(body["features"]) == limit
             next = body["links"][0]["href"]
@@ -182,4 +185,40 @@ def test_order_pagination(stapi_client: TestClient, setup_pagination, limit) -> 
 
 def test_token_not_found(stapi_client: TestClient) -> None:
     res = stapi_client.get("/orders", params={"next": "a_token"})
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_order_status_pagination(statuses_client: TestClient, limit: int = 2) -> None:
+    order_id = "test_order_id"
+    res = statuses_client.get(f"/orders/{order_id}/statuses")
+    assert res.status_code == status.HTTP_200_OK
+
+    order_id = "test_order_id"
+    res = statuses_client.get(
+        f"/orders/{order_id}/statuses", params={"next": None, "limit": limit}
+    )
+    body = res.json()
+    links = body["links"]
+    for link in body["links"]:
+        if ("rel", "next") in link.items():
+            assert len(body["statuses"]) == limit
+            next = link["href"]
+
+    while len(links) > 1:
+        res = statuses_client.get(next)
+        assert res.status_code == status.HTTP_200_OK
+        body = res.json()
+        assert body["statuses"] != []
+        links = body["links"]
+        for link in body["links"]:
+            if ("rel", "next") in link.items():
+                assert len(body["statuses"]) == limit
+                next = body["links"][0]["href"]
+
+
+def test_get_order_statuses_bad_token(
+    statuses_client: TestClient, limit: int = 2
+) -> None:
+    order_id = "non_existing_order_id"
+    res = statuses_client.get(f"/orders/{order_id}/statuses")
     assert res.status_code == status.HTTP_404_NOT_FOUND

@@ -21,6 +21,7 @@ from stapi_fastapi.models.product import (
 from stapi_fastapi.routers.root_router import RootRouter
 
 from .application import (
+    TEST_STATUSES,
     InMemoryOrderDB,
     MockProductBackend,
     MockRootBackend,
@@ -42,6 +43,13 @@ def order_db() -> InMemoryOrderDB:
 
 
 @pytest.fixture
+def order_db_statuses() -> InMemoryOrderDB:
+    order_db = InMemoryOrderDB()
+    order_db._statuses = TEST_STATUSES
+    return order_db
+
+
+@pytest.fixture
 def product_backend(order_db: InMemoryOrderDB) -> MockProductBackend:
     return MockProductBackend(order_db)
 
@@ -49,6 +57,11 @@ def product_backend(order_db: InMemoryOrderDB) -> MockProductBackend:
 @pytest.fixture
 def root_backend(order_db: InMemoryOrderDB) -> MockRootBackend:
     return MockRootBackend(order_db)
+
+
+@pytest.fixture
+def root_backend_preloaded(order_db_statuses: InMemoryOrderDB) -> MockRootBackend:
+    return MockRootBackend(order_db_statuses)
 
 
 @pytest.fixture
@@ -111,6 +124,16 @@ def stapi_client(
 @pytest.fixture
 def empty_stapi_client(root_backend, base_url: str) -> Iterator[TestClient]:
     root_router = RootRouter(root_backend)
+    app = FastAPI()
+    app.include_router(root_router, prefix="")
+
+    with TestClient(app, base_url=f"{base_url}") as client:
+        yield client
+
+
+@pytest.fixture
+def statuses_client(root_backend_preloaded, base_url: str) -> Iterator[TestClient]:
+    root_router = RootRouter(root_backend_preloaded)
     app = FastAPI()
     app.include_router(root_router, prefix="")
 

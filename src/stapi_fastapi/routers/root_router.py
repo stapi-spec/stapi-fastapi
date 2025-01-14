@@ -143,51 +143,50 @@ class RootRouter(APIRouter):
     def get_products(
         self, request: Request, next: str | None = None, limit: int = 10
     ) -> ProductsCollection:
+        start = 0
+        product_ids = [*self.product_routers.keys()]
+        end = min(start + limit, len(product_ids))
         try:
-            start = 0
-            product_ids = [*self.product_routers.keys()]
             if next:
                 start = product_ids.index(next)
-            if not product_ids and not next:
-                ProductsCollection(
-                    products=[],
-                    links=[
-                        Link(
-                            href=str(request.url_for(f"{self.name}:list-products")),
-                            rel="self",
-                            type=TYPE_JSON,
-                        )
-                    ],
+        except ValueError as e:
+            logging.exception("An error occurred while retrieving orders")
+            raise NotFoundException(detail="Error finding pagination token") from e
+
+        ids = product_ids[start:end]
+        links = [
+            Link(
+                href=str(request.url_for(f"{self.name}:list-products")),
+                rel="self",
+                type=TYPE_JSON,
+            ),
+        ]
+        if end < len(product_ids):
+            links.append(
+                Link(
+                    href=str(
+                        request.url.include_query_params(
+                            next=self.product_routers[product_ids[end]].product.id
+                        ),
+                    ),
+                    rel="next",
+                    type=TYPE_JSON,
                 )
-            end = start + limit
-            ids = product_ids[start:end]
-            products = [
+            )
+        return ProductsCollection(
+            products=[
                 self.product_routers[product_id].get_product(request)
                 for product_id in ids
-            ]
-            links = [
-                Link(
-                    href=str(request.url_for(f"{self.name}:list-products")),
-                    rel="self",
-                    type=TYPE_JSON,
-                ),
-            ]
-            next = ""
-            if end < len(product_ids):
-                next = self.product_routers[product_ids[end]].product.id
-                updated_url = request.url.include_query_params(next=next)
-                links.append(Link(href=str(updated_url), rel="next", type=TYPE_JSON))
-            return ProductsCollection(products=products, links=links)
-        except ValueError as e:
-            logging.exception(f"An error occurred while retrieving orders: {e}")
-            raise NotFoundException(detail="Error finding pagination token")
+            ],
+            links=links,
+        )
 
     async def get_orders(
         self, request: Request, next: str | None = None, limit: int = 10
     ) -> OrderCollection:
         match await self.backend.get_orders(request, next, limit):
-            case Success((collections, token)):
-                for order in collections:
+            case Success((orders, pagination_token)):
+                for order in orders:
                     order.links.append(
                         Link(
                             href=str(
@@ -199,14 +198,27 @@ class RootRouter(APIRouter):
                             type=TYPE_JSON,
                         )
                     )
-                if token:  # pagination link if backend returns token
-                    updated_url = request.url.include_query_params(next=token)
-                    collections.links.append(
-                        Link(href=str(updated_url), rel="next", type=TYPE_JSON)
+                if pagination_token:
+                    return OrderCollection(
+                        features=orders,
+                        links=[
+                            Link(
+                                href=str(
+                                    request.url.include_query_params(
+                                        next=pagination_token
+                                    )
+                                ),
+                                rel="next",
+                                type=TYPE_JSON,
+                            )
+                        ],
                     )
-                return collections
+                return OrderCollection(features=orders)
             case Failure(e):
-                logging.exception(f"An error occurred while retrieving orders: {e}")
+                logger.error(
+                    "An error occurred while retrieving orders: %s",
+                    traceback.format_exception(e),
+                )
                 if isinstance(e, ValueError):
                     raise NotFoundException(detail="Error finding pagination token")
                 else:
@@ -248,31 +260,46 @@ class RootRouter(APIRouter):
         limit: int = 10,
     ) -> OrderStatuses:
         match await self.backend.get_order_statuses(order_id, request, next, limit):
-            case Success(statuses):
-                return OrderStatuses(
-                    statuses=statuses,
-                    links=[
+            case Success((statuses, pagination_token)):
+                links = [
+                    Link(
+                        href=str(
+                            request.url_for(
+                                f"{self.name}:list-order-statuses",
+                                order_id=order_id,
+                            )
+                        ),
+                        rel="self",
+                        type=TYPE_JSON,
+                    )
+                ]
+                if pagination_token:
+                    links.append(
                         Link(
                             href=str(
-                                request.url_for(
-                                    f"{self.name}:list-order-statuses",
-                                    order_id=order_id,
-                                )
+                                request.url.include_query_params(next=pagination_token)
                             ),
-                            rel="self",
+                            rel="next",
                             type=TYPE_JSON,
                         )
-                    ],
+                    )
+                    return OrderStatuses(statuses=statuses, links=links)
+                return OrderStatuses(
+                    statuses=statuses,
+                    links=links,
                 )
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving order statuses: %s",
                     traceback.format_exception(e),
                 )
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Error finding Order Statuses",
-                )
+                if isinstance(e, KeyError):
+                    raise NotFoundException(detail="Error finding pagination token")
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Error finding Order Statuses",
+                    )
             case _:
                 raise AssertionError("Expected code to be unreachable")
 

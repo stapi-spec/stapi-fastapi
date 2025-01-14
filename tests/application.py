@@ -18,7 +18,6 @@ from stapi_fastapi.models.opportunity import (
 )
 from stapi_fastapi.models.order import (
     Order,
-    OrderCollection,
     OrderParameters,
     OrderPayload,
     OrderStatus,
@@ -45,7 +44,7 @@ class MockRootBackend(RootBackend):
 
     async def get_orders(
         self, request: Request, next: str | None, limit: int
-    ) -> ResultE[tuple[OrderCollection, str]]:
+    ) -> ResultE[tuple[list[Order], str]]:
         """
         Return orders from backend.  Handle pagination/limit if applicable
         """
@@ -53,22 +52,17 @@ class MockRootBackend(RootBackend):
             start = 0
             if limit > 100:
                 limit = 100
-
             order_ids = [*self._orders_db._orders.keys()]
 
             if next:
                 start = order_ids.index(next)
-            if not order_ids and not next:  # no data in db
-                return Success((OrderCollection(features=[]), ""))
-
-            end = start + limit
+            end = min(start + limit, len(order_ids))
             ids = order_ids[start:end]
-            feats = [self._orders_db._orders[order_id] for order_id in ids]
+            orders = [self._orders_db._orders[order_id] for order_id in ids]
 
-            next = ""
             if end < len(order_ids):
-                next = self._orders_db._orders[order_ids[end]].id
-            return Success((OrderCollection(features=feats), next))
+                return Success((orders, self._orders_db._orders[order_ids[end]].id))
+            return Success((orders, ""))
         except Exception as e:
             return Failure(e)
 
@@ -90,17 +84,12 @@ class MockRootBackend(RootBackend):
 
             if next:
                 start = int(next)
-            if not statuses and not next:
-                return Success(([], ""))
-
-            end = start + limit
+            end = min(start + limit, len(statuses))
             stati = statuses[start:end]
 
-            next = ""
             if end < len(statuses):
-                next = str(end)
-            return Success((stati, next))
-            # return Success(self._orders_db._statuses[order_id])
+                return Success((stati, str(end)))
+            return Success((stati, ""))
         except Exception as e:
             return Failure(e)
 
@@ -217,3 +206,23 @@ root_router = RootRouter(root_backend, conformances=[CORE])
 root_router.add_product(product)
 app: FastAPI = FastAPI()
 app.include_router(root_router, prefix="")
+
+TEST_STATUSES = {
+    "test_order_id": [
+        OrderStatus(
+            timestamp=datetime(2025, 1, 14, 2, 21, 48, 466726, tzinfo=timezone.utc),
+            status_code=OrderStatusCode.received,
+            links=[],
+        ),
+        OrderStatus(
+            timestamp=datetime(2025, 1, 15, 5, 20, 48, 466726, tzinfo=timezone.utc),
+            status_code=OrderStatusCode.accepted,
+            links=[],
+        ),
+        OrderStatus(
+            timestamp=datetime(2025, 1, 16, 10, 15, 32, 466726, tzinfo=timezone.utc),
+            status_code=OrderStatusCode.completed,
+            links=[],
+        ),
+    ]
+}
