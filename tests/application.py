@@ -60,7 +60,7 @@ class MockRootBackend(RootBackend):
             ids = order_ids[start:end]
             orders = [self._orders_db._orders[order_id] for order_id in ids]
 
-            if end < len(order_ids):
+            if end < len(order_ids) and end != 0:
                 return Success((orders, self._orders_db._orders[order_ids[end]].id))
             return Success((orders, ""))
         except Exception as e:
@@ -87,7 +87,7 @@ class MockRootBackend(RootBackend):
             end = min(start + limit, len(statuses))
             stati = statuses[start:end]
 
-            if end < len(statuses):
+            if end < len(statuses) and end != 0:
                 return Success((stati, str(end)))
             return Success((stati, ""))
         except Exception as e:
@@ -119,7 +119,7 @@ class MockProductBackend(ProductBackend):
                 o.model_copy(update=search.model_dump())
                 for o in self._opportunities[start:end]
             ]
-            if end < len(self._opportunities):
+            if end < len(self._opportunities) and end != 0:
                 return Success((opportunities, str(end)))
             return Success((opportunities, ""))
         except Exception as e:

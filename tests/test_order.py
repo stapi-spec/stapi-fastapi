@@ -170,21 +170,23 @@ def setup_orders_pagination(
     return orders
 
 
+@pytest.mark.parametrize("limit", [0, 2, 4])
 def test_order_pagination(
-    setup_orders_pagination, create_order_payloads, stapi_client: TestClient
+    limit, setup_orders_pagination, create_order_payloads, stapi_client: TestClient
 ) -> None:
     expected_returns = []
-    for order in setup_orders_pagination:
-        json_link = copy.deepcopy(order["links"][0])
-        json_link["type"] = "application/json"
-        order["links"].append(json_link)
-        expected_returns.append(order)
+    if limit != 0:
+        for order in setup_orders_pagination:
+            json_link = copy.deepcopy(order["links"][0])
+            json_link["type"] = "application/json"
+            order["links"].append(json_link)
+            expected_returns.append(order)
 
     pagination_tester(
         stapi_client=stapi_client,
         endpoint="/orders",
         method="GET",
-        limit=2,
+        limit=limit,
         target="features",
         expected_returns=expected_returns,
     )
@@ -221,22 +223,25 @@ def order_statuses() -> dict[str, list[OrderStatus]]:
     return statuses
 
 
+@pytest.mark.parametrize("limit", [0, 2, 4])
 def test_order_status_pagination(
+    limit: int,
     stapi_client: TestClient,
     order_db: InMemoryOrderDB,
     order_statuses: dict[str, list[OrderStatus]],
-    limit: int = 2,
 ) -> None:
     order_db._statuses = order_statuses
 
     order_id = "test_order_id"
-    expected_returns = [x.model_dump(mode="json") for x in order_statuses[order_id]]
+    expected_returns = []
+    if limit != 0:
+        expected_returns = [x.model_dump(mode="json") for x in order_statuses[order_id]]
 
     pagination_tester(
         stapi_client=stapi_client,
         endpoint=f"/orders/{order_id}/statuses",
         method="GET",
-        limit=2,
+        limit=limit,
         target="statuses",
         expected_returns=expected_returns,
     )

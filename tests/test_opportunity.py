@@ -96,17 +96,20 @@ def test_search_opportunities_response(
     assert_link(f"POST {url}", body, "create-order", f"/products/{product_id}/orders")
 
 
-@pytest.mark.parametrize("product_id", ["test-spotlight"])
+@pytest.mark.parametrize("limit", [0, 2, 4])
 def test_search_opportunities_pagination(
-    product_id: str,
+    limit: int,
     stapi_client: TestClient,
     product_backend: MockProductBackend,
     mock_test_pagination_opportunities: List[Opportunity],
 ) -> None:
+    product_id = "test-spotlight"
     product_backend._opportunities = mock_test_pagination_opportunities
-    expected_returns = [
-        x.model_dump(mode="json") for x in mock_test_pagination_opportunities
-    ]
+    expected_returns = []
+    if limit != 0:
+        expected_returns = [
+            x.model_dump(mode="json") for x in mock_test_pagination_opportunities
+        ]
 
     now = datetime.now(UTC)
     start = now
@@ -134,7 +137,7 @@ def test_search_opportunities_pagination(
         stapi_client=stapi_client,
         endpoint=f"/products/{product_id}/opportunities",
         method="POST",
-        limit=2,
+        limit=limit,
         target="features",
         expected_returns=expected_returns,
         body=request_payload,

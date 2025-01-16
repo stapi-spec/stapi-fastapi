@@ -67,47 +67,52 @@ def test_product_order_parameters_response(
     assert "s3_path" in json_schema["properties"]
 
 
+@pytest.mark.parametrize("limit", [0, 1, 2, 4])
 def test_product_pagination(
-    stapi_client: TestClient, mock_product_test_spotlight, mock_product_test_wolf_cola
+    limit: int,
+    stapi_client: TestClient,
+    mock_product_test_spotlight,
+    mock_product_test_wolf_cola,
 ):
     expected_returns = []
-    for product in [mock_product_test_spotlight, mock_product_test_wolf_cola]:
-        prod = product.model_dump(mode="json", by_alias=True)
-        product_id = prod["id"]
-        prod["links"] = [
-            {
-                "href": f"http://stapiserver/products/{product_id}",
-                "rel": "self",
-                "type": "application/json",
-            },
-            {
-                "href": f"http://stapiserver/products/{product_id}/constraints",
-                "rel": "constraints",
-                "type": "application/json",
-            },
-            {
-                "href": f"http://stapiserver/products/{product_id}/order-parameters",
-                "rel": "order-parameters",
-                "type": "application/json",
-            },
-            {
-                "href": f"http://stapiserver/products/{product_id}/opportunities",
-                "rel": "opportunities",
-                "type": "application/json",
-            },
-            {
-                "href": f"http://stapiserver/products/{product_id}/orders",
-                "rel": "create-order",
-                "type": "application/json",
-            },
-        ]
-        expected_returns.append(prod)
+    if limit != 0:
+        for product in [mock_product_test_spotlight, mock_product_test_wolf_cola]:
+            prod = product.model_dump(mode="json", by_alias=True)
+            product_id = prod["id"]
+            prod["links"] = [
+                {
+                    "href": f"http://stapiserver/products/{product_id}",
+                    "rel": "self",
+                    "type": "application/json",
+                },
+                {
+                    "href": f"http://stapiserver/products/{product_id}/constraints",
+                    "rel": "constraints",
+                    "type": "application/json",
+                },
+                {
+                    "href": f"http://stapiserver/products/{product_id}/order-parameters",
+                    "rel": "order-parameters",
+                    "type": "application/json",
+                },
+                {
+                    "href": f"http://stapiserver/products/{product_id}/opportunities",
+                    "rel": "opportunities",
+                    "type": "application/json",
+                },
+                {
+                    "href": f"http://stapiserver/products/{product_id}/orders",
+                    "rel": "create-order",
+                    "type": "application/json",
+                },
+            ]
+            expected_returns.append(prod)
 
     pagination_tester(
         stapi_client=stapi_client,
         endpoint="/products",
         method="GET",
-        limit=1,
+        limit=limit,
         target="products",
         expected_returns=expected_returns,
     )

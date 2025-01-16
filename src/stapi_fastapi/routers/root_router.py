@@ -160,7 +160,7 @@ class RootRouter(APIRouter):
                 type=TYPE_JSON,
             ),
         ]
-        if end < len(product_ids):
+        if end < len(product_ids) and end != 0:
             links.append(
                 Link(
                     href=str(
