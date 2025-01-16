@@ -1,3 +1,4 @@
+import copy
 from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
@@ -7,7 +8,7 @@ from geojson_pydantic import Point
 from geojson_pydantic.types import Position2D
 from httpx import Response
 
-from stapi_fastapi.models.order import OrderPayload, OrderStatus, OrderStatusCode
+from stapi_fastapi.models.order import Order, OrderPayload, OrderStatus, OrderStatusCode
 from tests.conftest import pagination_tester
 
 from .application import InMemoryOrderDB, MyOrderParameters
@@ -149,27 +150,43 @@ def test_order_status_after_create(
 
 
 @pytest.fixture
-def setup_orders_pagination(stapi_client: TestClient, create_order_payloads) -> None:
+def setup_orders_pagination(
+    stapi_client: TestClient, create_order_payloads
+) -> list[Order]:
     product_id = "test-spotlight"
-
+    orders = []
+    # t = {'id': 'dc2d9027-a670-475b-878c-a5a6e8ab022b', 'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': [14.4, 56.5]}, 'properties': {'product_id': 'test-spotlight', 'created': '2025-01-16T19:09:45.448059Z', 'status': {'timestamp': '2025-01-16T19:09:45.447952Z', 'status_code': 'received', 'reason_code': None, 'reason_text': None, 'links': []}, 'search_parameters': {'datetime': '2024-10-09T18:55:33+00:00/2024-10-12T18:55:33+00:00', 'geometry': {'type': 'Point', 'coordinates': [14.4, 56.5]}, 'filter': None}, 'opportunity_properties': {'datetime': '2024-01-29T12:00:00Z/2024-01-30T12:00:00Z', 'off_nadir': 10}, 'order_parameters': {'s3_path': 's3://my-bucket'}}, 'links': [{'href': 'http://stapiserver/orders/dc2d9027-a670-475b-878c-a5a6e8ab022b', 'rel': 'self', 'type': 'application/geo+json'}, {'href': 'http://stapiserver/orders/dc2d9027-a670-475b-878c-a5a6e8ab022b/statuses', 'rel': 'monitor', 'type': 'application/json'}, {'href': 'http://stapiserver/orders/dc2d9027-a670-475b-878c-a5a6e8ab022b', 'rel': 'self', 'type': 'application/json'}]}
     for order in create_order_payloads:
         res = stapi_client.post(
             f"products/{product_id}/orders",
             json=order.model_dump(),
         )
+        body = res.json()
+        orders.append(body)
 
         assert res.status_code == status.HTTP_201_CREATED, res.text
         assert res.headers["Content-Type"] == "application/geo+json"
 
+    return orders
 
-def test_order_pagination(setup_orders_pagination, stapi_client: TestClient) -> None:
+
+def test_order_pagination(
+    setup_orders_pagination, create_order_payloads, stapi_client: TestClient
+) -> None:
+    expected_returns = []
+    for order in setup_orders_pagination:
+        json_link = copy.deepcopy(order["links"][0])
+        json_link["type"] = "application/json"
+        order["links"].append(json_link)
+        expected_returns.append(order)
+
     pagination_tester(
         stapi_client=stapi_client,
         endpoint="/orders",
         method="GET",
         limit=2,
         target="features",
-        expected_total_returns=3,
+        expected_returns=expected_returns,
     )
 
 
@@ -213,6 +230,7 @@ def test_order_status_pagination(
     order_db._statuses = order_statuses
 
     order_id = "test_order_id"
+    expected_returns = [x.model_dump(mode="json") for x in order_statuses[order_id]]
 
     pagination_tester(
         stapi_client=stapi_client,
@@ -220,7 +238,7 @@ def test_order_status_pagination(
         method="GET",
         limit=2,
         target="statuses",
-        expected_total_returns=3,
+        expected_returns=expected_returns,
     )
 
 

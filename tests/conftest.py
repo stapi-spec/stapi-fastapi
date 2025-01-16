@@ -73,7 +73,7 @@ def mock_product_test_wolf_cola(
     return Product(
         id="test-wolf-cola",
         title="Test Wolf Cola Product",
-        description="Test product for Wolf Cola for testing GET /product pagination",
+        description="The right cola for closure",
         license="CC-BY-4.0",
         keywords=["test", "satellite", "wolf-cola"],
         providers=[mock_provider],
@@ -161,7 +161,7 @@ def pagination_tester(
     method: str,
     limit: int,
     target: str,
-    expected_total_returns: int,
+    expected_returns: list,
     body: dict | None = None,
 ) -> None:
     retrieved = []
@@ -181,6 +181,7 @@ def pagination_tester(
         resp_body = res.json()
         retrieved.extend(resp_body[target])
 
+        # get url w/ query params for next call if exists, and POST body if necessary
         if resp_body["links"]:
             next_url = next(
                 (d["href"] for d in resp_body["links"] if d["rel"] == "next"), None
@@ -191,7 +192,8 @@ def pagination_tester(
         else:
             next_url = None
 
-    assert len(retrieved) == expected_total_returns
+    assert len(retrieved) == len(expected_returns)
+    assert retrieved == expected_returns
 
 
 def make_request(
@@ -203,6 +205,8 @@ def make_request(
     limit: int,
 ) -> Response:
     """request wrapper for pagination tests"""
+
+    # extract pagination token
     if next_token and "next=" in next_token:
         next_token = next_token.split("next=")[1]
     params = {"next": next_token, "limit": limit}
