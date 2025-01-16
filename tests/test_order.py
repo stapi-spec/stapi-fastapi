@@ -8,6 +8,7 @@ from geojson_pydantic.types import Position2D
 from httpx import Response
 
 from stapi_fastapi.models.order import OrderPayload, OrderStatus, OrderStatusCode
+from tests.conftest import pagination_tester
 
 from .application import InMemoryOrderDB, MyOrderParameters
 from .backends import MockProductBackend
@@ -161,26 +162,15 @@ def setup_orders_pagination(stapi_client: TestClient, create_order_payloads) -> 
         assert res.headers["Content-Type"] == "application/geo+json"
 
 
-@pytest.mark.parametrize("limit", [2])
-def test_order_pagination(
-    stapi_client: TestClient, setup_orders_pagination, limit
-) -> None:
-    res = stapi_client.get("/orders", params={"next": None, "limit": limit})
-    assert res.status_code == status.HTTP_200_OK
-    body = res.json()
-    assert len(body["features"]) == limit
-    next = body["links"][0]["href"]
-
-    while next:
-        res = stapi_client.get(next)
-        assert res.status_code == status.HTTP_200_OK
-        body = res.json()
-        assert body["features"] != []
-        if body["links"]:
-            assert len(body["features"]) == limit
-            next = body["links"][0]["href"]
-        else:
-            break
+def test_order_pagination(setup_orders_pagination, stapi_client: TestClient) -> None:
+    pagination_tester(
+        stapi_client=stapi_client,
+        endpoint="/orders",
+        method="GET",
+        limit=2,
+        target="features",
+        expected_total_returns=3,
+    )
 
 
 def test_token_not_found(stapi_client: TestClient) -> None:
@@ -223,30 +213,15 @@ def test_order_status_pagination(
     order_db._statuses = order_statuses
 
     order_id = "test_order_id"
-    res = stapi_client.get(f"/orders/{order_id}/statuses")
-    assert res.status_code == status.HTTP_200_OK
 
-    order_id = "test_order_id"
-    res = stapi_client.get(
-        f"/orders/{order_id}/statuses", params={"next": None, "limit": limit}
+    pagination_tester(
+        stapi_client=stapi_client,
+        endpoint=f"/orders/{order_id}/statuses",
+        method="GET",
+        limit=2,
+        target="statuses",
+        expected_total_returns=3,
     )
-    body = res.json()
-    links = body["links"]
-    for link in body["links"]:
-        if ("rel", "next") in link.items():
-            assert len(body["statuses"]) == limit
-            next = link["href"]
-
-    while len(links) > 1:
-        res = stapi_client.get(next)
-        assert res.status_code == status.HTTP_200_OK
-        body = res.json()
-        assert body["statuses"] != []
-        links = body["links"]
-        for link in body["links"]:
-            if ("rel", "next") in link.items():
-                assert len(body["statuses"]) == limit
-                next = body["links"][0]["href"]
 
 
 def test_get_order_statuses_bad_token(

@@ -1,14 +1,52 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from typing import List
+from uuid import uuid4
 
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
+from geojson_pydantic import Point
+from geojson_pydantic.types import Position2D
 
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
+from tests.application import MyOpportunityProperties
 
 from .backends import MockProductBackend
 from .test_datetime_interval import rfc3339_strftime
+
+
+@pytest.fixture
+def mock_test_spotlight_opportunities() -> list[Opportunity]:
+    """Fixture to create mock data for Opportunities for `test-spotlight-1`."""
+    now = datetime.now(timezone.utc)  # Use timezone-aware datetime
+    start = now
+    end = start + timedelta(days=5)
+
+    # Create a list of mock opportunities for the given product
+    return [
+        Opportunity(
+            id=str(uuid4()),
+            type="Feature",
+            geometry=Point(
+                type="Point",
+                coordinates=Position2D(longitude=0.0, latitude=0.0),
+            ),
+            properties=MyOpportunityProperties(
+                product_id="xyz123",
+                datetime=(start, end),
+                off_nadir={"minimum": 20, "maximum": 22},
+                vehicle_id=[1],
+                platform="platform_id",
+            ),
+        ),
+    ]
+
+
+@pytest.fixture
+def mock_test_pagination_opportunities(
+    mock_test_spotlight_opportunities,
+) -> list[Opportunity]:
+    return [opp for opp in mock_test_spotlight_opportunities for __ in range(0, 3)]
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
