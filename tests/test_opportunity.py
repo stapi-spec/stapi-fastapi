@@ -3,13 +3,13 @@ from typing import List
 from uuid import uuid4
 
 import pytest
-from fastapi import status
 from fastapi.testclient import TestClient
 from geojson_pydantic import Point
 from geojson_pydantic.types import Position2D
 
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
 from tests.application import MyOpportunityProperties
+from tests.conftest import pagination_tester
 
 from .backends import MockProductBackend
 from .test_datetime_interval import rfc3339_strftime
@@ -127,12 +127,12 @@ def test_search_opportunities_pagination(
         },
     }
 
-    res = stapi_client.post(
-        f"/products/{product_id}/opportunities",
-        json=request_payload,
-        params={"next": None, "limit": 2},
+    pagination_tester(
+        stapi_client=stapi_client,
+        endpoint=f"/products/{product_id}/opportunities",
+        method="POST",
+        limit=2,
+        target="features",
+        expected_total_returns=3,
+        body=request_payload,
     )
-    body = res.json()  # noqa: F841
-
-    assert res.status_code == status.HTTP_200_OK
-    assert 1 == 2

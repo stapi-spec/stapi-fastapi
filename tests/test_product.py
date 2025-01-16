@@ -2,6 +2,8 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
+from tests.conftest import pagination_tester
+
 
 def test_products_response(stapi_client: TestClient):
     res = stapi_client.get("/products")
@@ -65,27 +67,15 @@ def test_product_order_parameters_response(
     assert "s3_path" in json_schema["properties"]
 
 
-@pytest.mark.parametrize("limit", [1])
-def test_product_pagination(stapi_client: TestClient, limit: int):
-    res = stapi_client.get("/products", params={"next": None, "limit": limit})
-    assert res.status_code == status.HTTP_200_OK
-    body = res.json()
-    assert len(body["products"]) == limit
-    links = body["links"]
-    for d in body["links"]:
-        if ("rel", "next") in d.items():
-            next = d["href"]
-
-    while len(links) > 1:
-        res = stapi_client.get(next)
-        assert res.status_code == status.HTTP_200_OK
-        body = res.json()
-        assert body["products"] != []
-        links = body["links"]
-        for d in body["links"]:
-            if ("rel", "next") in d.items():
-                assert len(body["products"]) == limit
-                next = body["links"][0]["href"]
+def test_product_pagination(stapi_client: TestClient):
+    pagination_tester(
+        stapi_client=stapi_client,
+        endpoint="/products",
+        method="GET",
+        limit=1,
+        target="products",
+        expected_total_returns=2,
+    )
 
 
 def test_token_not_found(stapi_client: TestClient) -> None:

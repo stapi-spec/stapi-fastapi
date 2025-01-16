@@ -179,7 +179,7 @@ class ProductRouter(APIRouter):
         ):
             case Success((features, pagination_token)):
                 links = [
-                    Link(  # current bug is missing method set and setting body for
+                    Link(
                         href=str(
                             request.url_for(
                                 f"{self.root_router.name}:{self.product.id}:create-order",
