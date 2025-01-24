@@ -145,6 +145,7 @@ class RootRouter(APIRouter):
         self, request: Request, next: str | None = None, limit: int = 10
     ) -> ProductsCollection:
         start = 0
+        limit = min(limit, 100)
         try:
             if next:
                 start = self.product_ids.index(next)

@@ -50,8 +50,7 @@ class MockRootBackend(RootBackend):
         """
         try:
             start = 0
-            if limit > 100:
-                limit = 100
+            limit = min(limit, 100)
             order_ids = [*self._orders_db._orders.keys()]
 
             if next:
@@ -80,8 +79,7 @@ class MockRootBackend(RootBackend):
     ) -> ResultE[tuple[list[OrderStatus], Maybe[str]]]:
         try:
             start = 0
-            if limit > 100:
-                limit = 100
+            limit = min(limit, 100)
             statuses = self._orders_db._statuses[order_id]
 
             if next:
@@ -112,8 +110,7 @@ class MockProductBackend(ProductBackend):
     ) -> ResultE[tuple[list[Opportunity], Maybe[str]]]:
         try:
             start = 0
-            if limit > 100:
-                limit = 100
+            limit = min(limit, 100)
             if next:
                 start = int(next)
             end = start + limit
