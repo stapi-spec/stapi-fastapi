@@ -177,6 +177,8 @@ class ProductRouter(APIRouter):
         ):
             case Success((features, Some(pagination_token))):
                 links.append(self.order_link(request, "create-order"))
+                body = search.model_dump()
+                body["next"] = pagination_token
                 links.append(
                     Link(
                         href=str(
@@ -185,7 +187,7 @@ class ProductRouter(APIRouter):
                         rel="next",
                         type=TYPE_JSON,
                         method="POST",
-                        body={"next": pagination_token, "search": search},
+                        body=body,
                     )
                 )
             case Success((features, Nothing)):  # noqa: F841

@@ -196,7 +196,7 @@ def pagination_tester(
                 (d["href"] for d in resp_body["links"] if d["rel"] == "next"), None
             )
             body = next(
-                (d.get("body")["search"] for d in resp_body["links"] if d.get("body")),
+                (d.get("body") for d in resp_body["links"] if d.get("body")),
                 None,
             )
         else:
