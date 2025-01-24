@@ -13,7 +13,7 @@ from stapi_fastapi.models.order import (
 class RootBackend[T: OrderStatus](Protocol):  # pragma: nocover
     async def get_orders(
         self, request: Request, next: str | None, limit: int
-    ) -> ResultE[tuple[list[Order], str]]:
+    ) -> ResultE[tuple[list[Order], Maybe[str]]]:
         """
         Return a list of existing orders and pagination token if applicable
         No pagination will return empty string for token
@@ -35,7 +35,7 @@ class RootBackend[T: OrderStatus](Protocol):  # pragma: nocover
 
     async def get_order_statuses(
         self, order_id: str, request: Request, next: str | None, limit: int
-    ) -> ResultE[tuple[list[T], str]]:
+    ) -> ResultE[tuple[list[T], Maybe[str]]]:
         """
         Get statuses for order with `order_id`.
 

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Self
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from geojson_pydantic.geometries import Geometry
+from returns.maybe import Some
 from returns.result import Failure, Success
 
 from stapi_fastapi.constants import TYPE_JSON
@@ -170,36 +171,25 @@ class ProductRouter(APIRouter):
         """
         Explore the opportunities available for a particular set of constraints
         """
+        links: list[Link] = []
         match await self.product.backend.search_opportunities(
             self, search, request, next, limit
         ):
-            case Success((features, pagination_token)):
-                links = [
+            case Success((features, Some(pagination_token))):
+                links.append(self.order_link(request, "create-order"))
+                links.append(
                     Link(
                         href=str(
-                            request.url_for(
-                                f"{self.root_router.name}:{self.product.id}:create-order",
-                            ),
+                            request.url.remove_query_params(keys=["next", "limit"])
                         ),
-                        rel="create-order",
+                        rel="next",
                         type=TYPE_JSON,
                         method="POST",
-                    ),
-                ]
-                if pagination_token:
-                    links.append(
-                        Link(
-                            href=str(
-                                request.url.include_query_params(next=pagination_token)
-                            ),
-                            rel="next",
-                            type=TYPE_JSON,
-                            method="POST",
-                            body=search,
-                        )
+                        body={"next": pagination_token, "search": search},
                     )
-                    return OpportunityCollection(features=features, links=links)
-                return OpportunityCollection(features=features, links=links)
+                )
+            case Success((features, Nothing)):  # noqa: F841
+                links.append(self.order_link(request, "create-order"))
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):
@@ -213,6 +203,7 @@ class ProductRouter(APIRouter):
                 )
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")
+        return OpportunityCollection(features=features, links=links)
 
     def get_product_constraints(self: Self) -> JsonSchemaModel:
         """
@@ -255,3 +246,15 @@ class ProductRouter(APIRouter):
                 )
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")
+
+    def order_link(self, request: Request, suffix: str):
+        return Link(
+            href=str(
+                request.url_for(
+                    f"{self.root_router.name}:{self.product.id}:{suffix}",
+                ),
+            ),
+            rel="create-order",
+            type=TYPE_JSON,
+            method="POST",
+        )

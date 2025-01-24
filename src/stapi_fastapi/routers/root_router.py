@@ -42,6 +42,7 @@ class RootRouter(APIRouter):
         self.conformances = conformances
         self.openapi_endpoint_name = openapi_endpoint_name
         self.docs_endpoint_name = docs_endpoint_name
+        self.product_ids: list = []
 
         # A dict is used to track the product routers so we can ensure
         # idempotentcy in case a product is added multiple times, and also to
@@ -144,15 +145,16 @@ class RootRouter(APIRouter):
         self, request: Request, next: str | None = None, limit: int = 10
     ) -> ProductsCollection:
         start = 0
-        product_ids = [*self.product_routers.keys()]
         try:
             if next:
-                start = product_ids.index(next)
+                start = self.product_ids.index(next)
         except ValueError:
-            logging.exception("An error occurred while retrieving orders")
-            raise NotFoundException(detail="Error finding pagination token") from None
-        end = min(start + limit, len(product_ids))
-        ids = product_ids[start:end]
+            logging.exception("An error occurred while retrieving products")
+            raise NotFoundException(
+                detail="Error finding pagination token for products"
+            ) from None
+        end = start + limit
+        ids = self.product_ids[start:end]
         links = [
             Link(
                 href=str(request.url_for(f"{self.name}:list-products")),
@@ -160,13 +162,11 @@ class RootRouter(APIRouter):
                 type=TYPE_JSON,
             ),
         ]
-        if end < len(product_ids) and end != 0:
+        if end > 0 and end < len(self.product_ids):
             links.append(
                 Link(
                     href=str(
-                        request.url.include_query_params(
-                            next=self.product_routers[product_ids[end]].product.id
-                        ),
+                        request.url.include_query_params(next=self.product_ids[end]),
                     ),
                     rel="next",
                     type=TYPE_JSON,
@@ -183,36 +183,24 @@ class RootRouter(APIRouter):
     async def get_orders(
         self, request: Request, next: str | None = None, limit: int = 10
     ) -> OrderCollection:
+        # links: list[Link] = []
         match await self.backend.get_orders(request, next, limit):
-            case Success((orders, pagination_token)):
+            case Success((orders, Some(pagination_token))):
                 for order in orders:
-                    order.links.append(
-                        Link(
-                            href=str(
-                                request.url_for(
-                                    f"{self.name}:get-order", order_id=order.id
-                                )
-                            ),
-                            rel="self",
-                            type=TYPE_JSON,
-                        )
+                    order.links.append(self.order_link(request, "get-order", order))
+                links = [
+                    Link(
+                        href=str(
+                            request.url.include_query_params(next=pagination_token)
+                        ),
+                        rel="next",
+                        type=TYPE_JSON,
                     )
-                if pagination_token:
-                    return OrderCollection(
-                        features=orders,
-                        links=[
-                            Link(
-                                href=str(
-                                    request.url.include_query_params(
-                                        next=pagination_token
-                                    )
-                                ),
-                                rel="next",
-                                type=TYPE_JSON,
-                            )
-                        ],
-                    )
-                return OrderCollection(features=orders)
+                ]
+            case Success((orders, Nothing)):  # noqa: F841
+                for order in orders:
+                    order.links.append(self.order_link(request, "get-order", order))
+                links = []
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving orders: %s",
@@ -227,6 +215,7 @@ class RootRouter(APIRouter):
                     )
             case _:
                 raise AssertionError("Expected code to be unreachable")
+        return OrderCollection(features=orders, links=links)
 
     async def get_order(self: Self, order_id: str, request: Request) -> Order:
         """
@@ -258,34 +247,24 @@ class RootRouter(APIRouter):
         next: str | None = None,
         limit: int = 10,
     ) -> OrderStatuses:
+        links: list[Link] = []
         match await self.backend.get_order_statuses(order_id, request, next, limit):
-            case Success((statuses, pagination_token)):
-                links = [
+            case Success((statuses, Some(pagination_token))):
+                links.append(
+                    self.order_statuses_link(request, "list-order-statuses", order_id)
+                )
+                links.append(
                     Link(
                         href=str(
-                            request.url_for(
-                                f"{self.name}:list-order-statuses",
-                                order_id=order_id,
-                            )
+                            request.url.include_query_params(next=pagination_token)
                         ),
-                        rel="self",
+                        rel="next",
                         type=TYPE_JSON,
                     )
-                ]
-                if pagination_token:
-                    links.append(
-                        Link(
-                            href=str(
-                                request.url.include_query_params(next=pagination_token)
-                            ),
-                            rel="next",
-                            type=TYPE_JSON,
-                        )
-                    )
-                    return OrderStatuses(statuses=statuses, links=links)
-                return OrderStatuses(
-                    statuses=statuses,
-                    links=links,
+                )
+            case Success((statuses, Nothing)):  # noqa: F841
+                links.append(
+                    self.order_statuses_link(request, "list-order-statuses", order_id)
                 )
             case Failure(e):
                 logger.error(
@@ -301,12 +280,14 @@ class RootRouter(APIRouter):
                     )
             case _:
                 raise AssertionError("Expected code to be unreachable")
+        return OrderStatuses(statuses=statuses, links=links)
 
     def add_product(self: Self, product: Product, *args, **kwargs) -> None:
         # Give the include a prefix from the product router
         product_router = ProductRouter(product, self, *args, **kwargs)
         self.include_router(product_router, prefix=f"/products/{product.id}")
         self.product_routers[product.id] = product_router
+        self.product_ids = [*self.product_routers.keys()]
 
     def generate_order_href(self: Self, request: Request, order_id: str) -> URL:
         return request.url_for(f"{self.name}:get-order", order_id=order_id)
@@ -330,4 +311,23 @@ class RootRouter(APIRouter):
                 rel="monitor",
                 type=TYPE_JSON,
             ),
+        )
+
+    def order_link(self, request: Request, link_suffix: str, order: Order):
+        return Link(
+            href=str(request.url_for(f"{self.name}:{link_suffix}", order_id=order.id)),
+            rel="self",
+            type=TYPE_JSON,
+        )
+
+    def order_statuses_link(self, request: Request, link_suffix: str, order_id: str):
+        return Link(
+            href=str(
+                request.url_for(
+                    f"{self.name}:{link_suffix}",
+                    order_id=order_id,
+                )
+            ),
+            rel="self",
+            type=TYPE_JSON,
         )

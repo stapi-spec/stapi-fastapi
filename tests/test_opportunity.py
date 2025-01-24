@@ -96,7 +96,7 @@ def test_search_opportunities_response(
     assert_link(f"POST {url}", body, "create-order", f"/products/{product_id}/orders")
 
 
-@pytest.mark.parametrize("limit", [0, 2, 4])
+@pytest.mark.parametrize("limit", [0, 1, 2, 4])
 def test_search_opportunities_pagination(
     limit: int,
     stapi_client: TestClient,

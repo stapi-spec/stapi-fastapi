@@ -1,3 +1,4 @@
+import copy
 from collections.abc import Iterator
 from typing import Any, Callable
 from urllib.parse import urljoin
@@ -66,16 +67,16 @@ def mock_product_test_spotlight(
 
 
 @pytest.fixture
-def mock_product_test_wolf_cola(
+def mock_product_test_satellite_provider(
     product_backend: MockProductBackend, mock_provider: Provider
 ) -> Product:
-    """Fixture for a mock Wolf Cola product."""
+    """Fixture for a mock satellite provider product."""
     return Product(
-        id="test-wolf-cola",
-        title="Test Wolf Cola Product",
-        description="The right cola for closure",
+        id="test-satellite-provider",
+        title="Satellite Product",
+        description="A product by a satellite provider",
         license="CC-BY-4.0",
-        keywords=["test", "satellite", "wolf-cola"],
+        keywords=["test", "satellite", "provider"],
         providers=[mock_provider],
         links=[],
         constraints=MyProductConstraints,
@@ -89,12 +90,12 @@ def mock_product_test_wolf_cola(
 def stapi_client(
     root_backend,
     mock_product_test_spotlight,
-    mock_product_test_wolf_cola,
+    mock_product_test_satellite_provider,
     base_url: str,
 ) -> Iterator[TestClient]:
     root_router = RootRouter(root_backend)
     root_router.add_product(mock_product_test_spotlight)
-    root_router.add_product(mock_product_test_wolf_cola)
+    root_router.add_product(mock_product_test_satellite_provider)
     app = FastAPI()
     app.include_router(root_router, prefix="")
 
@@ -172,10 +173,18 @@ def pagination_tester(
 
     assert len(resp_body[target]) <= limit
     retrieved.extend(resp_body[target])
-    next_url = next((d["href"] for d in resp_body["links"] if d["rel"] == "next"), None)
+    next_token = next(
+        (d["href"] for d in resp_body["links"] if d["rel"] == "next"), None
+    )
 
-    while next_url:
-        res = make_request(stapi_client, next_url, method, body, next_url, limit)
+    while next_token:
+        url = copy.deepcopy(next_token)
+        if method == "POST":
+            next_token = next(
+                (d["body"]["next"] for d in resp_body["links"] if d["rel"] == "next"),
+            )
+
+        res = make_request(stapi_client, url, method, body, next_token, limit)
         assert res.status_code == status.HTTP_200_OK
         assert len(resp_body[target]) <= limit
         resp_body = res.json()
@@ -183,17 +192,19 @@ def pagination_tester(
 
         # get url w/ query params for next call if exists, and POST body if necessary
         if resp_body["links"]:
-            next_url = next(
+            next_token = next(
                 (d["href"] for d in resp_body["links"] if d["rel"] == "next"), None
             )
             body = next(
-                (d.et("body") for d in resp_body["links"] if d.get("body")), None
+                (d.get("body")["search"] for d in resp_body["links"] if d.get("body")),
+                None,
             )
         else:
-            next_url = None
+            next_token = None
 
     assert len(retrieved) == len(expected_returns)
     assert retrieved == expected_returns
+    # assert retrieved[:2] == expected_returns[:2]
 
 
 def make_request(
@@ -207,7 +218,7 @@ def make_request(
     """request wrapper for pagination tests"""
 
     # extract pagination token
-    if next_token and "next=" in next_token:
+    if next_token and method == "GET":
         next_token = next_token.split("next=")[1]
     params = {"next": next_token, "limit": limit}
 

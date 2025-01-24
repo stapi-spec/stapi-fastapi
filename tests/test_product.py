@@ -72,11 +72,14 @@ def test_product_pagination(
     limit: int,
     stapi_client: TestClient,
     mock_product_test_spotlight,
-    mock_product_test_wolf_cola,
+    mock_product_test_satellite_provider,
 ):
     expected_returns = []
     if limit != 0:
-        for product in [mock_product_test_spotlight, mock_product_test_wolf_cola]:
+        for product in [
+            mock_product_test_spotlight,
+            mock_product_test_satellite_provider,
+        ]:
             prod = product.model_dump(mode="json", by_alias=True)
             product_id = prod["id"]
             prod["links"] = [

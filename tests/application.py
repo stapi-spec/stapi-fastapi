@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from pydantic import BaseModel, Field, model_validator
-from returns.maybe import Maybe
+from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
 
 from stapi_fastapi.backends.product_backend import ProductBackend
@@ -44,7 +44,7 @@ class MockRootBackend(RootBackend):
 
     async def get_orders(
         self, request: Request, next: str | None, limit: int
-    ) -> ResultE[tuple[list[Order], str]]:
+    ) -> ResultE[tuple[list[Order], Maybe[str]]]:
         """
         Return orders from backend.  Handle pagination/limit if applicable
         """
@@ -56,13 +56,15 @@ class MockRootBackend(RootBackend):
 
             if next:
                 start = order_ids.index(next)
-            end = min(start + limit, len(order_ids))
+            end = start + limit
             ids = order_ids[start:end]
             orders = [self._orders_db._orders[order_id] for order_id in ids]
 
-            if end < len(order_ids) and end != 0:
-                return Success((orders, self._orders_db._orders[order_ids[end]].id))
-            return Success((orders, ""))
+            if end > 0 and end < len(order_ids):
+                return Success(
+                    (orders, Some(self._orders_db._orders[order_ids[end]].id))
+                )
+            return Success((orders, Nothing))
         except Exception as e:
             return Failure(e)
 
@@ -75,7 +77,7 @@ class MockRootBackend(RootBackend):
 
     async def get_order_statuses(
         self, order_id: str, request: Request, next: str | None, limit: int
-    ) -> ResultE[tuple[list[OrderStatus], str]]:
+    ) -> ResultE[tuple[list[OrderStatus], Maybe[str]]]:
         try:
             start = 0
             if limit > 100:
@@ -84,12 +86,12 @@ class MockRootBackend(RootBackend):
 
             if next:
                 start = int(next)
-            end = min(start + limit, len(statuses))
+            end = start + limit
             stati = statuses[start:end]
 
-            if end < len(statuses) and end != 0:
-                return Success((stati, str(end)))
-            return Success((stati, ""))
+            if end > 0 and end < len(statuses):
+                return Success((stati, Some(str(end))))
+            return Success((stati, Nothing))
         except Exception as e:
             return Failure(e)
 
@@ -107,21 +109,21 @@ class MockProductBackend(ProductBackend):
         request: Request,
         next: str | None,
         limit: int,
-    ) -> ResultE[tuple[list[Opportunity], str]]:
+    ) -> ResultE[tuple[list[Opportunity], Maybe[str]]]:
         try:
             start = 0
             if limit > 100:
                 limit = 100
             if next:
                 start = int(next)
-            end = min(start + limit, len(self._opportunities))
+            end = start + limit
             opportunities = [
                 o.model_copy(update=search.model_dump())
                 for o in self._opportunities[start:end]
             ]
-            if end < len(self._opportunities) and end != 0:
-                return Success((opportunities, str(end)))
-            return Success((opportunities, ""))
+            if end > 0 and end < len(self._opportunities):
+                return Success((opportunities, Some(str(end))))
+            return Success((opportunities, Nothing))
         except Exception as e:
             return Failure(e)
 

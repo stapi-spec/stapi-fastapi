@@ -155,7 +155,6 @@ def setup_orders_pagination(
 ) -> list[Order]:
     product_id = "test-spotlight"
     orders = []
-    # t = {'id': 'dc2d9027-a670-475b-878c-a5a6e8ab022b', 'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': [14.4, 56.5]}, 'properties': {'product_id': 'test-spotlight', 'created': '2025-01-16T19:09:45.448059Z', 'status': {'timestamp': '2025-01-16T19:09:45.447952Z', 'status_code': 'received', 'reason_code': None, 'reason_text': None, 'links': []}, 'search_parameters': {'datetime': '2024-10-09T18:55:33+00:00/2024-10-12T18:55:33+00:00', 'geometry': {'type': 'Point', 'coordinates': [14.4, 56.5]}, 'filter': None}, 'opportunity_properties': {'datetime': '2024-01-29T12:00:00Z/2024-01-30T12:00:00Z', 'off_nadir': 10}, 'order_parameters': {'s3_path': 's3://my-bucket'}}, 'links': [{'href': 'http://stapiserver/orders/dc2d9027-a670-475b-878c-a5a6e8ab022b', 'rel': 'self', 'type': 'application/geo+json'}, {'href': 'http://stapiserver/orders/dc2d9027-a670-475b-878c-a5a6e8ab022b/statuses', 'rel': 'monitor', 'type': 'application/json'}, {'href': 'http://stapiserver/orders/dc2d9027-a670-475b-878c-a5a6e8ab022b', 'rel': 'self', 'type': 'application/json'}]}
     for order in create_order_payloads:
         res = stapi_client.post(
             f"products/{product_id}/orders",
@@ -170,8 +169,8 @@ def setup_orders_pagination(
     return orders
 
 
-@pytest.mark.parametrize("limit", [0, 2, 4])
-def test_order_pagination(
+@pytest.mark.parametrize("limit", [0, 1, 2, 4])
+def test_get_orders_pagination(
     limit, setup_orders_pagination, create_order_payloads, stapi_client: TestClient
 ) -> None:
     expected_returns = []
@@ -223,8 +222,8 @@ def order_statuses() -> dict[str, list[OrderStatus]]:
     return statuses
 
 
-@pytest.mark.parametrize("limit", [0, 2, 4])
-def test_order_status_pagination(
+@pytest.mark.parametrize("limit", [0, 1, 2, 4])
+def test_get_order_status_pagination(
     limit: int,
     stapi_client: TestClient,
     order_db: InMemoryOrderDB,
