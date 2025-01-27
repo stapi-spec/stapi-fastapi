@@ -1,6 +1,8 @@
 from collections import defaultdict
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Literal, Self
+from typing import Any, Literal, Self
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
@@ -8,8 +10,6 @@ from pydantic import BaseModel, Field, model_validator
 from returns.maybe import Maybe
 from returns.result import Failure, ResultE, Success
 
-from stapi_fastapi.backends.product_backend import ProductBackend
-from stapi_fastapi.backends.root_backend import RootBackend
 from stapi_fastapi.models.conformance import CORE
 from stapi_fastapi.models.opportunity import (
     Opportunity,
@@ -21,6 +21,8 @@ from stapi_fastapi.models.order import (
     OrderCollection,
     OrderParameters,
     OrderPayload,
+    OrderProperties,
+    OrderSearchParameters,
     OrderStatus,
     OrderStatusCode,
 )
@@ -38,85 +40,82 @@ class InMemoryOrderDB:
     _statuses: dict[str, list[OrderStatus]] = defaultdict(list)
 
 
-class MockRootBackend(RootBackend):
-    def __init__(self, orders: InMemoryOrderDB) -> None:
-        self._orders_db: InMemoryOrderDB = orders
-
-    async def get_orders(self, request: Request) -> ResultE[OrderCollection]:
-        """
-        Show all orders.
-        """
-        return Success(OrderCollection(features=list(self._orders_db._orders.values())))
-
-    async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:
-        """
-        Show details for order with `order_id`.
-        """
-
-        return Success(Maybe.from_optional(self._orders_db._orders.get(order_id)))
-
-    async def get_order_statuses(
-        self, order_id: str, request: Request
-    ) -> ResultE[list[OrderStatus]]:
-        return Success(self._orders_db._statuses[order_id])
+async def mock_get_orders(request: Request) -> ResultE[OrderCollection]:
+    """
+    Show all orders.
+    """
+    return Success(
+        OrderCollection(features=list(request.state._orders_db._orders.values()))
+    )
 
 
-class MockProductBackend(ProductBackend):
-    def __init__(self, orders: InMemoryOrderDB) -> None:
-        self._opportunities: list[Opportunity] = []
-        self._allowed_payloads: list[OrderPayload] = []
-        self._orders_db: InMemoryOrderDB = orders
+async def mock_get_order(order_id: str, request: Request) -> ResultE[Maybe[Order]]:
+    """
+    Show details for order with `order_id`.
+    """
 
-    async def search_opportunities(
-        self,
-        product_router: ProductRouter,
-        search: OpportunityRequest,
-        request: Request,
-    ) -> ResultE[list[Opportunity]]:
-        try:
-            return Success(
-                [o.model_copy(update=search.model_dump()) for o in self._opportunities]
-            )
-        except Exception as e:
-            return Failure(e)
+    return Success(Maybe.from_optional(request.state._orders_db._orders.get(order_id)))
 
-    async def create_order(
-        self, product_router: ProductRouter, payload: OrderPayload, request: Request
-    ) -> ResultE[Order]:
-        """
-        Create a new order.
-        """
-        try:
-            status = OrderStatus(
-                timestamp=datetime.now(timezone.utc),
-                status_code=OrderStatusCode.received,
-            )
-            order = Order(
-                id=str(uuid4()),
-                geometry=payload.geometry,
-                properties={
-                    "product_id": product_router.product.id,
-                    "created": datetime.now(timezone.utc),
-                    "status": status,
-                    "search_parameters": {
-                        "geometry": payload.geometry,
-                        "datetime": payload.datetime,
-                        "filter": payload.filter,
-                    },
-                    "order_parameters": payload.order_parameters.model_dump(),
-                    "opportunity_properties": {
-                        "datetime": "2024-01-29T12:00:00Z/2024-01-30T12:00:00Z",
-                        "off_nadir": 10,
-                    },
+
+async def mock_get_order_statuses(
+    order_id: str, request: Request
+) -> ResultE[list[OrderStatus]]:
+    return Success(request.state._orders_db._statuses[order_id])
+
+
+async def mock_search_opportunities(
+    product_router: ProductRouter,
+    search: OpportunityRequest,
+    request: Request,
+) -> ResultE[list[Opportunity]]:
+    try:
+        return Success(
+            [
+                o.model_copy(update=search.model_dump())
+                for o in request.state._opportunities
+            ]
+        )
+    except Exception as e:
+        return Failure(e)
+
+
+async def mock_create_order(
+    product_router: ProductRouter, payload: OrderPayload, request: Request
+) -> ResultE[Order]:
+    """
+    Create a new order.
+    """
+    try:
+        status = OrderStatus(
+            timestamp=datetime.now(timezone.utc),
+            status_code=OrderStatusCode.received,
+        )
+        order = Order(
+            id=str(uuid4()),
+            geometry=payload.geometry,
+            properties=OrderProperties(
+                product_id=product_router.product.id,
+                created=datetime.now(timezone.utc),
+                status=status,
+                search_parameters=OrderSearchParameters(
+                    geometry=payload.geometry,
+                    datetime=payload.datetime,
+                    filter=payload.filter,
+                ),
+                order_parameters=payload.order_parameters.model_dump(),
+                opportunity_properties={
+                    "datetime": "2024-01-29T12:00:00Z/2024-01-30T12:00:00Z",
+                    "off_nadir": 10,
                 },
-                links=[],
-            )
+            ),
+            links=[],
+        )
 
-            self._orders_db._orders[order.id] = order
-            self._orders_db._statuses[order.id].insert(0, status)
-            return Success(order)
-        except Exception as e:
-            return Failure(e)
+        request.state._orders_db._orders[order.id] = order
+        request.state._orders_db._statuses[order.id].insert(0, status)
+        return Success(order)
+    except Exception as e:
+        return Failure(e)
 
 
 class MyProductConstraints(BaseModel):
@@ -144,10 +143,6 @@ class MyOrderParameters(OrderParameters):
     s3_path: str | None = None
 
 
-order_db = InMemoryOrderDB()
-product_backend = MockProductBackend(order_db)
-root_backend = MockRootBackend(order_db)
-
 provider = Provider(
     name="Test Provider",
     description="A provider for Test data",
@@ -163,13 +158,30 @@ product = Product(
     keywords=["test", "satellite"],
     providers=[provider],
     links=[],
+    create_order=mock_create_order,
+    search_opportunities=mock_search_opportunities,
     constraints=MyProductConstraints,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
-    backend=product_backend,
 )
 
-root_router = RootRouter(root_backend, conformances=[CORE])
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
+    try:
+        yield {
+            "_orders_db": InMemoryOrderDB(),
+        }
+    finally:
+        pass
+
+
+root_router = RootRouter(
+    get_orders=mock_get_orders,
+    get_order=mock_get_order,
+    get_order_statuses=mock_get_order_statuses,
+    conformances=[CORE],
+)
 root_router.add_product(product)
-app: FastAPI = FastAPI()
+app: FastAPI = FastAPI(lifespan=lifespan)
 app.include_router(root_router, prefix="")

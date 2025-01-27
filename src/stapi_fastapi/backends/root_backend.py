@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Any, Callable, Coroutine, TypeVar
 
 from fastapi import Request
 from returns.maybe import Maybe
@@ -10,38 +10,48 @@ from stapi_fastapi.models.order import (
     OrderStatus,
 )
 
+GetOrders = Callable[[Request], Coroutine[Any, Any, ResultE[OrderCollection]]]
+"""
+Type alias for an async function that returns a list of existing Orders.
 
-class RootBackend[T: OrderStatus](Protocol):  # pragma: nocover
-    async def get_orders(self, request: Request) -> ResultE[OrderCollection]:
-        """
-        Return a list of existing orders.
-        """
-        ...
+Args:
+    request (Request): FastAPI's Request object.
 
-    async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:
-        """
-        Get details for order with `order_id`.
+Returns:
+    - Should return returns.result.Success[OrderCollection]
+    - Returning returns.result.Failure[Exception] will result in a 500.
+"""
 
-        Should return returns.results.Success[Order] if order is found.
+GetOrder = Callable[[str, Request], Coroutine[Any, Any, ResultE[Maybe[Order]]]]
+"""
+Type alias for an async function that gets details for the order with `order_id`.
 
-        Should return returns.results.Failure[returns.maybe.Nothing] if the order is
-        not found or if access is denied.
+Args:
+    order_id (str): The order ID.
+    request (Request): FastAPI's Request object.
 
-        A Failure[Exception] will result in a 500.
-        """
-        ...
+Returns:
+    - Should return returns.result.Success[Order] if order is found.
+    - Should return returns.result.Failure[returns.maybe.Nothing] if the order is not
+    found or if access is denied.
+    - Returning returns.result.Failure[Exception] will result in a 500.
+"""
 
-    async def get_order_statuses(
-        self, order_id: str, request: Request
-    ) -> ResultE[list[T]]:
-        """
-        Get statuses for order with `order_id`.
 
-        Should return returns.results.Success[list[OrderStatus]] if order is found.
+T = TypeVar("T", bound=OrderStatus)
 
-        Should return returns.results.Failure[Exception] if the order is
-        not found or if access is denied.
 
-        A Failure[Exception] will result in a 500.
-        """
-        ...
+GetOrderStatuses = Callable[[str, Request], Coroutine[Any, Any, ResultE[list[T]]]]
+"""
+Type alias for an async function that gets statuses for the order with `order_id`.
+
+Args:
+    order_id (str): The order ID.
+    request (Request): FastAPI's Request object.
+
+Returns:
+    - Should return returns.result.Success[list[OrderStatus]] if order is found.
+    - Should return returns.result.Failure[Exception] if the order is not found or if
+    access is denied.
+    - Returning returns.result.Failure[Exception] will result in a 500.
+"""

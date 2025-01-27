@@ -166,7 +166,7 @@ class ProductRouter(APIRouter):
         """
         Explore the opportunities available for a particular set of constraints
         """
-        match await self.product.backend.search_opportunities(self, search, request):
+        match await self.product.search_opportunities(self, search, request):
             case Success(features):
                 return OpportunityCollection(
                     features=features,
@@ -214,7 +214,7 @@ class ProductRouter(APIRouter):
         """
         Create a new order.
         """
-        match await self.product.backend.create_order(
+        match await self.product.create_order(
             self,
             payload,
             request,

@@ -1,4 +1,5 @@
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 from urllib.parse import urljoin
@@ -22,11 +23,15 @@ from stapi_fastapi.routers.root_router import RootRouter
 
 from .application import (
     InMemoryOrderDB,
-    MockProductBackend,
-    MockRootBackend,
     MyOpportunityProperties,
     MyOrderParameters,
     MyProductConstraints,
+    OffNadirRange,
+    mock_create_order,
+    mock_get_order,
+    mock_get_order_statuses,
+    mock_get_orders,
+    mock_search_opportunities,
 )
 from .shared import find_link
 
@@ -37,23 +42,8 @@ def base_url() -> Iterator[str]:
 
 
 @pytest.fixture
-def order_db() -> InMemoryOrderDB:
-    return InMemoryOrderDB()
-
-
-@pytest.fixture
-def product_backend(order_db: InMemoryOrderDB) -> MockProductBackend:
-    return MockProductBackend(order_db)
-
-
-@pytest.fixture
-def root_backend(order_db: InMemoryOrderDB) -> MockRootBackend:
-    return MockRootBackend(order_db)
-
-
-@pytest.fixture
 def mock_product_test_spotlight(
-    product_backend: MockProductBackend, mock_provider: Provider
+    mock_provider: Provider,
 ) -> Product:
     """Fixture for a mock Test Spotlight product."""
     return Product(
@@ -67,17 +57,31 @@ def mock_product_test_spotlight(
         constraints=MyProductConstraints,
         opportunity_properties=MyOpportunityProperties,
         order_parameters=MyOrderParameters,
-        backend=product_backend,
+        create_order=mock_create_order,
+        search_opportunities=mock_search_opportunities,
     )
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
+    try:
+        yield {
+            "_orders_db": InMemoryOrderDB(),
+            "_opportunities": [],
+        }
+    finally:
+        pass
+
+
 @pytest.fixture
-def stapi_client(
-    root_backend, mock_product_test_spotlight, base_url: str
-) -> Iterator[TestClient]:
-    root_router = RootRouter(root_backend)
+def stapi_client(mock_product_test_spotlight, base_url: str) -> Iterator[TestClient]:
+    root_router = RootRouter(
+        get_orders=mock_get_orders,
+        get_order=mock_get_order,
+        get_order_statuses=mock_get_order_statuses,
+    )
     root_router.add_product(mock_product_test_spotlight)
-    app = FastAPI()
+    app = FastAPI(lifespan=lifespan)
     app.include_router(root_router, prefix="")
 
     with TestClient(app, base_url=f"{base_url}") as client:
@@ -146,7 +150,7 @@ def mock_test_spotlight_opportunities() -> list[Opportunity]:
             properties=MyOpportunityProperties(
                 product_id="xyz123",
                 datetime=(start, end),
-                off_nadir={"minimum": 20, "maximum": 22},
+                off_nadir=OffNadirRange(minimum=20, maximum=22),
                 vehicle_id=[1],
                 platform="platform_id",
                 other_thing="abcd1234",

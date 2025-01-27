@@ -1,24 +1,21 @@
 from datetime import UTC, datetime, timedelta
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
 
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
 
-from .backends import MockProductBackend
 from .test_datetime_interval import rfc3339_strftime
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
 def test_search_opportunities_response(
     product_id: str,
-    mock_test_spotlight_opportunities: List[Opportunity],
-    product_backend: MockProductBackend,
+    mock_test_spotlight_opportunities: list[Opportunity],
     stapi_client: TestClient,
     assert_link,
 ) -> None:
-    product_backend._opportunities = mock_test_spotlight_opportunities
+    stapi_client.app_state["_opportunities"] = mock_test_spotlight_opportunities
 
     now = datetime.now(UTC)
     start = now
@@ -52,6 +49,9 @@ def test_search_opportunities_response(
     # Validate response status and structure
     assert response.status_code == 200, f"Failed for product: {product_id}"
     body = response.json()
+
+    # Validate the opportunity was returned
+    assert len(body["features"]) == 1
 
     try:
         _ = OpportunityCollection(**body)

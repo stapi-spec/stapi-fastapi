@@ -1,7 +1,10 @@
-from .product_backend import ProductBackend
-from .root_backend import RootBackend
+from .product_backend import CreateOrder, SearchOpportunities
+from .root_backend import GetOrder, GetOrders, GetOrderStatuses
 
 __all__ = [
-    "ProductBackend",
-    "RootBackend",
+    "CreateOrder",
+    "GetOrder",
+    "GetOrders",
+    "GetOrderStatuses",
+    "SearchOpportunities",
 ]

@@ -10,7 +10,10 @@ from stapi_fastapi.models.order import OrderParameters
 from stapi_fastapi.models.shared import Link
 
 if TYPE_CHECKING:
-    from stapi_fastapi.backends.product_backend import ProductBackend
+    from stapi_fastapi.backends.product_backend import (
+        CreateOrder,
+        SearchOpportunities,
+    )
 
 
 type Constraints = BaseModel
@@ -50,26 +53,33 @@ class Product(BaseModel):
     _constraints: type[Constraints]
     _opportunity_properties: type[OpportunityProperties]
     _order_parameters: type[OrderParameters]
-    _backend: ProductBackend
+    _create_order: CreateOrder
+    _search_opportunities: SearchOpportunities
 
     def __init__(
         self,
         *args,
-        backend: ProductBackend,
+        create_order: CreateOrder,
+        search_opportunities: SearchOpportunities,
         constraints: type[Constraints],
         opportunity_properties: type[OpportunityProperties],
         order_parameters: type[OrderParameters],
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self._backend = backend
+        self._create_order = create_order
+        self._search_opportunities = search_opportunities
         self._constraints = constraints
         self._opportunity_properties = opportunity_properties
         self._order_parameters = order_parameters
 
     @property
-    def backend(self: Self) -> ProductBackend:
-        return self._backend
+    def create_order(self: Self) -> CreateOrder:
+        return self._create_order
+
+    @property
+    def search_opportunities(self: Self) -> SearchOpportunities:
+        return self._search_opportunities
 
     @property
     def constraints(self: Self) -> type[Constraints]:
