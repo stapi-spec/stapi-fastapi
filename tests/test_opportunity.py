@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
-from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
+from stapi_fastapi.models.opportunity import OpportunityCollection
 
 from .test_datetime_interval import rfc3339_strftime
 
@@ -11,12 +11,9 @@ from .test_datetime_interval import rfc3339_strftime
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
 def test_search_opportunities_response(
     product_id: str,
-    mock_test_spotlight_opportunities: list[Opportunity],
     stapi_client: TestClient,
     assert_link,
 ) -> None:
-    stapi_client.app_state["_opportunities"] = mock_test_spotlight_opportunities
-
     now = datetime.now(UTC)
     start = now
     end = start + timedelta(days=5)

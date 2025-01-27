@@ -62,19 +62,25 @@ def mock_product_test_spotlight(
     )
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
-    try:
-        yield {
-            "_orders_db": InMemoryOrderDB(),
-            "_opportunities": [],
-        }
-    finally:
-        pass
-
-
 @pytest.fixture
-def stapi_client(mock_product_test_spotlight, base_url: str) -> Iterator[TestClient]:
+def stapi_client(
+    mock_product_test_spotlight,
+    base_url: str,
+    orders_db: InMemoryOrderDB | None = None,
+    opportunities: list[Opportunity] | None = None,
+) -> Iterator[TestClient]:
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
+        try:
+            yield {
+                "_orders_db": orders_db if orders_db is not None else InMemoryOrderDB(),
+                "_opportunities": opportunities
+                if opportunities is not None
+                else mock_test_spotlight_opportunities(),
+            }
+        finally:
+            pass
+
     root_router = RootRouter(
         get_orders=mock_get_orders,
         get_order=mock_get_order,
@@ -131,7 +137,6 @@ def mock_provider() -> Provider:
     )
 
 
-@pytest.fixture
 def mock_test_spotlight_opportunities() -> list[Opportunity]:
     """Fixture to create mock data for Opportunities for `test-spotlight-1`."""
     now = datetime.now(timezone.utc)  # Use timezone-aware datetime
