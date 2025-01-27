@@ -42,7 +42,7 @@ class RootRouter(APIRouter):
         self.conformances = conformances
         self.openapi_endpoint_name = openapi_endpoint_name
         self.docs_endpoint_name = docs_endpoint_name
-        self.product_ids: list = []
+        self.product_ids: list[str] = []
 
         # A dict is used to track the product routers so we can ensure
         # idempotentcy in case a product is added multiple times, and also to
@@ -164,15 +164,7 @@ class RootRouter(APIRouter):
             ),
         ]
         if end > 0 and end < len(self.product_ids):
-            links.append(
-                Link(
-                    href=str(
-                        request.url.include_query_params(next=self.product_ids[end]),
-                    ),
-                    rel="next",
-                    type=TYPE_JSON,
-                )
-            )
+            links.append(self.pagination_link(request, self.product_ids[end]))
         return ProductsCollection(
             products=[
                 self.product_routers[product_id].get_product(request)
@@ -184,36 +176,26 @@ class RootRouter(APIRouter):
     async def get_orders(
         self, request: Request, next: str | None = None, limit: int = 10
     ) -> OrderCollection:
-        # links: list[Link] = []
+        links: list[Link] = []
         match await self.backend.get_orders(request, next, limit):
             case Success((orders, Some(pagination_token))):
                 for order in orders:
-                    order.links.append(self.order_link(request, "get-order", order))
-                links = [
-                    Link(
-                        href=str(
-                            request.url.include_query_params(next=pagination_token)
-                        ),
-                        rel="next",
-                        type=TYPE_JSON,
-                    )
-                ]
+                    order.links.append(self.order_link(request, order))
+                links.append(self.pagination_link(request, pagination_token))
             case Success((orders, Nothing)):  # noqa: F841
                 for order in orders:
-                    order.links.append(self.order_link(request, "get-order", order))
-                links = []
+                    order.links.append(self.order_link(request, order))
+            case Failure(ValueError()):
+                raise NotFoundException(detail="Error finding pagination token")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving orders: %s",
                     traceback.format_exception(e),
                 )
-                if isinstance(e, ValueError):
-                    raise NotFoundException(detail="Error finding pagination token")
-                else:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail="Error finding Orders",
-                    )
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error finding Orders",
+                )
             case _:
                 raise AssertionError("Expected code to be unreachable")
         return OrderCollection(features=orders, links=links)
@@ -251,34 +233,21 @@ class RootRouter(APIRouter):
         links: list[Link] = []
         match await self.backend.get_order_statuses(order_id, request, next, limit):
             case Success((statuses, Some(pagination_token))):
-                links.append(
-                    self.order_statuses_link(request, "list-order-statuses", order_id)
-                )
-                links.append(
-                    Link(
-                        href=str(
-                            request.url.include_query_params(next=pagination_token)
-                        ),
-                        rel="next",
-                        type=TYPE_JSON,
-                    )
-                )
+                links.append(self.order_statuses_link(request, order_id))
+                links.append(self.pagination_link(request, pagination_token))
             case Success((statuses, Nothing)):  # noqa: F841
-                links.append(
-                    self.order_statuses_link(request, "list-order-statuses", order_id)
-                )
+                links.append(self.order_statuses_link(request, order_id))
+            case Failure(KeyError()):
+                raise NotFoundException("Error finding pagination token")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving order statuses: %s",
                     traceback.format_exception(e),
                 )
-                if isinstance(e, KeyError):
-                    raise NotFoundException(detail="Error finding pagination token")
-                else:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail="Error finding Order Statuses",
-                    )
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error finding Order Statuses",
+                )
             case _:
                 raise AssertionError("Expected code to be unreachable")
         return OrderStatuses(statuses=statuses, links=links)
@@ -314,21 +283,28 @@ class RootRouter(APIRouter):
             ),
         )
 
-    def order_link(self, request: Request, link_suffix: str, order: Order):
+    def order_link(self, request: Request, order: Order):
         return Link(
-            href=str(request.url_for(f"{self.name}:{link_suffix}", order_id=order.id)),
+            href=str(request.url_for(f"{self.name}:get-order", order_id=order.id)),
             rel="self",
             type=TYPE_JSON,
         )
 
-    def order_statuses_link(self, request: Request, link_suffix: str, order_id: str):
+    def order_statuses_link(self, request: Request, order_id: str):
         return Link(
             href=str(
                 request.url_for(
-                    f"{self.name}:{link_suffix}",
+                    f"{self.name}:list-order-statuses",
                     order_id=order_id,
                 )
             ),
             rel="self",
+            type=TYPE_JSON,
+        )
+
+    def pagination_link(self, request: Request, pagination_token: str):
+        return Link(
+            href=str(request.url.include_query_params(next=pagination_token)),
+            rel="next",
             type=TYPE_JSON,
         )

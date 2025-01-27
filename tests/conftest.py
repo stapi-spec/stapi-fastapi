@@ -1,4 +1,3 @@
-import copy
 from collections.abc import Iterator
 from typing import Any, Callable
 from urllib.parse import urljoin
@@ -173,18 +172,16 @@ def pagination_tester(
 
     assert len(resp_body[target]) <= limit
     retrieved.extend(resp_body[target])
-    next_token = next(
-        (d["href"] for d in resp_body["links"] if d["rel"] == "next"), None
-    )
+    next_url = next((d["href"] for d in resp_body["links"] if d["rel"] == "next"), None)
 
-    while next_token:
-        url = copy.deepcopy(next_token)
+    while next_url:
+        url = next_url
         if method == "POST":
-            next_token = next(
+            next_url = next(
                 (d["body"]["next"] for d in resp_body["links"] if d["rel"] == "next"),
             )
 
-        res = make_request(stapi_client, url, method, body, next_token, limit)
+        res = make_request(stapi_client, url, method, body, next_url, limit)
         assert res.status_code == status.HTTP_200_OK
         assert len(resp_body[target]) <= limit
         resp_body = res.json()
@@ -192,7 +189,7 @@ def pagination_tester(
 
         # get url w/ query params for next call if exists, and POST body if necessary
         if resp_body["links"]:
-            next_token = next(
+            next_url = next(
                 (d["href"] for d in resp_body["links"] if d["rel"] == "next"), None
             )
             body = next(
@@ -200,11 +197,10 @@ def pagination_tester(
                 None,
             )
         else:
-            next_token = None
+            next_url = None
 
     assert len(retrieved) == len(expected_returns)
     assert retrieved == expected_returns
-    # assert retrieved[:2] == expected_returns[:2]
 
 
 def make_request(

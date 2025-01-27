@@ -18,8 +18,7 @@ from .test_datetime_interval import rfc3339_strftime
 @pytest.fixture
 def mock_test_spotlight_opportunities() -> list[Opportunity]:
     """Fixture to create mock data for Opportunities for `test-spotlight-1`."""
-    now = datetime.now(timezone.utc)  # Use timezone-aware datetime
-    start = now
+    start = datetime.now(timezone.utc)  # Use timezone-aware datetime
     end = start + timedelta(days=5)
 
     # Create a list of mock opportunities for the given product
@@ -60,10 +59,9 @@ def test_search_opportunities_response(
     product_backend._opportunities = mock_test_spotlight_opportunities
 
     now = datetime.now(UTC)
-    start = now
-    end = start + timedelta(days=5)
+    end = now + timedelta(days=5)
     format = "%Y-%m-%dT%H:%M:%S.%f%z"
-    start_string = rfc3339_strftime(start, format)
+    start_string = rfc3339_strftime(now, format)
     end_string = rfc3339_strftime(end, format)
 
     request_payload = {

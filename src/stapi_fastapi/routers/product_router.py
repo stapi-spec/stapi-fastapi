@@ -176,22 +176,12 @@ class ProductRouter(APIRouter):
             self, search, request, next, limit
         ):
             case Success((features, Some(pagination_token))):
-                links.append(self.order_link(request, "create-order"))
-                body = search.model_dump()
+                links.append(self.order_link(request))
+                body = search.model_dump(mode="json")
                 body["next"] = pagination_token
-                links.append(
-                    Link(
-                        href=str(
-                            request.url.remove_query_params(keys=["next", "limit"])
-                        ),
-                        rel="next",
-                        type=TYPE_JSON,
-                        method="POST",
-                        body=body,
-                    )
-                )
+                links.append(self.pagination_link(request, body))
             case Success((features, Nothing)):  # noqa: F841
-                links.append(self.order_link(request, "create-order"))
+                links.append(self.order_link(request))
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):
@@ -249,14 +239,23 @@ class ProductRouter(APIRouter):
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")
 
-    def order_link(self, request: Request, suffix: str):
+    def order_link(self, request: Request):
         return Link(
             href=str(
                 request.url_for(
-                    f"{self.root_router.name}:{self.product.id}:{suffix}",
+                    f"{self.root_router.name}:{self.product.id}:create-order",
                 ),
             ),
             rel="create-order",
             type=TYPE_JSON,
             method="POST",
+        )
+
+    def pagination_link(self, request: Request, body: dict[str, str | dict]):
+        return Link(
+            href=str(request.url.remove_query_params(keys=["next", "limit"])),
+            rel="next",
+            type=TYPE_JSON,
+            method="POST",
+            body=body,
         )

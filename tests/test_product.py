@@ -68,7 +68,7 @@ def test_product_order_parameters_response(
 
 
 @pytest.mark.parametrize("limit", [0, 1, 2, 4])
-def test_product_pagination(
+def test_get_products_pagination(
     limit: int,
     stapi_client: TestClient,
     mock_product_test_spotlight,
