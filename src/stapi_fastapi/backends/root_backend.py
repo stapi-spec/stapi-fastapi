@@ -31,8 +31,8 @@ Args:
     request (Request): FastAPI's Request object.
 
 Returns:
-    - Should return returns.result.Success[Order] if order is found.
-    - Should return returns.result.Failure[returns.maybe.Nothing] if the order is not
+    - Should return returns.result.Success[returns.maybe.Some[Order]] if order is found.
+    - Should return returns.result.Success[returns.maybe.Nothing] if the order is not
     found or if access is denied.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
