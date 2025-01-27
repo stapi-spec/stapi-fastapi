@@ -179,6 +179,8 @@ class ProductRouter(APIRouter):
                             ),
                             rel="create-order",
                             type=TYPE_JSON,
+                            method="POST",
+                            body=search.dict(),
                         ),
                     ],
                 )
