@@ -16,22 +16,17 @@ from stapi_fastapi.models.opportunity import (
 )
 from stapi_fastapi.models.product import (
     Product,
-    Provider,
-    ProviderRole,
 )
 from stapi_fastapi.routers.root_router import RootRouter
 
 from .application import (
     InMemoryOrderDB,
     MyOpportunityProperties,
-    MyOrderParameters,
-    MyProductConstraints,
     OffNadirRange,
-    mock_create_order,
     mock_get_order,
     mock_get_order_statuses,
     mock_get_orders,
-    mock_search_opportunities,
+    product,
 )
 from .shared import find_link
 
@@ -42,41 +37,23 @@ def base_url() -> Iterator[str]:
 
 
 @pytest.fixture
-def mock_product_test_spotlight(
-    mock_provider: Provider,
-) -> Product:
+def mock_product() -> Product:
     """Fixture for a mock Test Spotlight product."""
-    return Product(
-        id="test-spotlight",
-        title="Test Spotlight Product",
-        description="Test product for test spotlight",
-        license="CC-BY-4.0",
-        keywords=["test", "satellite"],
-        providers=[mock_provider],
-        links=[],
-        constraints=MyProductConstraints,
-        opportunity_properties=MyOpportunityProperties,
-        order_parameters=MyOrderParameters,
-        create_order=mock_create_order,
-        search_opportunities=mock_search_opportunities,
-    )
+    return product
 
 
 @pytest.fixture
 def stapi_client(
-    mock_product_test_spotlight,
+    mock_product,
     base_url: str,
-    orders_db: InMemoryOrderDB | None = None,
-    opportunities: list[Opportunity] | None = None,
+    mock_opportunities: list[Opportunity],
 ) -> Iterator[TestClient]:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
         try:
             yield {
-                "_orders_db": orders_db if orders_db is not None else InMemoryOrderDB(),
-                "_opportunities": opportunities
-                if opportunities is not None
-                else mock_test_spotlight_opportunities(),
+                "_orders_db": InMemoryOrderDB(),
+                "_opportunities": mock_opportunities,
             }
         finally:
             pass
@@ -86,7 +63,7 @@ def stapi_client(
         get_order=mock_get_order,
         get_order_statuses=mock_get_order_statuses,
     )
-    root_router.add_product(mock_product_test_spotlight)
+    root_router.add_product(mock_product)
     app = FastAPI(lifespan=lifespan)
     app.include_router(root_router, prefix="")
 
@@ -123,21 +100,7 @@ def assert_link(url_for) -> Callable:
 
 
 @pytest.fixture
-def products(mock_product_test_spotlight: Product) -> list[Product]:
-    return [mock_product_test_spotlight]
-
-
-@pytest.fixture
-def mock_provider() -> Provider:
-    return Provider(
-        name="Test Provider",
-        description="A provider for Test data",
-        roles=[ProviderRole.producer],  # Example role
-        url="https://test-provider.example.com",  # Must be a valid URL
-    )
-
-
-def mock_test_spotlight_opportunities() -> list[Opportunity]:
+def mock_opportunities() -> list[Opportunity]:
     """Fixture to create mock data for Opportunities for `test-spotlight-1`."""
     now = datetime.now(timezone.utc)  # Use timezone-aware datetime
     start = now
