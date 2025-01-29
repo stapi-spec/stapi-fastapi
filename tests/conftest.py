@@ -177,8 +177,8 @@ def pagination_tester(
     while next_url:
         url = next_url
         if method == "POST":
-            next_url = next(
-                (d["body"]["next"] for d in resp_body["links"] if d["rel"] == "next"),
+            body = next(
+                (d["body"] for d in resp_body["links"] if d["rel"] == "next"), None
             )
 
         res = make_request(stapi_client, url, method, body, next_url, limit)
@@ -191,10 +191,6 @@ def pagination_tester(
         if resp_body["links"]:
             next_url = next(
                 (d["href"] for d in resp_body["links"] if d["rel"] == "next"), None
-            )
-            body = next(
-                (d.get("body") for d in resp_body["links"] if d.get("body")),
-                None,
             )
         else:
             next_url = None
@@ -221,6 +217,6 @@ def make_request(
     if method == "GET":
         res = stapi_client.get(endpoint, params=params)
     if method == "POST":
-        res = stapi_client.post(endpoint, json=body, params=params)
+        res = stapi_client.post(endpoint, json=body)
 
     return res

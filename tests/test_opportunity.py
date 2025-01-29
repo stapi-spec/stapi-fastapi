@@ -7,7 +7,10 @@ from fastapi.testclient import TestClient
 from geojson_pydantic import Point
 from geojson_pydantic.types import Position2D
 
-from stapi_fastapi.models.opportunity import Opportunity, OpportunityCollection
+from stapi_fastapi.models.opportunity import (
+    Opportunity,
+    OpportunityCollection,
+)
 from tests.application import MyOpportunityProperties
 from tests.conftest import pagination_tester
 
@@ -65,18 +68,21 @@ def test_search_opportunities_response(
     end_string = rfc3339_strftime(end, format)
 
     request_payload = {
-        "geometry": {
-            "type": "Point",
-            "coordinates": [0, 0],
+        "search": {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [0, 0],
+            },
+            "datetime": f"{start_string}/{end_string}",
+            "filter": {
+                "op": "and",
+                "args": [
+                    {"op": ">", "args": [{"property": "off_nadir"}, 0]},
+                    {"op": "<", "args": [{"property": "off_nadir"}, 45]},
+                ],
+            },
         },
-        "datetime": f"{start_string}/{end_string}",
-        "filter": {
-            "op": "and",
-            "args": [
-                {"op": ">", "args": [{"property": "off_nadir"}, 0]},
-                {"op": "<", "args": [{"property": "off_nadir"}, 45]},
-            ],
-        },
+        "limit": 10,
     }
 
     url = f"/products/{product_id}/opportunities"
@@ -117,18 +123,21 @@ def test_search_opportunities_pagination(
     end_string = rfc3339_strftime(end, format)
 
     request_payload = {
-        "geometry": {
-            "type": "Point",
-            "coordinates": [0, 0],
+        "search": {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [0, 0],
+            },
+            "datetime": f"{start_string}/{end_string}",
+            "filter": {
+                "op": "and",
+                "args": [
+                    {"op": ">", "args": [{"property": "off_nadir"}, 0]},
+                    {"op": "<", "args": [{"property": "off_nadir"}, 45]},
+                ],
+            },
         },
-        "datetime": f"{start_string}/{end_string}",
-        "filter": {
-            "op": "and",
-            "args": [
-                {"op": ">", "args": [{"property": "off_nadir"}, 0]},
-                {"op": "<", "args": [{"property": "off_nadir"}, 45]},
-            ],
-        },
+        "limit": limit,
     }
 
     pagination_tester(
