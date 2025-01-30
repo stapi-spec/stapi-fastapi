@@ -209,14 +209,13 @@ def make_request(
 ) -> Response:
     """request wrapper for pagination tests"""
 
-    # extract pagination token
-    if next_token and method == "GET":
-        next_token = next_token.split("next=")[1]
-    params = {"next": next_token, "limit": limit}
-
-    if method == "GET":
-        res = stapi_client.get(endpoint, params=params)
-    if method == "POST":
-        res = stapi_client.post(endpoint, json=body)
+    match method:
+        case "GET":
+            if next_token:  # extract pagination token
+                next_token = next_token.split("next=")[1]
+            params = {"next": next_token, "limit": limit}
+            res = stapi_client.get(endpoint, params=params)
+        case "POST":
+            res = stapi_client.post(endpoint, json=body)
 
     return res
