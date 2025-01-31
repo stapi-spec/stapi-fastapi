@@ -6,6 +6,7 @@ import pytest
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 from httpx import Response
+from pytest import fail
 
 from stapi_fastapi.models.product import (
     Product,
@@ -217,5 +218,7 @@ def make_request(
             res = stapi_client.get(endpoint, params=params)
         case "POST":
             res = stapi_client.post(endpoint, json=body)
+        case _:
+            fail(f"method {method} not supported in make request")
 
     return res
