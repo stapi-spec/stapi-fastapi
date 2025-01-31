@@ -8,6 +8,18 @@ guaranteed to be not correct.
 STAPI FastAPI provides an `fastapi.APIRouter` which must be included in
 `fastapi.FastAPI` instance.
 
+### Pagination
+
+4 endpoints currently offer pagination:
+`GET`: `'/orders`, `/products`, `/orders/{order_id}/statuses`
+`POST`: `/opportunities`.
+
+Pagination is token based and follows recommendations in the [STAC API pagination].  Limit and token are passed in as query params for `GET` endpoints, and via the body aas separte key/value pairs for `POST` requests.
+
+If pagination is available and more records remain the response object will contain a `next` link object that can be used to get the next page of results.  No `next` `Link` returned indicates there are no further records available.
+
+`limit` defaults to 10 and maxes at 100.
+
 
 ## ADRs
 
@@ -59,3 +71,4 @@ With the `uvicorn` defaults the app should be accessible at
 
 [STAPI spec]: https://github.com/stapi-spec/stapi-spec
 [poetry]: https://python-poetry.org/
+[STAC API pagination]: https://github.com/radiantearth/stac-api-spec/blob/release/v1.0.0/item-search/examples.md#paging-examples

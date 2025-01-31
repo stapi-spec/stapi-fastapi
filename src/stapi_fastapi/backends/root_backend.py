@@ -6,15 +6,16 @@ from returns.result import ResultE
 
 from stapi_fastapi.models.order import (
     Order,
-    OrderCollection,
     OrderStatus,
 )
 
 
 class RootBackend[T: OrderStatus](Protocol):  # pragma: nocover
-    async def get_orders(self, request: Request) -> ResultE[OrderCollection]:
+    async def get_orders(
+        self, request: Request, next: str | None, limit: int
+    ) -> ResultE[tuple[list[Order], Maybe[str]]]:
         """
-        Return a list of existing orders.
+        Return a list of existing orders and pagination token if applicable.
         """
         ...
 
@@ -24,18 +25,18 @@ class RootBackend[T: OrderStatus](Protocol):  # pragma: nocover
 
         Should return returns.results.Success[Order] if order is found.
 
-        Should return returns.results.Failure[returns.maybe.Nothing] if the order is
-        not found or if access is denied.
+        Should return returns.results.Failure[returns.maybe.Nothing] if the
+        order is not found or if access is denied.
 
         A Failure[Exception] will result in a 500.
         """
         ...
 
     async def get_order_statuses(
-        self, order_id: str, request: Request
-    ) -> ResultE[list[T]]:
+        self, order_id: str, request: Request, next: str | None, limit: int
+    ) -> ResultE[tuple[list[T], Maybe[str]]]:
         """
-        Get statuses for order with `order_id`.
+        Get statuses for order with `order_id` and return pagination token if applicable
 
         Should return returns.results.Success[list[OrderStatus]] if order is found.
 

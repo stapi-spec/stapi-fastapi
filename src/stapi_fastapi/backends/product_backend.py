@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from fastapi import Request
+from returns.maybe import Maybe
 from returns.result import ResultE
 
 from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
@@ -16,9 +17,11 @@ class ProductBackend(Protocol):  # pragma: nocover
         product_router: ProductRouter,
         search: OpportunityRequest,
         request: Request,
-    ) -> ResultE[list[Opportunity]]:
+        next: str | None,
+        limit: int,
+    ) -> ResultE[tuple[list[Opportunity], Maybe[str]]]:
         """
-        Search for ordering opportunities for the  given search parameters.
+        Search for ordering opportunities for the  given search parameters and return pagination token if applicable.
 
         Backends must validate search constraints and return
         `stapi_fastapi.exceptions.ConstraintsException` if not valid.
