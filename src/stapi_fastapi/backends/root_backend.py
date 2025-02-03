@@ -6,19 +6,26 @@ from returns.result import ResultE
 
 from stapi_fastapi.models.order import (
     Order,
-    OrderCollection,
     OrderStatus,
 )
 
-GetOrders = Callable[[Request], Coroutine[Any, Any, ResultE[OrderCollection]]]
+GetOrders = Callable[
+    [Request, str | None, int],
+    Coroutine[Any, Any, ResultE[tuple[list[Order], Maybe[str]]]],
+]
 """
 Type alias for an async function that returns a list of existing Orders.
 
 Args:
     request (Request): FastAPI's Request object.
+    next (str | None): A pagination token.
+    limit (int): The maximum number of orders to return in a page.
 
 Returns:
-    - Should return returns.result.Success[OrderCollection]
+    A tuple containing a list of orders and a pagination token.
+
+    - Should return returns.result.Success[tuple[list[Order], returns.maybe.Some[str]]] if including a pagination token
+    - Should return returns.result.Success[tuple[list[Order], returns.maybe.Nothing]] if not including a pagination token
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 
@@ -37,21 +44,33 @@ Returns:
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 
+# async def get_order_statuses(
+#     self, order_id: str, request: Request, next: str | None, limit: int
+# ) -> ResultE[tuple[list[T], Maybe[str]]]:
+#     """
+#     Get statuses for order with `order_id` and return pagination token if applicable
 
 T = TypeVar("T", bound=OrderStatus)
 
 
-GetOrderStatuses = Callable[[str, Request], Coroutine[Any, Any, ResultE[list[T]]]]
+GetOrderStatuses = Callable[
+    [str, Request, str | None, int],
+    Coroutine[Any, Any, ResultE[tuple[list[T], Maybe[str]]]],
+]
 """
 Type alias for an async function that gets statuses for the order with `order_id`.
 
 Args:
     order_id (str): The order ID.
     request (Request): FastAPI's Request object.
+    next (str | None): A pagination token.
+    limit (int): The maximum number of statuses to return in a page.
 
 Returns:
-    - Should return returns.result.Success[list[OrderStatus]] if order is found.
-    - Should return returns.result.Failure[Exception] if the order is not found or if
-    access is denied.
+    A tuple containing a list of order statuses and a pagination token.
+
+    - Should return returns.result.Success[tuple[list[OrderStatus], returns.maybe.Some[str]] if order is found and including a pagination token.
+    - Should return returns.result.Success[tuple[list[OrderStatus], returns.maybe.Nothing]] if order is found and not including a pagination token.
+    - Should return returns.result.Failure[Exception] if the order is not found or if access is denied.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """

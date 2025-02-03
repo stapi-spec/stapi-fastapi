@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from pydantic import BaseModel, Field, model_validator
-from returns.maybe import Maybe
+from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
 
 from stapi_fastapi.models.conformance import CORE
@@ -18,7 +18,6 @@ from stapi_fastapi.models.opportunity import (
 )
 from stapi_fastapi.models.order import (
     Order,
-    OrderCollection,
     OrderParameters,
     OrderPayload,
     OrderProperties,
@@ -36,17 +35,35 @@ from stapi_fastapi.routers.root_router import RootRouter
 
 
 class InMemoryOrderDB:
-    _orders: dict[str, Order] = {}
-    _statuses: dict[str, list[OrderStatus]] = defaultdict(list)
+    def __init__(self) -> None:
+        self._orders: dict[str, Order] = {}
+        self._statuses: dict[str, list[OrderStatus]] = defaultdict(list)
 
 
-async def mock_get_orders(request: Request) -> ResultE[OrderCollection]:
+async def mock_get_orders(
+    request: Request, next: str | None, limit: int
+) -> ResultE[tuple[list[Order], Maybe[str]]]:
     """
-    Show all orders.
+    Return orders from backend.  Handle pagination/limit if applicable
     """
-    return Success(
-        OrderCollection(features=list(request.state._orders_db._orders.values()))
-    )
+    try:
+        start = 0
+        limit = min(limit, 100)
+        order_ids = [*request.state._orders_db._orders.keys()]
+
+        if next:
+            start = order_ids.index(next)
+        end = start + limit
+        ids = order_ids[start:end]
+        orders = [request.state._orders_db._orders[order_id] for order_id in ids]
+
+        if end > 0 and end < len(order_ids):
+            return Success(
+                (orders, Some(request.state._orders_db._orders[order_ids[end]].id))
+            )
+        return Success((orders, Nothing))
+    except Exception as e:
+        return Failure(e)
 
 
 async def mock_get_order(order_id: str, request: Request) -> ResultE[Maybe[Order]]:
@@ -58,23 +75,45 @@ async def mock_get_order(order_id: str, request: Request) -> ResultE[Maybe[Order
 
 
 async def mock_get_order_statuses(
-    order_id: str, request: Request
-) -> ResultE[list[OrderStatus]]:
-    return Success(request.state._orders_db._statuses[order_id])
+    order_id: str, request: Request, next: str | None, limit: int
+) -> ResultE[tuple[list[OrderStatus], Maybe[str]]]:
+    try:
+        start = 0
+        limit = min(limit, 100)
+        statuses = request.state._orders_db._statuses[order_id]
+
+        if next:
+            start = int(next)
+        end = start + limit
+        stati = statuses[start:end]
+
+        if end > 0 and end < len(statuses):
+            return Success((stati, Some(str(end))))
+        return Success((stati, Nothing))
+    except Exception as e:
+        return Failure(e)
 
 
 async def mock_search_opportunities(
     product_router: ProductRouter,
     search: OpportunityRequest,
     request: Request,
-) -> ResultE[list[Opportunity]]:
+    next: str | None,
+    limit: int,
+) -> ResultE[tuple[list[Opportunity], Maybe[str]]]:
     try:
-        return Success(
-            [
-                o.model_copy(update=search.model_dump())
-                for o in request.state._opportunities
-            ]
-        )
+        start = 0
+        limit = min(limit, 100)
+        if next:
+            start = int(next)
+        end = start + limit
+        opportunities = [
+            o.model_copy(update=search.model_dump())
+            for o in request.state._opportunities[start:end]
+        ]
+        if end > 0 and end < len(request.state._opportunities):
+            return Success((opportunities, Some(str(end))))
+        return Success((opportunities, Nothing))
     except Exception as e:
         return Failure(e)
 
@@ -150,7 +189,7 @@ provider = Provider(
     url="https://test-provider.example.com",  # Must be a valid URL
 )
 
-product = Product(
+mock_product_test_spotlight = Product(
     id="test-spotlight",
     title="Test Spotlight Product",
     description="Test product for test spotlight",
@@ -182,6 +221,6 @@ root_router = RootRouter(
     get_order_statuses=mock_get_order_statuses,
     conformances=[CORE],
 )
-root_router.add_product(product)
+root_router.add_product(mock_product_test_spotlight)
 app: FastAPI = FastAPI(lifespan=lifespan)
 app.include_router(root_router, prefix="")
