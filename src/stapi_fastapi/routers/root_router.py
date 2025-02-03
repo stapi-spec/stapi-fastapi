@@ -42,6 +42,7 @@ class RootRouter(APIRouter):
         self.conformances = conformances
         self.openapi_endpoint_name = openapi_endpoint_name
         self.docs_endpoint_name = docs_endpoint_name
+        self.product_ids: list[str] = []
 
         # A dict is used to track the product routers so we can ensure
         # idempotentcy in case a product is added multiple times, and also to
@@ -140,34 +141,52 @@ class RootRouter(APIRouter):
     def get_conformance(self, request: Request) -> Conformance:
         return Conformance(conforms_to=self.conformances)
 
-    def get_products(self, request: Request) -> ProductsCollection:
+    def get_products(
+        self, request: Request, next: str | None = None, limit: int = 10
+    ) -> ProductsCollection:
+        start = 0
+        limit = min(limit, 100)
+        try:
+            if next:
+                start = self.product_ids.index(next)
+        except ValueError:
+            logging.exception("An error occurred while retrieving products")
+            raise NotFoundException(
+                detail="Error finding pagination token for products"
+            ) from None
+        end = start + limit
+        ids = self.product_ids[start:end]
+        links = [
+            Link(
+                href=str(request.url_for(f"{self.name}:list-products")),
+                rel="self",
+                type=TYPE_JSON,
+            ),
+        ]
+        if end > 0 and end < len(self.product_ids):
+            links.append(self.pagination_link(request, self.product_ids[end]))
         return ProductsCollection(
-            products=[pr.get_product(request) for pr in self.product_routers.values()],
-            links=[
-                Link(
-                    href=str(request.url_for(f"{self.name}:list-products")),
-                    rel="self",
-                    type=TYPE_JSON,
-                )
+            products=[
+                self.product_routers[product_id].get_product(request)
+                for product_id in ids
             ],
+            links=links,
         )
 
-    async def get_orders(self, request: Request) -> OrderCollection:
-        match await self.backend.get_orders(request):
-            case Success(orders):
+    async def get_orders(
+        self, request: Request, next: str | None = None, limit: int = 10
+    ) -> OrderCollection:
+        links: list[Link] = []
+        match await self.backend.get_orders(request, next, limit):
+            case Success((orders, Some(pagination_token))):
                 for order in orders:
-                    order.links.append(
-                        Link(
-                            href=str(
-                                request.url_for(
-                                    f"{self.name}:get-order", order_id=order.id
-                                )
-                            ),
-                            rel="self",
-                            type=TYPE_JSON,
-                        )
-                    )
-                return orders
+                    order.links.append(self.order_link(request, order))
+                links.append(self.pagination_link(request, pagination_token))
+            case Success((orders, Nothing)):  # noqa: F841
+                for order in orders:
+                    order.links.append(self.order_link(request, order))
+            case Failure(ValueError()):
+                raise NotFoundException(detail="Error finding pagination token")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving orders: %s",
@@ -179,6 +198,7 @@ class RootRouter(APIRouter):
                 )
             case _:
                 raise AssertionError("Expected code to be unreachable")
+        return OrderCollection(features=orders, links=links)
 
     async def get_order(self: Self, order_id: str, request: Request) -> Order:
         """
@@ -204,25 +224,21 @@ class RootRouter(APIRouter):
                 raise AssertionError("Expected code to be unreachable")
 
     async def get_order_statuses(
-        self: Self, order_id: str, request: Request
+        self: Self,
+        order_id: str,
+        request: Request,
+        next: str | None = None,
+        limit: int = 10,
     ) -> OrderStatuses:
-        match await self.backend.get_order_statuses(order_id, request):
-            case Success(statuses):
-                return OrderStatuses(
-                    statuses=statuses,
-                    links=[
-                        Link(
-                            href=str(
-                                request.url_for(
-                                    f"{self.name}:list-order-statuses",
-                                    order_id=order_id,
-                                )
-                            ),
-                            rel="self",
-                            type=TYPE_JSON,
-                        )
-                    ],
-                )
+        links: list[Link] = []
+        match await self.backend.get_order_statuses(order_id, request, next, limit):
+            case Success((statuses, Some(pagination_token))):
+                links.append(self.order_statuses_link(request, order_id))
+                links.append(self.pagination_link(request, pagination_token))
+            case Success((statuses, Nothing)):  # noqa: F841
+                links.append(self.order_statuses_link(request, order_id))
+            case Failure(KeyError()):
+                raise NotFoundException("Error finding pagination token")
             case Failure(e):
                 logger.error(
                     "An error occurred while retrieving order statuses: %s",
@@ -234,12 +250,14 @@ class RootRouter(APIRouter):
                 )
             case _:
                 raise AssertionError("Expected code to be unreachable")
+        return OrderStatuses(statuses=statuses, links=links)
 
     def add_product(self: Self, product: Product, *args, **kwargs) -> None:
         # Give the include a prefix from the product router
         product_router = ProductRouter(product, self, *args, **kwargs)
         self.include_router(product_router, prefix=f"/products/{product.id}")
         self.product_routers[product.id] = product_router
+        self.product_ids = [*self.product_routers.keys()]
 
     def generate_order_href(self: Self, request: Request, order_id: str) -> URL:
         return request.url_for(f"{self.name}:get-order", order_id=order_id)
@@ -263,4 +281,30 @@ class RootRouter(APIRouter):
                 rel="monitor",
                 type=TYPE_JSON,
             ),
+        )
+
+    def order_link(self, request: Request, order: Order):
+        return Link(
+            href=str(request.url_for(f"{self.name}:get-order", order_id=order.id)),
+            rel="self",
+            type=TYPE_JSON,
+        )
+
+    def order_statuses_link(self, request: Request, order_id: str):
+        return Link(
+            href=str(
+                request.url_for(
+                    f"{self.name}:list-order-statuses",
+                    order_id=order_id,
+                )
+            ),
+            rel="self",
+            type=TYPE_JSON,
+        )
+
+    def pagination_link(self, request: Request, pagination_token: str):
+        return Link(
+            href=str(request.url.include_query_params(next=pagination_token)),
+            rel="next",
+            type=TYPE_JSON,
         )

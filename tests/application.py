@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from pydantic import BaseModel, Field, model_validator
-from returns.maybe import Maybe
+from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, ResultE, Success
 
 from stapi_fastapi.backends.product_backend import ProductBackend
@@ -18,7 +18,6 @@ from stapi_fastapi.models.opportunity import (
 )
 from stapi_fastapi.models.order import (
     Order,
-    OrderCollection,
     OrderParameters,
     OrderPayload,
     OrderStatus,
@@ -34,19 +33,39 @@ from stapi_fastapi.routers.root_router import RootRouter
 
 
 class InMemoryOrderDB:
-    _orders: dict[str, Order] = {}
-    _statuses: dict[str, list[OrderStatus]] = defaultdict(list)
+    def __init__(self) -> None:
+        self._orders: dict[str, Order] = {}
+        self._statuses: dict[str, list[OrderStatus]] = defaultdict(list)
 
 
 class MockRootBackend(RootBackend):
     def __init__(self, orders: InMemoryOrderDB) -> None:
         self._orders_db: InMemoryOrderDB = orders
 
-    async def get_orders(self, request: Request) -> ResultE[OrderCollection]:
+    async def get_orders(
+        self, request: Request, next: str | None, limit: int
+    ) -> ResultE[tuple[list[Order], Maybe[str]]]:
         """
-        Show all orders.
+        Return orders from backend.  Handle pagination/limit if applicable
         """
-        return Success(OrderCollection(features=list(self._orders_db._orders.values())))
+        try:
+            start = 0
+            limit = min(limit, 100)
+            order_ids = [*self._orders_db._orders.keys()]
+
+            if next:
+                start = order_ids.index(next)
+            end = start + limit
+            ids = order_ids[start:end]
+            orders = [self._orders_db._orders[order_id] for order_id in ids]
+
+            if end > 0 and end < len(order_ids):
+                return Success(
+                    (orders, Some(self._orders_db._orders[order_ids[end]].id))
+                )
+            return Success((orders, Nothing))
+        except Exception as e:
+            return Failure(e)
 
     async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:
         """
@@ -56,9 +75,23 @@ class MockRootBackend(RootBackend):
         return Success(Maybe.from_optional(self._orders_db._orders.get(order_id)))
 
     async def get_order_statuses(
-        self, order_id: str, request: Request
-    ) -> ResultE[list[OrderStatus]]:
-        return Success(self._orders_db._statuses[order_id])
+        self, order_id: str, request: Request, next: str | None, limit: int
+    ) -> ResultE[tuple[list[OrderStatus], Maybe[str]]]:
+        try:
+            start = 0
+            limit = min(limit, 100)
+            statuses = self._orders_db._statuses[order_id]
+
+            if next:
+                start = int(next)
+            end = start + limit
+            stati = statuses[start:end]
+
+            if end > 0 and end < len(statuses):
+                return Success((stati, Some(str(end))))
+            return Success((stati, Nothing))
+        except Exception as e:
+            return Failure(e)
 
 
 class MockProductBackend(ProductBackend):
@@ -72,11 +105,22 @@ class MockProductBackend(ProductBackend):
         product_router: ProductRouter,
         search: OpportunityRequest,
         request: Request,
-    ) -> ResultE[list[Opportunity]]:
+        next: str | None,
+        limit: int,
+    ) -> ResultE[tuple[list[Opportunity], Maybe[str]]]:
         try:
-            return Success(
-                [o.model_copy(update=search.model_dump()) for o in self._opportunities]
-            )
+            start = 0
+            limit = min(limit, 100)
+            if next:
+                start = int(next)
+            end = start + limit
+            opportunities = [
+                o.model_copy(update=search.model_dump())
+                for o in self._opportunities[start:end]
+            ]
+            if end > 0 and end < len(self._opportunities):
+                return Success((opportunities, Some(str(end))))
+            return Success((opportunities, Nothing))
         except Exception as e:
             return Failure(e)
 
