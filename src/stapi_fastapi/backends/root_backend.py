@@ -44,11 +44,6 @@ Returns:
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 
-# async def get_order_statuses(
-#     self, order_id: str, request: Request, next: str | None, limit: int
-# ) -> ResultE[tuple[list[T], Maybe[str]]]:
-#     """
-#     Get statuses for order with `order_id` and return pagination token if applicable
 
 T = TypeVar("T", bound=OrderStatus)
 
