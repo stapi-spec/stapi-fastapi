@@ -9,10 +9,8 @@ from geojson_pydantic.types import Position2D
 from httpx import Response
 
 from stapi_fastapi.models.order import Order, OrderPayload, OrderStatus, OrderStatusCode
-from tests.conftest import pagination_tester
 
-from .application import MyOrderParameters
-from .shared import find_link
+from .shared import MyOrderParameters, find_link, pagination_tester
 
 NOW = datetime.now(UTC)
 START = NOW

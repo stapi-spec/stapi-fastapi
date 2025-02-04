@@ -3,7 +3,8 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from stapi_fastapi.models.product import Product
-from tests.conftest import pagination_tester
+
+from .shared import pagination_tester
 
 
 def test_products_response(stapi_client: TestClient):

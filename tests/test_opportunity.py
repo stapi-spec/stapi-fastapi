@@ -1,15 +1,13 @@
 from datetime import UTC, datetime, timedelta
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
 
 from stapi_fastapi.models.opportunity import (
-    Opportunity,
     OpportunityCollection,
 )
-from tests.conftest import pagination_tester
 
+from .shared import create_mock_opportunity, pagination_tester
 from .test_datetime_interval import rfc3339_strftime
 
 
@@ -61,21 +59,14 @@ def test_search_opportunities_response(
     assert_link(f"POST {url}", body, "create-order", f"/products/{product_id}/orders")
 
 
-@pytest.fixture
-def mock_pagination_opportunities(
-    mock_opportunities,
-) -> list[Opportunity]:
-    return [opp for opp in mock_opportunities for __ in range(0, 3)]
-
-
 @pytest.mark.parametrize("limit", [0, 1, 2, 4])
 def test_search_opportunities_pagination(
     limit: int,
     stapi_client: TestClient,
-    mock_pagination_opportunities: List[Opportunity],
 ) -> None:
-    product_id = "test-spotlight"
+    mock_pagination_opportunities = [create_mock_opportunity() for __ in range(3)]
     stapi_client.app_state["_opportunities"] = mock_pagination_opportunities
+    product_id = "test-spotlight"
     expected_returns = []
     if limit != 0:
         expected_returns = [
