@@ -64,6 +64,11 @@ class OpportunitySearchRecord(BaseModel):
     links: list[Link] = Field(default_factory=list)
 
 
+class OpportunitySearchRecords(BaseModel):
+    records: list[OpportunitySearchRecord]
+    links: list[Link] = Field(default_factory=list)
+
+
 class Prefer(StrEnum):
     respond_async = "respond-async"
     wait = "wait"
