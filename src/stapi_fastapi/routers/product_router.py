@@ -14,6 +14,7 @@ from fastapi import (
     Response,
     status,
 )
+from fastapi.responses import JSONResponse
 from geojson_pydantic.geometries import Geometry
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
@@ -48,7 +49,7 @@ def get_preference(prefer: str | None = Header(None)) -> str | None:
             detail=f"Invalid Prefer header value: {prefer}",
         )
 
-    return prefer
+    return Prefer(prefer)
 
 
 class ProductRouter(APIRouter):
@@ -129,7 +130,10 @@ class ProductRouter(APIRouter):
             tags=["Products"],
         )
 
-        if product.supports_opportunity_search:
+        if (
+            product.supports_opportunity_search
+            or root_router.supports_async_opportunity_search
+        ):
             self.add_api_route(
                 path="/opportunities",
                 endpoint=self.search_opportunities,
@@ -141,21 +145,17 @@ class ProductRouter(APIRouter):
                     Geometry,
                     self.product.opportunity_properties,  # type: ignore
                 ],
+                responses={
+                    201: {
+                        "model": OpportunitySearchRecord,
+                        "content": {TYPE_JSON: {}},
+                    }
+                },
                 summary="Search Opportunities for the product",
                 tags=["Products"],
             )
 
         if root_router.supports_async_opportunity_search:
-            self.add_api_route(
-                path="/opportunities",
-                endpoint=self.search_opportunities_async,
-                name=f"{self.root_router.name}:{self.product.id}:search-opportunities",
-                methods=["POST"],
-                status_code=status.HTTP_201_CREATED,
-                summary="Search Opportunities for the product",
-                tags=["Products"],
-            )
-
             self.add_api_route(
                 path="/opportunities/{opportunity_collection_id}",
                 endpoint=self.get_opportunity_collection,
@@ -216,18 +216,19 @@ class ProductRouter(APIRouter):
             ],
         )
 
-    async def search_opportunities(
+    async def search_opportunities(  # noqa: C901
         self: Self,
         search: OpportunityRequest,
         request: Request,
-        response: GeoJSONResponse,
-        prefer: str | None = Depends(get_preference),
+        response: Response,
         next: Annotated[str | None, Body()] = None,
         limit: Annotated[int, Body()] = 10,
-    ) -> OpportunityCollection:
+        prefer: str | None = Depends(get_preference),
+    ) -> OpportunityCollection | Response:
         """
         Explore the opportunities available for a particular set of constraints
         """
+        # synchronous opportunities search
         if (
             not self.root_router.supports_async_opportunity_search
             or prefer is Prefer.wait
@@ -272,20 +273,7 @@ class ProductRouter(APIRouter):
 
             return OpportunityCollection(features=features, links=links)
 
-        raise AssertionError("Expected code to be unreachable")
-
-    async def search_opportunities_async(
-        self: Self,
-        search: OpportunityRequest,
-        request: Request,
-        response: Response,
-        prefer: str | None = Depends(get_preference),
-    ) -> OpportunitySearchRecord:
-        """
-        Initiate an asynchronous search for opportunities.
-
-        TODO: Do I need a location header somewhere?
-        """
+        # asynchronous opportunities search
         if (
             prefer is None
             or prefer is Prefer.respond_async
@@ -296,14 +284,19 @@ class ProductRouter(APIRouter):
                     self.root_router.add_opportunity_search_record_self_link(
                         search_record, request
                     )
-                    response.headers["Location"] = str(
+                    headers = {}
+                    headers["Location"] = str(
                         self.root_router.generate_opportunity_search_record_href(
                             request, search_record.id
                         )
                     )
                     if prefer is not None:
-                        response.headers["Preference-Applied"] = "respond-async"
-                    return search_record
+                        headers["Preference-Applied"] = "respond-async"
+                    return JSONResponse(
+                        status_code=201,
+                        content=search_record.model_dump(mode="json"),
+                        headers=headers,
+                    )
                 case Failure(e) if isinstance(e, ConstraintsException):
                     raise e
                 case Failure(e):
@@ -315,8 +308,8 @@ class ProductRouter(APIRouter):
                         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                         detail="Error initiating an asynchronous opportunity search",
                     )
-                case x:
-                    raise AssertionError(f"Expected code to be unreachable: {x}")
+                case y:
+                    raise AssertionError(f"Expected code to be unreachable: {y}")
 
         raise AssertionError("Expected code to be unreachable")
 

@@ -59,7 +59,7 @@ class OpportunitySearchStatus(BaseModel):
 class OpportunitySearchRecord(BaseModel):
     id: str
     product_id: str
-    request: OpportunityRequest
+    opportunity_request: OpportunityRequest
     status: OpportunitySearchStatus
     links: list[Link] = Field(default_factory=list)
 
