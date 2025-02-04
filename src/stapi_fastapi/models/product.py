@@ -12,7 +12,9 @@ from stapi_fastapi.models.shared import Link
 if TYPE_CHECKING:
     from stapi_fastapi.backends.product_backend import (
         CreateOrder,
+        GetOpportunityCollection,
         SearchOpportunities,
+        SearchOpportunitiesAsync,
     )
 
 
@@ -54,32 +56,41 @@ class Product(BaseModel):
     _opportunity_properties: type[OpportunityProperties]
     _order_parameters: type[OrderParameters]
     _create_order: CreateOrder
-    _search_opportunities: SearchOpportunities
 
     def __init__(
         self,
         *args,
-        create_order: CreateOrder,
-        search_opportunities: SearchOpportunities,
         constraints: type[Constraints],
         opportunity_properties: type[OpportunityProperties],
         order_parameters: type[OrderParameters],
+        create_order: CreateOrder,
+        search_opportunities: SearchOpportunities | None = None,
+        search_opportunities_async: SearchOpportunitiesAsync | None = None,
+        get_opportunity_collection: GetOpportunityCollection | None = None,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self._create_order = create_order
-        self._search_opportunities = search_opportunities
+
+        if bool(search_opportunities_async) != bool(get_opportunity_collection):
+            raise ValueError(
+                "Both the `search_opportunities_async` and `get_opportunity_collection` "
+                "arguments must be provided if either is provided"
+            )
+
         self._constraints = constraints
         self._opportunity_properties = opportunity_properties
         self._order_parameters = order_parameters
+        self._create_order = create_order
+        if search_opportunities is not None:
+            self._search_opportunities = search_opportunities
+        if search_opportunities_async is not None:
+            self._search_opportunities_async = search_opportunities_async
+        if get_opportunity_collection is not None:
+            self._get_opportunity_collection = get_opportunity_collection
 
     @property
     def create_order(self: Self) -> CreateOrder:
         return self._create_order
-
-    @property
-    def search_opportunities(self: Self) -> SearchOpportunities:
-        return self._search_opportunities
 
     @property
     def constraints(self: Self) -> type[Constraints]:
@@ -92,6 +103,16 @@ class Product(BaseModel):
     @property
     def order_parameters(self: Self) -> type[OrderParameters]:
         return self._order_parameters
+
+    @property
+    def supports_opportunity_search(self: Self) -> bool:
+        return hasattr(self, "_search_opportunities")
+
+    @property
+    def supports_async_opportunity_search(self: Self) -> bool:
+        return hasattr(self, "_search_opportunities_async") and hasattr(
+            self, "_get_opportunity_collection"
+        )
 
     def with_links(self: Self, links: list[Link] | None = None) -> Self:
         if not links:
