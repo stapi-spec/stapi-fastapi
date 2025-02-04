@@ -181,7 +181,7 @@ class RootRouter(APIRouter):
         self, request: Request, next: str | None = None, limit: int = 10
     ) -> OrderCollection:
         links: list[Link] = []
-        match await self._get_orders(request, next, limit):
+        match await self._get_orders(next, limit, request):
             case Success((orders, Some(pagination_token))):
                 for order in orders:
                     order.links.append(self.order_link(request, order))
@@ -235,7 +235,7 @@ class RootRouter(APIRouter):
         limit: int = 10,
     ) -> OrderStatuses:
         links: list[Link] = []
-        match await self._get_order_statuses(order_id, request, next, limit):
+        match await self._get_order_statuses(order_id, next, limit, request):
             case Success((statuses, Some(pagination_token))):
                 links.append(self.order_statuses_link(request, order_id))
                 links.append(self.pagination_link(request, pagination_token))

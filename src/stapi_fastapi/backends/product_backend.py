@@ -11,7 +11,7 @@ from stapi_fastapi.models.order import Order, OrderPayload
 from stapi_fastapi.routers.product_router import ProductRouter
 
 SearchOpportunities = Callable[
-    [ProductRouter, OpportunityRequest, Request, str | None, int],
+    [ProductRouter, OpportunityRequest, str | None, int, Request],
     Coroutine[Any, Any, ResultE[tuple[list[Opportunity], Maybe[str]]]],
 ]
 """
@@ -21,9 +21,9 @@ search parameters.
 Args:
     product_router (ProductRouter): The product router.
     search (OpportunityRequest): The search parameters.
-    request (Request): FastAPI's Request object.
     next (str | None): A pagination token.
     limit (int): The maximum number of opportunities to return in a page.
+    request (Request): FastAPI's Request object.
 
 Returns:
     A tuple containing a list of opportunities and a pagination token.

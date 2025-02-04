@@ -10,16 +10,16 @@ from stapi_fastapi.models.order import (
 )
 
 GetOrders = Callable[
-    [Request, str | None, int],
+    [str | None, int, Request],
     Coroutine[Any, Any, ResultE[tuple[list[Order], Maybe[str]]]],
 ]
 """
 Type alias for an async function that returns a list of existing Orders.
 
 Args:
-    request (Request): FastAPI's Request object.
     next (str | None): A pagination token.
     limit (int): The maximum number of orders to return in a page.
+    request (Request): FastAPI's Request object.
 
 Returns:
     A tuple containing a list of orders and a pagination token.
@@ -49,7 +49,7 @@ T = TypeVar("T", bound=OrderStatus)
 
 
 GetOrderStatuses = Callable[
-    [str, Request, str | None, int],
+    [str, str | None, int, Request],
     Coroutine[Any, Any, ResultE[tuple[list[T], Maybe[str]]]],
 ]
 """
@@ -57,9 +57,9 @@ Type alias for an async function that gets statuses for the order with `order_id
 
 Args:
     order_id (str): The order ID.
-    request (Request): FastAPI's Request object.
     next (str | None): A pagination token.
     limit (int): The maximum number of statuses to return in a page.
+    request (Request): FastAPI's Request object.
 
 Returns:
     A tuple containing a list of order statuses and a pagination token.
