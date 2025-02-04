@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import logging
 import traceback
-from typing import TYPE_CHECKING, Annotated, Self
+from typing import TYPE_CHECKING, Self
 
-from fastapi import APIRouter, Body, HTTPException, Request, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from geojson_pydantic.geometries import Geometry
 from returns.maybe import Some
 from returns.result import Failure, Success
@@ -165,8 +165,6 @@ class ProductRouter(APIRouter):
         self,
         search: OpportunityRequest,
         request: Request,
-        next: Annotated[str | None, Body()] = None,
-        limit: Annotated[int, Body()] = 10,
     ) -> OpportunityCollection:
         """
         Explore the opportunities available for a particular set of constraints
@@ -175,18 +173,16 @@ class ProductRouter(APIRouter):
         match await self.product._search_opportunities(
             self,
             search,
-            next,
-            limit,
+            search.next,
+            search.limit,
             request,
         ):
             case Success((features, Some(pagination_token))):
                 links.append(self.order_link(request))
-                body = {
-                    "search": search.model_dump(mode="json"),
-                    "next": pagination_token,
-                    "limit": limit,
-                }
-                links.append(self.pagination_link(request, body))
+                search.next = pagination_token
+                links.append(
+                    self.pagination_link(request, search.model_dump(mode="json"))
+                )
             case Success((features, Nothing)):  # noqa: F841
                 links.append(self.order_link(request))
             case Failure(e) if isinstance(e, ConstraintsException):
