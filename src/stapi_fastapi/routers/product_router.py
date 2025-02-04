@@ -163,7 +163,7 @@ class ProductRouter(APIRouter):
 
     async def search_opportunities(
         self,
-        search: Annotated[OpportunityRequest, Body(embed=True)],
+        search: OpportunityRequest,
         request: Request,
         next: Annotated[str | None, Body()] = None,
         limit: Annotated[int, Body()] = 10,
