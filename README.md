@@ -14,12 +14,15 @@ STAPI FastAPI provides an `fastapi.APIRouter` which must be included in
 `GET`: `'/orders`, `/products`, `/orders/{order_id}/statuses`
 `POST`: `/opportunities`.
 
-Pagination is token based and follows recommendations in the [STAC API pagination].  Limit and token are passed in as query params for `GET` endpoints, and via the body aas separte key/value pairs for `POST` requests.
+Pagination is token based and follows recommendations in the [STAC API pagination].
+Limit and token are passed in as query params for `GET` endpoints, and via the body as
+separate key/value pairs for `POST` requests.
 
-If pagination is available and more records remain the response object will contain a `next` link object that can be used to get the next page of results.  No `next` `Link` returned indicates there are no further records available.
+If pagination is available and more records remain the response object will contain a
+`next` link object that can be used to get the next page of results. No `next` `Link`
+returned indicates there are no further records available.
 
 `limit` defaults to 10 and maxes at 100.
-
 
 ## ADRs
 

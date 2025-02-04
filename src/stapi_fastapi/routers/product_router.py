@@ -172,7 +172,7 @@ class ProductRouter(APIRouter):
         Explore the opportunities available for a particular set of constraints
         """
         links: list[Link] = []
-        match await self.product.backend.search_opportunities(
+        match await self.product._search_opportunities(
             self, search, request, next, limit
         ):
             case Success((features, Some(pagination_token))):
@@ -218,7 +218,7 @@ class ProductRouter(APIRouter):
         """
         Create a new order.
         """
-        match await self.product.backend.create_order(
+        match await self.product.create_order(
             self,
             payload,
             request,

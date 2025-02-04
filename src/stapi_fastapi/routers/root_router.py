@@ -7,7 +7,7 @@ from fastapi.datastructures import URL
 from returns.maybe import Maybe, Some
 from returns.result import Failure, Success
 
-from stapi_fastapi.backends.root_backend import RootBackend
+from stapi_fastapi.backends.root_backend import GetOrder, GetOrders, GetOrderStatuses
 from stapi_fastapi.constants import TYPE_GEOJSON, TYPE_JSON
 from stapi_fastapi.exceptions import NotFoundException
 from stapi_fastapi.models.conformance import CORE, Conformance
@@ -28,7 +28,9 @@ logger = logging.getLogger(__name__)
 class RootRouter(APIRouter):
     def __init__(
         self,
-        backend: RootBackend,
+        get_orders: GetOrders,
+        get_order: GetOrder,
+        get_order_statuses: GetOrderStatuses,
         conformances: list[str] = [CORE],
         name: str = "root",
         openapi_endpoint_name: str = "openapi",
@@ -37,7 +39,9 @@ class RootRouter(APIRouter):
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.backend = backend
+        self._get_orders = get_orders
+        self._get_order = get_order
+        self._get_order_statuses = get_order_statuses
         self.name = name
         self.conformances = conformances
         self.openapi_endpoint_name = openapi_endpoint_name
@@ -177,7 +181,7 @@ class RootRouter(APIRouter):
         self, request: Request, next: str | None = None, limit: int = 10
     ) -> OrderCollection:
         links: list[Link] = []
-        match await self.backend.get_orders(request, next, limit):
+        match await self._get_orders(request, next, limit):
             case Success((orders, Some(pagination_token))):
                 for order in orders:
                     order.links.append(self.order_link(request, order))
@@ -204,7 +208,7 @@ class RootRouter(APIRouter):
         """
         Get details for order with `order_id`.
         """
-        match await self.backend.get_order(order_id, request):
+        match await self._get_order(order_id, request):
             case Success(Some(order)):
                 self.add_order_links(order, request)
                 return order
@@ -231,7 +235,7 @@ class RootRouter(APIRouter):
         limit: int = 10,
     ) -> OrderStatuses:
         links: list[Link] = []
-        match await self.backend.get_order_statuses(order_id, request, next, limit):
+        match await self._get_order_statuses(order_id, request, next, limit):
             case Success((statuses, Some(pagination_token))):
                 links.append(self.order_statuses_link(request, order_id))
                 links.append(self.pagination_link(request, pagination_token))

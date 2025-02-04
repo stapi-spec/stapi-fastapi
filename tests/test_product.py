@@ -2,7 +2,9 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
-from tests.conftest import pagination_tester
+from stapi_fastapi.models.product import Product
+
+from .shared import pagination_tester
 
 
 def test_products_response(stapi_client: TestClient):
@@ -71,15 +73,11 @@ def test_product_order_parameters_response(
 def test_get_products_pagination(
     limit: int,
     stapi_client: TestClient,
-    mock_product_test_spotlight,
-    mock_product_test_satellite_provider,
+    mock_products: list[Product],
 ):
     expected_returns = []
     if limit != 0:
-        for product in [
-            mock_product_test_spotlight,
-            mock_product_test_satellite_provider,
-        ]:
+        for product in mock_products:
             prod = product.model_dump(mode="json", by_alias=True)
             product_id = prod["id"]
             prod["links"] = [
