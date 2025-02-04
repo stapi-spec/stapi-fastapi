@@ -4,6 +4,7 @@ from fastapi import Request
 from returns.maybe import Maybe
 from returns.result import ResultE
 
+from stapi_fastapi.models.opportunity import OpportunitySearchRecord
 from stapi_fastapi.models.order import (
     Order,
     OrderStatus,
@@ -39,8 +40,7 @@ Args:
 
 Returns:
     - Should return returns.result.Success[returns.maybe.Some[Order]] if order is found.
-    - Should return returns.result.Success[returns.maybe.Nothing] if the order is not
-    found or if access is denied.
+    - Should return returns.result.Success[returns.maybe.Nothing] if the order is not found or if access is denied.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 
@@ -67,5 +67,40 @@ Returns:
     - Should return returns.result.Success[tuple[list[OrderStatus], returns.maybe.Some[str]] if order is found and including a pagination token.
     - Should return returns.result.Success[tuple[list[OrderStatus], returns.maybe.Nothing]] if order is found and not including a pagination token.
     - Should return returns.result.Failure[Exception] if the order is not found or if access is denied.
+    - Returning returns.result.Failure[Exception] will result in a 500.
+"""
+
+GetOpportunitySearchRecords = Callable[
+    [Request, str | None, int],
+    Coroutine[Any, Any, ResultE[tuple[list[OpportunitySearchRecord], Maybe[str]]]],
+]
+"""
+Type alias for an async function that gets OpportunitySearchRecords for all products.
+
+Args:
+    request (Request): FastAPI's Request object.
+    next (str | None): A pagination token.
+    limit (int): The maximum number of search records to return in a page.
+
+Returns:
+    - Should return returns.result.Success[tuple[list[OpportunitySearchRecord], returns.maybe.Some[str]]] if including a pagination token
+    - Should return returns.result.Success[tuple[list[OpportunitySearchRecord], returns.maybe.Nothing]] if not including a pagination token
+    - Returning returns.result.Failure[Exception] will result in a 500.
+"""
+
+GetOpportunitySearchRecord = Callable[
+    [str, Request], Coroutine[Any, Any, ResultE[Maybe[OpportunitySearchRecord]]]
+]
+"""
+Type alias for an async function that gets the OpportunitySearchRecord with
+`search_record_id`.
+
+Args:
+    search_record_id (str): The ID of the OpportunitySearchRecord.
+    request (Request): FastAPI's Request object.
+
+Returns:
+    - Should return returns.result.Success[returns.maybe.Some[OpportunitySearchRecord]] if the search record is found.
+    - Should return returns.result.Success[returns.maybe.Nothing] if the search record is not found or if access is denied.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
