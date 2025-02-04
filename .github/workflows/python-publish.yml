@@ -1,36 +1,37 @@
-name: PR Checks
+name: Build Python Package
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
+  release:
+    types:
+      - published
 
 jobs:
-  test:
+  build-package:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.12", "3.13"]
+    environment:
+      name: pypi
+      url: https://pypi.org/p/stapi-fastapi
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/pip
-            .venv
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-${{ matrix.python-version }}-
-            ${{ runner.os }}-pip-
-      - name: Install
+          python-version: "3.12"
+      - name: Install dependencies
         run: |
-          python -m pip install poetry==1.7.1
-          poetry install --with=dev
-      - name: Lint
-        run: |
-          poetry run pre-commit run --all-files
-      - name: Test
-        run: poetry run pytest
+          python -m pip install --upgrade pip
+          pip install build
+          pip install .
+      - name: Build package
+        run: python -m build
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: startsWith(github.ref, 'refs/tags')
