@@ -163,7 +163,7 @@ class ProductRouter(APIRouter):
 
     async def search_opportunities(
         self,
-        search: OpportunityRequest,
+        search: Annotated[OpportunityRequest, Body(embed=True)],
         request: Request,
         next: Annotated[str | None, Body()] = None,
         limit: Annotated[int, Body()] = 10,
@@ -173,7 +173,11 @@ class ProductRouter(APIRouter):
         """
         links: list[Link] = []
         match await self.product._search_opportunities(
-            self, search, request, next, limit
+            self,
+            search,
+            next,
+            limit,
+            request,
         ):
             case Success((features, Some(pagination_token))):
                 links.append(self.order_link(request))

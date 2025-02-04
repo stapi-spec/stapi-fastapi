@@ -55,7 +55,7 @@ async def mock_get_order(order_id: str, request: Request) -> ResultE[Maybe[Order
 
 
 async def mock_get_order_statuses(
-    order_id: str, request: Request, next: str | None, limit: int
+    order_id: str, next: str | None, limit: int, request: Request
 ) -> ResultE[tuple[list[OrderStatus], Maybe[str]]]:
     try:
         start = 0
@@ -77,9 +77,9 @@ async def mock_get_order_statuses(
 async def mock_search_opportunities(
     product_router: ProductRouter,
     search: OpportunityRequest,
-    request: Request,
     next: str | None,
     limit: int,
+    request: Request,
 ) -> ResultE[tuple[list[Opportunity], Maybe[str]]]:
     try:
         start = 0
