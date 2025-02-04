@@ -7,11 +7,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added token-based pagination to `GET /orders`, `GET /products`,
+  `GET /orders/{order_id}/statuses`, and `POST /products/{product_id}/opportunities`.
+
 ### Changed
 
 - Replaced the root and product backend Protocol classes with Callable type aliases to
   enable future changes to make product opportunity searching, product ordering, and/or
   asynchronous (stateful) product opportunity searching optional.
+- Backend methods that support pagination now return tuples to include the pagination
+  token.
+- Moved `OrderCollection` construction from the root backend to the `RootRouter`
+  `get_orders` method.
 
 ## [v0.5.0] - 2025-01-08
 
