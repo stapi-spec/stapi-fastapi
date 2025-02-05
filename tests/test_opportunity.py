@@ -24,19 +24,17 @@ def test_search_opportunities_response(
     end_string = rfc3339_strftime(end, format)
 
     request_payload = {
-        "search": {
-            "geometry": {
-                "type": "Point",
-                "coordinates": [0, 0],
-            },
-            "datetime": f"{start_string}/{end_string}",
-            "filter": {
-                "op": "and",
-                "args": [
-                    {"op": ">", "args": [{"property": "off_nadir"}, 0]},
-                    {"op": "<", "args": [{"property": "off_nadir"}, 45]},
-                ],
-            },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [0, 0],
+        },
+        "datetime": f"{start_string}/{end_string}",
+        "filter": {
+            "op": "and",
+            "args": [
+                {"op": ">", "args": [{"property": "off_nadir"}, 0]},
+                {"op": "<", "args": [{"property": "off_nadir"}, 45]},
+            ],
         },
         "limit": 10,
     }
@@ -81,19 +79,17 @@ def test_search_opportunities_pagination(
     end_string = rfc3339_strftime(end, format)
 
     request_payload = {
-        "search": {
-            "geometry": {
-                "type": "Point",
-                "coordinates": [0, 0],
-            },
-            "datetime": f"{start_string}/{end_string}",
-            "filter": {
-                "op": "and",
-                "args": [
-                    {"op": ">", "args": [{"property": "off_nadir"}, 0]},
-                    {"op": "<", "args": [{"property": "off_nadir"}, 45]},
-                ],
-            },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [0, 0],
+        },
+        "datetime": f"{start_string}/{end_string}",
+        "filter": {
+            "op": "and",
+            "args": [
+                {"op": ">", "args": [{"property": "off_nadir"}, 0]},
+                {"op": "<", "args": [{"property": "off_nadir"}, 45]},
+            ],
         },
         "limit": limit,
     }

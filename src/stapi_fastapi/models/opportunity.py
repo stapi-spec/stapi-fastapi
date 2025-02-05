@@ -21,6 +21,9 @@ class OpportunityRequest(BaseModel):
     geometry: Geometry
     # TODO: validate the CQL2 filter?
     filter: CQL2Filter | None = None
+    next: str | None = None
+    limit: int = 10
+
     model_config = ConfigDict(strict=True)
 
 
