@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   token.
 - Moved `OrderCollection` construction from the root backend to the `RootRouter`
   `get_orders` method.
+- Renamed `OpportunityRequest` to `OpportunityPayload` so that would not be confused as
+  being a subclass of the Starlette/FastAPI Request class.
+
+### Fixed
+
+- Opportunities Search result now has the search body in the `create-order` link.
 
 ## [v0.5.0] - 2025-01-08
 

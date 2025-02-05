@@ -13,7 +13,7 @@ from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.exceptions import ConstraintsException
 from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
-    OpportunityRequest,
+    OpportunityPayload,
 )
 from stapi_fastapi.models.order import Order, OrderPayload
 from stapi_fastapi.models.product import Product
@@ -163,7 +163,7 @@ class ProductRouter(APIRouter):
 
     async def search_opportunities(
         self,
-        search: OpportunityRequest,
+        search: OpportunityPayload,
         request: Request,
     ) -> OpportunityCollection:
         """
@@ -178,13 +178,10 @@ class ProductRouter(APIRouter):
             request,
         ):
             case Success((features, Some(pagination_token))):
-                links.append(self.order_link(request))
-                search.next = pagination_token
-                links.append(
-                    self.pagination_link(request, search.model_dump(mode="json"))
-                )
+                links.append(self.order_link(request, search))
+                links.append(self.pagination_link(request, search, pagination_token))
             case Success((features, Nothing)):  # noqa: F841
-                links.append(self.order_link(request))
+                links.append(self.order_link(request, search))
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):
@@ -224,7 +221,7 @@ class ProductRouter(APIRouter):
             request,
         ):
             case Success(order):
-                self.root_router.add_order_links(order, request)
+                order.links.extend(self.root_router.order_links(order, request))
                 location = str(self.root_router.generate_order_href(request, order.id))
                 response.headers["Location"] = location
                 return order
@@ -242,7 +239,7 @@ class ProductRouter(APIRouter):
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")
 
-    def order_link(self, request: Request):
+    def order_link(self, request: Request, opp_req: OpportunityPayload):
         return Link(
             href=str(
                 request.url_for(
@@ -252,11 +249,16 @@ class ProductRouter(APIRouter):
             rel="create-order",
             type=TYPE_JSON,
             method="POST",
+            body=opp_req.search_body(),
         )
 
-    def pagination_link(self, request: Request, body: dict[str, str | dict]):
+    def pagination_link(
+        self, request: Request, opp_req: OpportunityPayload, pagination_token: str
+    ):
+        body = opp_req.body()
+        body["next"] = pagination_token
         return Link(
-            href=str(request.url.remove_query_params(keys=["next", "limit"])),
+            href=str(request.url),
             rel="next",
             type=TYPE_JSON,
             method="POST",
