@@ -6,12 +6,12 @@ from fastapi import Request
 from returns.maybe import Maybe
 from returns.result import ResultE
 
-from stapi_fastapi.models.opportunity import Opportunity, OpportunityRequest
+from stapi_fastapi.models.opportunity import Opportunity, OpportunityPayload
 from stapi_fastapi.models.order import Order, OrderPayload
 from stapi_fastapi.routers.product_router import ProductRouter
 
 SearchOpportunities = Callable[
-    [ProductRouter, OpportunityRequest, str | None, int, Request],
+    [ProductRouter, OpportunityPayload, str | None, int, Request],
     Coroutine[Any, Any, ResultE[tuple[list[Opportunity], Maybe[str]]]],
 ]
 """

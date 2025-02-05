@@ -111,7 +111,7 @@ def test_get_products_pagination(
 
     pagination_tester(
         stapi_client=stapi_client,
-        endpoint="/products",
+        url="/products",
         method="GET",
         limit=limit,
         target="products",

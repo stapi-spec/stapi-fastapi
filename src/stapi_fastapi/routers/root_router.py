@@ -168,7 +168,7 @@ class RootRouter(APIRouter):
             ),
         ]
         if end > 0 and end < len(self.product_ids):
-            links.append(self.pagination_link(request, self.product_ids[end]))
+            links.append(self.pagination_link(request, self.product_ids[end], limit))
         return ProductsCollection(
             products=[
                 self.product_routers[product_id].get_product(request)
@@ -182,13 +182,14 @@ class RootRouter(APIRouter):
     ) -> OrderCollection:
         links: list[Link] = []
         match await self._get_orders(next, limit, request):
-            case Success((orders, Some(pagination_token))):
+            case Success((orders, maybe_pagination_token)):
                 for order in orders:
-                    order.links.append(self.order_link(request, order))
-                links.append(self.pagination_link(request, pagination_token))
-            case Success((orders, Nothing)):  # noqa: F841
-                for order in orders:
-                    order.links.append(self.order_link(request, order))
+                    order.links.extend(self.order_links(order, request))
+                match maybe_pagination_token:
+                    case Some(x):
+                        links.append(self.pagination_link(request, x, limit))
+                    case Maybe.empty:
+                        pass
             case Failure(ValueError()):
                 raise NotFoundException(detail="Error finding pagination token")
             case Failure(e):
@@ -210,7 +211,7 @@ class RootRouter(APIRouter):
         """
         match await self._get_order(order_id, request):
             case Success(Some(order)):
-                self.add_order_links(order, request)
+                order.links.extend(self.order_links(order, request))
                 return order
             case Success(Maybe.empty):
                 raise NotFoundException("Order not found")
@@ -238,7 +239,7 @@ class RootRouter(APIRouter):
         match await self._get_order_statuses(order_id, next, limit, request):
             case Success((statuses, Some(pagination_token))):
                 links.append(self.order_statuses_link(request, order_id))
-                links.append(self.pagination_link(request, pagination_token))
+                links.append(self.pagination_link(request, pagination_token, limit))
             case Success((statuses, Nothing)):  # noqa: F841
                 links.append(self.order_statuses_link(request, order_id))
             case Failure(KeyError()):
@@ -271,28 +272,19 @@ class RootRouter(APIRouter):
     ) -> URL:
         return request.url_for(f"{self.name}:list-order-statuses", order_id=order_id)
 
-    def add_order_links(self, order: Order, request: Request):
-        order.links.append(
+    def order_links(self, order: Order, request: Request) -> list[Link]:
+        return [
             Link(
                 href=str(self.generate_order_href(request, order.id)),
                 rel="self",
                 type=TYPE_GEOJSON,
-            )
-        )
-        order.links.append(
+            ),
             Link(
                 href=str(self.generate_order_statuses_href(request, order.id)),
                 rel="monitor",
                 type=TYPE_JSON,
             ),
-        )
-
-    def order_link(self, request: Request, order: Order):
-        return Link(
-            href=str(request.url_for(f"{self.name}:get-order", order_id=order.id)),
-            rel="self",
-            type=TYPE_JSON,
-        )
+        ]
 
     def order_statuses_link(self, request: Request, order_id: str):
         return Link(
@@ -306,9 +298,11 @@ class RootRouter(APIRouter):
             type=TYPE_JSON,
         )
 
-    def pagination_link(self, request: Request, pagination_token: str):
+    def pagination_link(self, request: Request, pagination_token: str, limit: int):
         return Link(
-            href=str(request.url.include_query_params(next=pagination_token)),
+            href=str(
+                request.url.include_query_params(next=pagination_token, limit=limit)
+            ),
             rel="next",
             type=TYPE_JSON,
         )

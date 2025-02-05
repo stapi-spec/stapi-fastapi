@@ -7,7 +7,7 @@ from returns.result import Failure, ResultE, Success
 
 from stapi_fastapi.models.opportunity import (
     Opportunity,
-    OpportunityRequest,
+    OpportunityPayload,
 )
 from stapi_fastapi.models.order import (
     Order,
@@ -76,7 +76,7 @@ async def mock_get_order_statuses(
 
 async def mock_search_opportunities(
     product_router: ProductRouter,
-    search: OpportunityRequest,
+    search: OpportunityPayload,
     next: str | None,
     limit: int,
     request: Request,

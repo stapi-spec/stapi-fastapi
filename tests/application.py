@@ -15,7 +15,11 @@ from tests.backends import (
     mock_get_order_statuses,
     mock_get_orders,
 )
-from tests.shared import InMemoryOrderDB, mock_product_test_spotlight
+from tests.shared import (
+    InMemoryOrderDB,
+    mock_product_test_satellite_provider,
+    mock_product_test_spotlight,
+)
 
 
 @asynccontextmanager
@@ -35,5 +39,6 @@ root_router = RootRouter(
     conformances=[CORE],
 )
 root_router.add_product(mock_product_test_spotlight)
+root_router.add_product(mock_product_test_satellite_provider)
 app: FastAPI = FastAPI(lifespan=lifespan)
 app.include_router(root_router, prefix="")
