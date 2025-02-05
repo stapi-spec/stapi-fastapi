@@ -71,7 +71,7 @@ Returns:
 """
 
 GetOpportunitySearchRecords = Callable[
-    [Request, str | None, int],
+    [str | None, int, Request],
     Coroutine[Any, Any, ResultE[tuple[list[OpportunitySearchRecord], Maybe[str]]]],
 ]
 """

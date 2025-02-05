@@ -379,7 +379,7 @@ class RootRouter(APIRouter):
         self: Self, request: Request, next: str | None = None, limit: int = 10
     ) -> OpportunitySearchRecords:
         links: list[Link] = []
-        match await self._get_opportunity_search_records(request, next, limit):
+        match await self._get_opportunity_search_records(next, limit, request):
             case Success((records, Some(pagination_token))):
                 for record in records:
                     self.add_opportunity_search_record_self_link(record, request)

@@ -13,7 +13,9 @@ from pytest import fail
 
 from stapi_fastapi.models.opportunity import (
     Opportunity,
+    OpportunityCollection,
     OpportunityProperties,
+    OpportunitySearchRecord,
 )
 from stapi_fastapi.models.order import (
     Order,
@@ -28,7 +30,9 @@ from stapi_fastapi.models.product import (
 
 from .backends import (
     mock_create_order,
+    mock_get_opportunity_collection,
     mock_search_opportunities,
+    mock_search_opportunities_async,
 )
 
 type link_dict = dict[str, Any]
@@ -42,6 +46,13 @@ class InMemoryOrderDB:
     def __init__(self) -> None:
         self._orders: dict[str, Order] = {}
         self._statuses: dict[str, list[OrderStatus]] = defaultdict(list)
+
+
+class InMemoryOpportunityDB:
+    def __init__(self) -> None:
+        self._search_records: dict[str, OpportunitySearchRecord] = {}
+        self._search_record_statuses: dict[str, list[OrderStatus]] = defaultdict(list)
+        self._collections: dict[str, OpportunityCollection] = {}
 
 
 class MyProductConstraints(BaseModel):
@@ -76,7 +87,24 @@ provider = Provider(
     url="https://test-provider.example.com",  # Must be a valid URL
 )
 
-mock_product_test_spotlight = Product(
+product_test_spotlight = Product(
+    id="test-spotlight",
+    title="Test Spotlight Product",
+    description="Test product for test spotlight",
+    license="CC-BY-4.0",
+    keywords=["test", "satellite"],
+    providers=[provider],
+    links=[],
+    create_order=mock_create_order,
+    search_opportunities=None,
+    search_opportunities_async=None,
+    get_opportunity_collection=None,
+    constraints=MyProductConstraints,
+    opportunity_properties=MyOpportunityProperties,
+    order_parameters=MyOrderParameters,
+)
+
+product_test_spotlight_sync_opportunity = Product(
     id="test-spotlight",
     title="Test Spotlight Product",
     description="Test product for test spotlight",
@@ -86,12 +114,49 @@ mock_product_test_spotlight = Product(
     links=[],
     create_order=mock_create_order,
     search_opportunities=mock_search_opportunities,
+    search_opportunities_async=None,
+    get_opportunity_collection=None,
     constraints=MyProductConstraints,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
 )
 
-mock_product_test_satellite_provider = Product(
+
+product_test_spotlight_async_opportunity = Product(
+    id="test-spotlight",
+    title="Test Spotlight Product",
+    description="Test product for test spotlight",
+    license="CC-BY-4.0",
+    keywords=["test", "satellite"],
+    providers=[provider],
+    links=[],
+    create_order=mock_create_order,
+    search_opportunities=None,
+    search_opportunities_async=mock_search_opportunities_async,
+    get_opportunity_collection=mock_get_opportunity_collection,
+    constraints=MyProductConstraints,
+    opportunity_properties=MyOpportunityProperties,
+    order_parameters=MyOrderParameters,
+)
+
+product_test_spotlight_sync_async_opportunity = Product(
+    id="test-spotlight",
+    title="Test Spotlight Product",
+    description="Test product for test spotlight",
+    license="CC-BY-4.0",
+    keywords=["test", "satellite"],
+    providers=[provider],
+    links=[],
+    create_order=mock_create_order,
+    search_opportunities=mock_search_opportunities,
+    search_opportunities_async=mock_search_opportunities_async,
+    get_opportunity_collection=mock_get_opportunity_collection,
+    constraints=MyProductConstraints,
+    opportunity_properties=MyOpportunityProperties,
+    order_parameters=MyOrderParameters,
+)
+
+product_test_satellite_provider_sync_opportunity = Product(
     id="test-satellite-provider",
     title="Satellite Product",
     description="A product by a satellite provider",
@@ -101,6 +166,8 @@ mock_product_test_satellite_provider = Product(
     links=[],
     create_order=mock_create_order,
     search_opportunities=mock_search_opportunities,
+    search_opportunities_async=None,
+    get_opportunity_collection=None,
     constraints=MyProductConstraints,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,

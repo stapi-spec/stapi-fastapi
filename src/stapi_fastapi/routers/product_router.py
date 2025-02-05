@@ -166,35 +166,50 @@ class ProductRouter(APIRouter):
             )
 
     def get_product(self: Self, request: Request) -> Product:
-        return self.product.with_links(
-            links=[
-                Link(
-                    href=str(
-                        request.url_for(
-                            f"{self.root_router.name}:{self.product.id}:get-product",
-                        ),
+        links = [
+            Link(
+                href=str(
+                    request.url_for(
+                        f"{self.root_router.name}:{self.product.id}:get-product",
                     ),
-                    rel="self",
-                    type=TYPE_JSON,
                 ),
-                Link(
-                    href=str(
-                        request.url_for(
-                            f"{self.root_router.name}:{self.product.id}:get-constraints",
-                        ),
+                rel="self",
+                type=TYPE_JSON,
+            ),
+            Link(
+                href=str(
+                    request.url_for(
+                        f"{self.root_router.name}:{self.product.id}:get-constraints",
                     ),
-                    rel="constraints",
-                    type=TYPE_JSON,
                 ),
-                Link(
-                    href=str(
-                        request.url_for(
-                            f"{self.root_router.name}:{self.product.id}:get-order-parameters",
-                        ),
+                rel="constraints",
+                type=TYPE_JSON,
+            ),
+            Link(
+                href=str(
+                    request.url_for(
+                        f"{self.root_router.name}:{self.product.id}:get-order-parameters",
                     ),
-                    rel="order-parameters",
-                    type=TYPE_JSON,
                 ),
+                rel="order-parameters",
+                type=TYPE_JSON,
+            ),
+            Link(
+                href=str(
+                    request.url_for(
+                        f"{self.root_router.name}:{self.product.id}:create-order",
+                    ),
+                ),
+                rel="create-order",
+                type=TYPE_JSON,
+            ),
+        ]
+
+        if (
+            self.product.supports_opportunity_search
+            or self.root_router.supports_async_opportunity_search
+        ):
+            links.append(
                 Link(
                     href=str(
                         request.url_for(
@@ -204,114 +219,128 @@ class ProductRouter(APIRouter):
                     rel="opportunities",
                     type=TYPE_JSON,
                 ),
-                Link(
-                    href=str(
-                        request.url_for(
-                            f"{self.root_router.name}:{self.product.id}:create-order",
-                        ),
-                    ),
-                    rel="create-order",
-                    type=TYPE_JSON,
-                ),
-            ],
-        )
+            )
 
-    async def search_opportunities(  # noqa: C901
+        return self.product.with_links(links=links)
+
+    async def search_opportunities(
         self: Self,
         search: OpportunityRequest,
         request: Request,
         response: Response,
         next: Annotated[str | None, Body()] = None,
         limit: Annotated[int, Body()] = 10,
-        prefer: str | None = Depends(get_preference),
+        prefer: Prefer | None = Depends(get_preference),
     ) -> OpportunityCollection | Response:
         """
         Explore the opportunities available for a particular set of constraints
         """
-        # synchronous opportunities search
-        if (
-            not self.root_router.supports_async_opportunity_search
-            or prefer is Prefer.wait
+        # sync
+        if not self.root_router.supports_async_opportunity_search or (
+            prefer is Prefer.wait and self.product.supports_opportunity_search
         ):
-            links: list[Link] = []
-            match await self.product._search_opportunities(
-                self,
+            return await self.search_opportunities_sync(
                 search,
+                request,
+                response,
+                prefer,
                 next,
                 limit,
-                request,
-            ):
-                case Success((features, Some(pagination_token))):
-                    links.append(self.order_link(request))
-                    body = {
-                        "search": search.model_dump(mode="json"),
-                        "next": pagination_token,
-                        "limit": limit,
-                    }
-                    links.append(self.pagination_link(request, body))
-                case Success((features, Nothing)):  # noqa: F841
-                    links.append(self.order_link(request))
-                case Failure(e) if isinstance(e, ConstraintsException):
-                    raise e
-                case Failure(e):
-                    logger.error(
-                        "An error occurred while searching opportunities: %s",
-                        traceback.format_exception(e),
-                    )
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail="Error searching opportunities",
-                    )
-                case x:
-                    raise AssertionError(f"Expected code to be unreachable {x}")
+            )
 
-            if (
-                prefer is Prefer.wait
-                and self.root_router.supports_async_opportunity_search
-            ):
-                response.headers["Preference-Applied"] = "wait"
-
-            return OpportunityCollection(features=features, links=links)
-
-        # asynchronous opportunities search
+        # async
         if (
             prefer is None
             or prefer is Prefer.respond_async
             or (prefer is Prefer.wait and not self.product.supports_opportunity_search)
         ):
-            match await self.product._search_opportunities_async(self, search, request):
-                case Success(search_record):
-                    self.root_router.add_opportunity_search_record_self_link(
-                        search_record, request
-                    )
-                    headers = {}
-                    headers["Location"] = str(
-                        self.root_router.generate_opportunity_search_record_href(
-                            request, search_record.id
-                        )
-                    )
-                    if prefer is not None:
-                        headers["Preference-Applied"] = "respond-async"
-                    return JSONResponse(
-                        status_code=201,
-                        content=search_record.model_dump(mode="json"),
-                        headers=headers,
-                    )
-                case Failure(e) if isinstance(e, ConstraintsException):
-                    raise e
-                case Failure(e):
-                    logger.error(
-                        "An error occurred while initiating an asynchronous opportunity search: %s",
-                        traceback.format_exception(e),
-                    )
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail="Error initiating an asynchronous opportunity search",
-                    )
-                case y:
-                    raise AssertionError(f"Expected code to be unreachable: {y}")
+            return await self.search_opportunities_async(search, request, prefer)
 
         raise AssertionError("Expected code to be unreachable")
+
+    async def search_opportunities_sync(
+        self: Self,
+        search: OpportunityRequest,
+        request: Request,
+        response: Response,
+        prefer: Prefer | None,
+        next: Annotated[str | None, Body()] = None,
+        limit: Annotated[int, Body()] = 10,
+    ) -> OpportunityCollection:
+        links: list[Link] = []
+        match await self.product._search_opportunities(
+            self,
+            search,
+            next,
+            limit,
+            request,
+        ):
+            case Success((features, Some(pagination_token))):
+                links.append(self.order_link(request))
+                body = {
+                    "search": search.model_dump(mode="json"),
+                    "next": pagination_token,
+                    "limit": limit,
+                }
+                links.append(self.pagination_link(request, body))
+            case Success((features, Nothing)):  # noqa: F841
+                links.append(self.order_link(request))
+            case Failure(e) if isinstance(e, ConstraintsException):
+                raise e
+            case Failure(e):
+                logger.error(
+                    "An error occurred while searching opportunities: %s",
+                    traceback.format_exception(e),
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error searching opportunities",
+                )
+            case x:
+                raise AssertionError(f"Expected code to be unreachable {x}")
+
+        if prefer is Prefer.wait and self.root_router.supports_async_opportunity_search:
+            response.headers["Preference-Applied"] = "wait"
+
+        return OpportunityCollection(features=features, links=links)
+
+    async def search_opportunities_async(
+        self: Self,
+        search: OpportunityRequest,
+        request: Request,
+        prefer: Prefer | None,
+    ) -> JSONResponse:
+        match await self.product._search_opportunities_async(self, search, request):
+            case Success(search_record):
+                self.root_router.add_opportunity_search_record_self_link(
+                    search_record, request
+                )
+                headers = {}
+                headers["Location"] = str(
+                    self.root_router.generate_opportunity_search_record_href(
+                        request, search_record.id
+                    )
+                )
+                if prefer is not None:
+                    headers["Preference-Applied"] = "respond-async"
+                return JSONResponse(
+                    status_code=201,
+                    content=search_record.model_dump(mode="json"),
+                    headers=headers,
+                )
+            case Failure(e) if isinstance(e, ConstraintsException):
+                raise e
+            case Failure(e):
+                logger.error(
+                    "An error occurred while initiating an asynchronous opportunity search: %s",
+                    traceback.format_exception(e),
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error initiating an asynchronous opportunity search",
+                )
+            case x:
+                raise AssertionError(f"Expected code to be unreachable: {x}")
 
     def get_product_constraints(self: Self) -> JsonSchemaModel:
         """

@@ -7,7 +7,11 @@ from returns.result import Failure, ResultE, Success
 
 from stapi_fastapi.models.opportunity import (
     Opportunity,
+    OpportunityCollection,
     OpportunityRequest,
+    OpportunitySearchRecord,
+    OpportunitySearchStatus,
+    OpportunitySearchStatusCode,
 )
 from stapi_fastapi.models.order import (
     Order,
@@ -74,30 +78,6 @@ async def mock_get_order_statuses(
         return Failure(e)
 
 
-async def mock_search_opportunities(
-    product_router: ProductRouter,
-    search: OpportunityRequest,
-    next: str | None,
-    limit: int,
-    request: Request,
-) -> ResultE[tuple[list[Opportunity], Maybe[str]]]:
-    try:
-        start = 0
-        limit = min(limit, 100)
-        if next:
-            start = int(next)
-        end = start + limit
-        opportunities = [
-            o.model_copy(update=search.model_dump())
-            for o in request.state._opportunities[start:end]
-        ]
-        if end > 0 and end < len(request.state._opportunities):
-            return Success((opportunities, Some(str(end))))
-        return Success((opportunities, Nothing))
-    except Exception as e:
-        return Failure(e)
-
-
 async def mock_create_order(
     product_router: ProductRouter, payload: OrderPayload, request: Request
 ) -> ResultE[Order]:
@@ -133,5 +113,107 @@ async def mock_create_order(
         request.state._orders_db._orders[order.id] = order
         request.state._orders_db._statuses[order.id].insert(0, status)
         return Success(order)
+    except Exception as e:
+        return Failure(e)
+
+
+async def mock_search_opportunities(
+    product_router: ProductRouter,
+    search: OpportunityRequest,
+    next: str | None,
+    limit: int,
+    request: Request,
+) -> ResultE[tuple[list[Opportunity], Maybe[str]]]:
+    try:
+        start = 0
+        limit = min(limit, 100)
+        if next:
+            start = int(next)
+        end = start + limit
+        opportunities = [
+            o.model_copy(update=search.model_dump())
+            for o in request.state._opportunities[start:end]
+        ]
+        if end > 0 and end < len(request.state._opportunities):
+            return Success((opportunities, Some(str(end))))
+        return Success((opportunities, Nothing))
+    except Exception as e:
+        return Failure(e)
+
+
+async def mock_search_opportunities_async(
+    product_router: ProductRouter,
+    search: OpportunityRequest,
+    request: Request,
+) -> ResultE[OpportunitySearchRecord]:
+    try:
+        status = OpportunitySearchStatus(
+            timestamp=datetime.now(timezone.utc),
+            status_code=OpportunitySearchStatusCode.received,
+        )
+        search_record = OpportunitySearchRecord(
+            id=str(uuid4()),
+            product_id=product_router.product.id,
+            opportunity_request=search,
+            status=status,
+            links=[],
+        )
+        request.state._opportunities_db._search_records[search_record.id] = (
+            search_record
+        )
+        request.state._opportunities_db._search_record_statuses[
+            search_record.id
+        ].insert(0, status)
+        return Success(search_record)
+    except Exception as e:
+        return Failure(e)
+
+
+async def mock_get_opportunity_collection(
+    product_router: ProductRouter, opportunity_collection_id: str, request: Request
+) -> ResultE[Maybe[OpportunityCollection]]:
+    try:
+        return Success(
+            Maybe.from_optional(
+                request.state._opportunities_db._collections.get(
+                    opportunity_collection_id
+                )
+            )
+        )
+    except Exception as e:
+        return Failure(e)
+
+
+async def mock_get_opportunity_search_records(
+    next: str | None,
+    limit: int,
+    request: Request,
+) -> ResultE[tuple[list[OpportunitySearchRecord], Maybe[str]]]:
+    try:
+        start = 0
+        limit = min(limit, 100)
+        search_records = list(request.state._opportunities_db._search_records.values())
+
+        if next:
+            start = int(next)
+        end = start + limit
+        page = search_records[start:end]
+
+        if end > 0 and end < len(search_records):
+            return Success((page, Some(str(end))))
+        return Success((page, Nothing))
+    except Exception as e:
+        return Failure(e)
+
+
+async def mock_get_opportunity_search_record(
+    search_record_id: str, request: Request
+) -> ResultE[Maybe[OpportunitySearchRecord]]:
+    try:
+        return Success(
+            Maybe.from_optional(
+                request.state._opportunities_db._search_records.get(search_record_id)
+            )
+        )
     except Exception as e:
         return Failure(e)
