@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Added token-based pagination to `GET /orders`, `GET /products`,
   `GET /orders/{order_id}/statuses`, and `POST /products/{product_id}/opportunities`.
+- Asynchronous opportunity search. If the root router supports asynchronous opportunity
+  search, all products must support it. If asynchronouse opportunity search is
+  supported, `POST` requests to the `/products/{productId}/opportunities` endpoint will
+  default to asynchronous opportunity search unless synchronous searchis also supported
+  by the `product` and a `Prefer` header in the `POST` request is set to `wait`.
+- Added the `/products/{productId}/opportunities/` and `/searches/opportunities`
+  endpoints to support asynchronous opportunity search.
 
 ### Changed
 
