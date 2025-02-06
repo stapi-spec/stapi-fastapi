@@ -376,11 +376,15 @@ class RootRouter(APIRouter):
         match await self._get_opportunity_search_records(next, limit, request):
             case Success((records, Some(pagination_token))):
                 for record in records:
-                    self.add_opportunity_search_record_self_link(record, request)
-                links.append(self.pagination_link(request, pagination_token))
+                    record.links.append(
+                        self.opportunity_search_record_self_link(record, request)
+                    )
+                links.append(self.pagination_link(request, pagination_token, limit))
             case Success((records, Nothing)):  # noqa: F841
                 for record in records:
-                    self.add_opportunity_search_record_self_link(record, request)
+                    record.links.append(
+                        self.opportunity_search_record_self_link(record, request)
+                    )
             case Failure(ValueError()):
                 raise NotFoundException(detail="Error finding pagination token")
             case Failure(e):
@@ -404,7 +408,9 @@ class RootRouter(APIRouter):
         """
         match await self._get_opportunity_search_record(search_record_id, request):
             case Success(Some(search_record)):
-                self.add_opportunity_search_record_self_link(search_record, request)
+                search_record.links.append(
+                    self.opportunity_search_record_self_link(search_record, request)
+                )
                 return search_record
             case Success(Maybe.empty):
                 raise NotFoundException("Opportunity Search Record not found")
@@ -429,19 +435,17 @@ class RootRouter(APIRouter):
             search_record_id=search_record_id,
         )
 
-    def add_opportunity_search_record_self_link(
+    def opportunity_search_record_self_link(
         self: Self, opportunity_search_record: OpportunitySearchRecord, request: Request
-    ) -> None:
-        opportunity_search_record.links.append(
-            Link(
-                href=str(
-                    self.generate_opportunity_search_record_href(
-                        request, opportunity_search_record.id
-                    )
-                ),
-                rel="self",
-                type=TYPE_JSON,
-            )
+    ) -> Link:
+        return Link(
+            href=str(
+                self.generate_opportunity_search_record_href(
+                    request, opportunity_search_record.id
+                )
+            ),
+            rel="self",
+            type=TYPE_JSON,
         )
 
     @property

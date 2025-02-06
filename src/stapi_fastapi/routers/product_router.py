@@ -300,8 +300,10 @@ class ProductRouter(APIRouter):
     ) -> JSONResponse:
         match await self.product._search_opportunities_async(self, search, request):
             case Success(search_record):
-                self.root_router.add_opportunity_search_record_self_link(
-                    search_record, request
+                search_record.links.append(
+                    self.root_router.opportunity_search_record_self_link(
+                        search_record, request
+                    )
                 )
                 headers = {}
                 headers["Location"] = str(

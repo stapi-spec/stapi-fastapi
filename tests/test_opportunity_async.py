@@ -1,8 +1,9 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Any, Callable
 from uuid import uuid4
 
 import pytest
+from fastapi import status
 from fastapi.testclient import TestClient
 
 from stapi_fastapi.models.opportunity import (
@@ -17,11 +18,13 @@ from stapi_fastapi.models.shared import Link
 from .shared import (
     create_mock_opportunity,
     find_link,
+    pagination_tester,
     product_test_spotlight,
     product_test_spotlight_async_opportunity,
     product_test_spotlight_sync_async_opportunity,
     product_test_spotlight_sync_opportunity,
 )
+from .test_datetime_interval import rfc3339_strftime
 
 
 @pytest.mark.parametrize("mock_products", [[product_test_spotlight]])
@@ -297,5 +300,79 @@ def test_new_search_location_header_matches_self_link(
     assert search_response.headers["Location"] == str(link["href"])
 
 
-# Pagination test for the OpportunitySearchRecrods returned from the /searches/opportunities
-# endpoint on the root router
+@pytest.mark.parametrize("mock_products", [[product_test_spotlight_async_opportunity]])
+def test_bad_ids(stapi_client_async_opportunity: TestClient) -> None:
+    search_record_id = "bad_id"
+    res = stapi_client_async_opportunity.get(
+        f"/searches/opportunities/{search_record_id}"
+    )
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
+    product_id = "test-spotlight"
+    opportunity_collection_id = "bad_id"
+    res = stapi_client_async_opportunity.get(
+        f"/products/{product_id}/opportunities/{opportunity_collection_id}"
+    )
+    assert res.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.fixture
+def setup_search_record_pagination(
+    stapi_client_async_opportunity: TestClient,
+    mock_products: list[Product],
+) -> list[dict[str, Any]]:
+    product_id = "test-spotlight"
+    search_records = []
+    for _ in range(3):
+        now = datetime.now(UTC)
+        end = now + timedelta(days=5)
+        format = "%Y-%m-%dT%H:%M:%S.%f%z"
+        start_string = rfc3339_strftime(now, format)
+        end_string = rfc3339_strftime(end, format)
+
+        opportunity_request = {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [0, 0],
+            },
+            "datetime": f"{start_string}/{end_string}",
+            "filter": {
+                "op": "and",
+                "args": [
+                    {"op": ">", "args": [{"property": "off_nadir"}, 0]},
+                    {"op": "<", "args": [{"property": "off_nadir"}, 45]},
+                ],
+            },
+        }
+
+        response = stapi_client_async_opportunity.post(
+            f"/products/{product_id}/opportunities", json=opportunity_request
+        )
+        assert response.status_code == 201
+
+        body = response.json()
+        search_records.append(body)
+
+    return search_records
+
+
+@pytest.mark.parametrize("limit", [0, 1, 2, 4])
+@pytest.mark.parametrize("mock_products", [[product_test_spotlight_async_opportunity]])
+def test_get_search_records_pagination(
+    stapi_client_async_opportunity: TestClient,
+    mock_products: list[Product],
+    setup_search_record_pagination: list[dict[str, Any]],
+    limit: int,
+) -> None:
+    expected_returns = []
+    if limit > 0:
+        expected_returns = setup_search_record_pagination
+
+    pagination_tester(
+        stapi_client=stapi_client_async_opportunity,
+        url="/searches/opportunities",
+        method="GET",
+        limit=limit,
+        target="search_records",
+        expected_returns=expected_returns,
+    )
