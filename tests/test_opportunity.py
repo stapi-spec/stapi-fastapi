@@ -47,7 +47,7 @@ def test_search_opportunities_pagination(
 
     pagination_tester(
         stapi_client=stapi_client,
-        endpoint=f"/products/{product_id}/opportunities",
+        url=f"/products/{product_id}/opportunities",
         method="POST",
         limit=limit,
         target="features",

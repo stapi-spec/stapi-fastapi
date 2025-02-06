@@ -2,6 +2,7 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal, Self
+from urllib.parse import parse_qs, urlparse
 from uuid import uuid4
 
 from fastapi import status
@@ -217,7 +218,7 @@ def create_mock_opportunity() -> Opportunity:
 
 def pagination_tester(
     stapi_client: TestClient,
-    endpoint: str,
+    url: str,
     method: str,
     limit: int,
     target: str,
@@ -226,7 +227,7 @@ def pagination_tester(
 ) -> None:
     retrieved = []
 
-    res = make_request(stapi_client, endpoint, method, body, None, limit)
+    res = make_request(stapi_client, url, method, body, limit)
     assert res.status_code == status.HTTP_200_OK
     resp_body = res.json()
 
@@ -235,15 +236,16 @@ def pagination_tester(
     next_url = next((d["href"] for d in resp_body["links"] if d["rel"] == "next"), None)
 
     while next_url:
-        url = next_url
         if method == "POST":
             body = next(
                 (d["body"] for d in resp_body["links"] if d["rel"] == "next"), None
             )
 
-        res = make_request(stapi_client, url, method, body, next_url, limit)
-        assert res.status_code == status.HTTP_200_OK
+        res = make_request(stapi_client, next_url, method, body, limit)
+
+        assert res.status_code == status.HTTP_200_OK, res.status_code
         assert len(resp_body[target]) <= limit
+
         resp_body = res.json()
         retrieved.extend(resp_body[target])
 
@@ -261,22 +263,25 @@ def pagination_tester(
 
 def make_request(
     stapi_client: TestClient,
-    endpoint: str,
+    url: str,
     method: str,
     body: dict | None,
-    next_token: str | None,
     limit: int,
 ) -> Response:
     """request wrapper for pagination tests"""
 
     match method:
         case "GET":
-            if next_token:  # extract pagination token
-                next_token = next_token.split("next=")[1]
-            params = {"next": next_token, "limit": limit}
-            res = stapi_client.get(endpoint, params=params)
+            o = urlparse(url)
+            base_url = f"{o.scheme}://{o.netloc}{o.path}"
+            parsed_qs = parse_qs(o.query)
+            params = {}
+            if "next" in parsed_qs:
+                params["next"] = parsed_qs["next"][0]
+            params["limit"] = int(parsed_qs.get("limit", [None])[0] or limit)
+            res = stapi_client.get(base_url, params=params)
         case "POST":
-            res = stapi_client.post(endpoint, json=body)
+            res = stapi_client.post(url, json=body)
         case _:
             fail(f"method {method} not supported in make request")
 

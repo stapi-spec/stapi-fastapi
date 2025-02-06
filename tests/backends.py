@@ -8,7 +8,7 @@ from returns.result import Failure, ResultE, Success
 from stapi_fastapi.models.opportunity import (
     Opportunity,
     OpportunityCollection,
-    OpportunityRequest,
+    OpportunityPayload,
     OpportunitySearchRecord,
     OpportunitySearchStatus,
     OpportunitySearchStatusCode,
@@ -119,7 +119,7 @@ async def mock_create_order(
 
 async def mock_search_opportunities(
     product_router: ProductRouter,
-    search: OpportunityRequest,
+    search: OpportunityPayload,
     next: str | None,
     limit: int,
     request: Request,
@@ -143,7 +143,7 @@ async def mock_search_opportunities(
 
 async def mock_search_opportunities_async(
     product_router: ProductRouter,
-    search: OpportunityRequest,
+    search: OpportunityPayload,
     request: Request,
 ) -> ResultE[OpportunitySearchRecord]:
     try:

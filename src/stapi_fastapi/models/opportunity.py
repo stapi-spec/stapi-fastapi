@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Literal, TypeVar
+from typing import Any, Literal, TypeVar
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
@@ -17,12 +17,21 @@ class OpportunityProperties(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-class OpportunityRequest(BaseModel):
+class OpportunityPayload(BaseModel):
     datetime: DatetimeInterval
     geometry: Geometry
-    # TODO: validate the CQL2 filter?
     filter: CQL2Filter | None = None
+
+    next: str | None = None
+    limit: int = 10
+
     model_config = ConfigDict(strict=True)
+
+    def search_body(self) -> dict[str, Any]:
+        return self.model_dump(mode="json", include={"datetime", "geometry", "filter"})
+
+    def body(self) -> dict[str, Any]:
+        return self.model_dump(mode="json")
 
 
 G = TypeVar("G", bound=Geometry)
@@ -59,7 +68,7 @@ class OpportunitySearchStatus(BaseModel):
 class OpportunitySearchRecord(BaseModel):
     id: str
     product_id: str
-    opportunity_request: OpportunityRequest
+    opportunity_request: OpportunityPayload
     status: OpportunitySearchStatus
     links: list[Link] = Field(default_factory=list)
 

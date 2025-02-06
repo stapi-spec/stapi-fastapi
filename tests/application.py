@@ -20,6 +20,7 @@ from tests.backends import (
 from tests.shared import (
     InMemoryOpportunityDB,
     InMemoryOrderDB,
+    product_test_satellite_provider_sync_opportunity,
     product_test_spotlight_sync_async_opportunity,
 )
 
@@ -44,5 +45,6 @@ root_router = RootRouter(
     conformances=[CORE, OPPORTUNITIES, ASYNC_OPPORTUNITIES],
 )
 root_router.add_product(product_test_spotlight_sync_async_opportunity)
+root_router.add_product(product_test_satellite_provider_sync_opportunity)
 app: FastAPI = FastAPI(lifespan=lifespan)
 app.include_router(root_router, prefix="")

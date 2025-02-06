@@ -170,16 +170,20 @@ def test_get_orders_pagination(
     limit, setup_orders_pagination, create_order_payloads, stapi_client: TestClient
 ) -> None:
     expected_returns = []
-    if limit != 0:
+    if limit > 0:
         for order in setup_orders_pagination:
-            json_link = copy.deepcopy(order["links"][0])
-            json_link["type"] = "application/json"
-            order["links"].append(json_link)
+            self_link = copy.deepcopy(order["links"][0])
+            order["links"].append(self_link)
+            monitor_link = copy.deepcopy(order["links"][0])
+            monitor_link["rel"] = "monitor"
+            monitor_link["type"] = "application/json"
+            monitor_link["href"] = monitor_link["href"] + "/statuses"
+            order["links"].append(monitor_link)
             expected_returns.append(order)
 
     pagination_tester(
         stapi_client=stapi_client,
-        endpoint="/orders",
+        url="/orders",
         method="GET",
         limit=limit,
         target="features",
@@ -233,7 +237,7 @@ def test_get_order_status_pagination(
 
     pagination_tester(
         stapi_client=stapi_client,
-        endpoint=f"/orders/{order_id}/statuses",
+        url=f"/orders/{order_id}/statuses",
         method="GET",
         limit=limit,
         target="statuses",
