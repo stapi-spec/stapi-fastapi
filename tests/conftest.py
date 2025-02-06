@@ -41,7 +41,9 @@ def base_url() -> Iterator[str]:
 
 
 @pytest.fixture
-def mock_products() -> list[Product]:
+def mock_products(request) -> list[Product]:
+    if request.node.get_closest_marker("mock_products") is not None:
+        return request.node.get_closest_marker("mock_products").args[0]
     return [
         product_test_spotlight_sync_opportunity,
         product_test_satellite_provider_sync_opportunity,

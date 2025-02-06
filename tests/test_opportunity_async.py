@@ -12,7 +12,6 @@ from stapi_fastapi.models.opportunity import (
     OpportunitySearchStatus,
     OpportunitySearchStatusCode,
 )
-from stapi_fastapi.models.product import Product
 from stapi_fastapi.models.shared import Link
 
 from .shared import (
@@ -27,10 +26,8 @@ from .shared import (
 from .test_datetime_interval import rfc3339_strftime
 
 
-@pytest.mark.parametrize("mock_products", [[product_test_spotlight]])
-def test_no_opportunity_search_advertised(
-    stapi_client: TestClient, mock_products: list[Product]
-) -> None:
+@pytest.mark.mock_products([product_test_spotlight])
+def test_no_opportunity_search_advertised(stapi_client: TestClient) -> None:
     product_id = "test-spotlight"
 
     # the `/products/{productId}/opportunities link should not be advertised on the product
@@ -44,10 +41,8 @@ def test_no_opportunity_search_advertised(
     assert find_link(root_body["links"], "opportunity-search-records") is None
 
 
-@pytest.mark.parametrize("mock_products", [[product_test_spotlight_sync_opportunity]])
-def test_only_sync_search_advertised(
-    stapi_client: TestClient, mock_products: list[Product]
-) -> None:
+@pytest.mark.mock_products([product_test_spotlight_sync_opportunity])
+def test_only_sync_search_advertised(stapi_client: TestClient) -> None:
     product_id = "test-spotlight"
 
     # the `/products/{productId}/opportunities link should be advertised on the product
@@ -69,9 +64,7 @@ def test_only_sync_search_advertised(
         [product_test_spotlight_sync_async_opportunity],
     ],
 )
-def test_async_search_advertised(
-    stapi_client_async_opportunity: TestClient, mock_products: list[Product]
-) -> None:
+def test_async_search_advertised(stapi_client_async_opportunity: TestClient) -> None:
     product_id = "test-spotlight"
 
     # the `/products/{productId}/opportunities link should be advertised on the product
@@ -85,16 +78,10 @@ def test_async_search_advertised(
     assert find_link(root_body["links"], "opportunity-search-records")
 
 
-def test_sync_search_response() -> None:
-    # handled in test_opportunity.py
-    pass
-
-
-@pytest.mark.parametrize("mock_products", [[product_test_spotlight_async_opportunity]])
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
 def test_async_search_response(
     stapi_client_async_opportunity: TestClient,
     opportunity_search: dict[str, Any],
-    mock_products: list[Product],
 ) -> None:
     product_id = "test-spotlight"
     url = f"/products/{product_id}/opportunities"
@@ -111,13 +98,10 @@ def test_async_search_response(
     assert find_link(body["links"], "self")
 
 
-@pytest.mark.parametrize(
-    "mock_products", [[product_test_spotlight_sync_async_opportunity]]
-)
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
 def test_async_search_is_default(
     stapi_client_async_opportunity: TestClient,
     opportunity_search: dict[str, Any],
-    mock_products: list[Product],
 ) -> None:
     product_id = "test-spotlight"
     url = f"/products/{product_id}/opportunities"
@@ -132,13 +116,10 @@ def test_async_search_is_default(
         pytest.fail("response is not an opportunity search record")
 
 
-@pytest.mark.parametrize(
-    "mock_products", [[product_test_spotlight_sync_async_opportunity]]
-)
+@pytest.mark.mock_products([product_test_spotlight_sync_async_opportunity])
 def test_prefer_header(
     stapi_client_async_opportunity: TestClient,
     opportunity_search: dict[str, Any],
-    mock_products: list[Product],
 ) -> None:
     product_id = "test-spotlight"
     url = f"/products/{product_id}/opportunities"
@@ -170,11 +151,10 @@ def test_prefer_header(
         pytest.fail("response is not an opportunity search record")
 
 
-@pytest.mark.parametrize("mock_products", [[product_test_spotlight_async_opportunity]])
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
 def test_async_search_record_retrieval(
     stapi_client_async_opportunity: TestClient,
     opportunity_search: dict[str, Any],
-    mock_products: list[Product],
 ) -> None:
     # post an async search
     product_id = "test-spotlight"
@@ -201,11 +181,10 @@ def test_async_search_record_retrieval(
     ]
 
 
-@pytest.mark.parametrize("mock_products", [[product_test_spotlight_async_opportunity]])
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
 def test_async_opportunity_search_to_completion(
     stapi_client_async_opportunity: TestClient,
     opportunity_search: dict[str, Any],
-    mock_products: list[Product],
     url_for: Callable[[str], str],
 ) -> None:
     # Post a request for an async search
@@ -269,7 +248,7 @@ def test_async_opportunity_search_to_completion(
     )
 
     # Verify we can retrieve the OpportunityCollection from the
-    # OpportunitySearchRecord's `opportunities` link, and the retrieved
+    # OpportunitySearchRecord's `opportunities` link; verify the retrieved
     # OpportunityCollection contains an order link and a link pointing back to the
     # OpportunitySearchRecord
     opportunities_link = next(
@@ -283,11 +262,10 @@ def test_async_opportunity_search_to_completion(
     assert any(x for x in retrieved_collection.links if x.rel == "search-record")
 
 
-@pytest.mark.parametrize("mock_products", [[product_test_spotlight_async_opportunity]])
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
 def test_new_search_location_header_matches_self_link(
     stapi_client_async_opportunity: TestClient,
     opportunity_search: dict[str, Any],
-    mock_products: list[Product],
 ) -> None:
     product_id = "test-spotlight"
     url = f"/products/{product_id}/opportunities"
@@ -300,7 +278,7 @@ def test_new_search_location_header_matches_self_link(
     assert search_response.headers["Location"] == str(link["href"])
 
 
-@pytest.mark.parametrize("mock_products", [[product_test_spotlight_async_opportunity]])
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
 def test_bad_ids(stapi_client_async_opportunity: TestClient) -> None:
     search_record_id = "bad_id"
     res = stapi_client_async_opportunity.get(
@@ -319,7 +297,6 @@ def test_bad_ids(stapi_client_async_opportunity: TestClient) -> None:
 @pytest.fixture
 def setup_search_record_pagination(
     stapi_client_async_opportunity: TestClient,
-    mock_products: list[Product],
 ) -> list[dict[str, Any]]:
     product_id = "test-spotlight"
     search_records = []
@@ -357,10 +334,9 @@ def setup_search_record_pagination(
 
 
 @pytest.mark.parametrize("limit", [0, 1, 2, 4])
-@pytest.mark.parametrize("mock_products", [[product_test_spotlight_async_opportunity]])
+@pytest.mark.mock_products([product_test_spotlight_async_opportunity])
 def test_get_search_records_pagination(
     stapi_client_async_opportunity: TestClient,
-    mock_products: list[Product],
     setup_search_record_pagination: list[dict[str, Any]],
     limit: int,
 ) -> None:
