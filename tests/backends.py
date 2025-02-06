@@ -147,7 +147,7 @@ async def mock_search_opportunities_async(
     request: Request,
 ) -> ResultE[OpportunitySearchRecord]:
     try:
-        status = OpportunitySearchStatus(
+        received_status = OpportunitySearchStatus(
             timestamp=datetime.now(timezone.utc),
             status_code=OpportunitySearchStatusCode.received,
         )
@@ -155,15 +155,10 @@ async def mock_search_opportunities_async(
             id=str(uuid4()),
             product_id=product_router.product.id,
             opportunity_request=search,
-            status=status,
+            status=received_status,
             links=[],
         )
-        request.state._opportunities_db._search_records[search_record.id] = (
-            search_record
-        )
-        request.state._opportunities_db._search_record_statuses[
-            search_record.id
-        ].insert(0, status)
+        request.state._opportunities_db.put_search_record(search_record)
         return Success(search_record)
     except Exception as e:
         return Failure(e)
@@ -175,7 +170,7 @@ async def mock_get_opportunity_collection(
     try:
         return Success(
             Maybe.from_optional(
-                request.state._opportunities_db._collections.get(
+                request.state._opportunities_db.get_opportunity_collection(
                     opportunity_collection_id
                 )
             )
@@ -192,7 +187,7 @@ async def mock_get_opportunity_search_records(
     try:
         start = 0
         limit = min(limit, 100)
-        search_records = list(request.state._opportunities_db._search_records.values())
+        search_records = request.state._opportunities_db.get_search_records()
 
         if next:
             start = int(next)
@@ -212,7 +207,7 @@ async def mock_get_opportunity_search_record(
     try:
         return Success(
             Maybe.from_optional(
-                request.state._opportunities_db._search_records.get(search_record_id)
+                request.state._opportunities_db.get_search_record(search_record_id)
             )
         )
     except Exception as e:

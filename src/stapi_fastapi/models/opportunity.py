@@ -65,7 +65,7 @@ class OpportunitySearchRecord(BaseModel):
 
 
 class OpportunitySearchRecords(BaseModel):
-    records: list[OpportunitySearchRecord]
+    search_records: list[OpportunitySearchRecord]
     links: list[Link] = Field(default_factory=list)
 
 

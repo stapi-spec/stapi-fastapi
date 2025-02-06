@@ -429,7 +429,9 @@ class ProductRouter(APIRouter):
                         type=TYPE_JSON,
                     ),
                 )
-                return GeoJSONResponse(content=opportunity_collection.model_dump_json())
+                return GeoJSONResponse(
+                    content=opportunity_collection.model_dump(mode="json")
+                )
             case Success(Maybe.empty):
                 raise NotFoundException("Opportunity Collection not found")
             case Failure(e):

@@ -409,7 +409,7 @@ class RootRouter(APIRouter):
         Get the Opportunity Search Record with `search_record_id`.
         """
         match await self._get_opportunity_search_record(search_record_id, request):
-            case Success(Maybe(Some(search_record))):
+            case Success(Some(search_record)):
                 self.add_opportunity_search_record_self_link(search_record, request)
                 return search_record
             case Success(Maybe.empty):

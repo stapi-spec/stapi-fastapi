@@ -1,4 +1,5 @@
 from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal, Self
 from uuid import uuid4
@@ -51,8 +52,24 @@ class InMemoryOrderDB:
 class InMemoryOpportunityDB:
     def __init__(self) -> None:
         self._search_records: dict[str, OpportunitySearchRecord] = {}
-        self._search_record_statuses: dict[str, list[OrderStatus]] = defaultdict(list)
         self._collections: dict[str, OpportunityCollection] = {}
+
+    def get_search_record(self, search_id: str) -> OpportunitySearchRecord | None:
+        return deepcopy(self._search_records.get(search_id))
+
+    def get_search_records(self) -> list[OpportunitySearchRecord]:
+        return deepcopy(list(self._search_records.values()))
+
+    def put_search_record(self, search_record: OpportunitySearchRecord) -> None:
+        self._search_records[search_record.id] = deepcopy(search_record)
+
+    def get_opportunity_collection(self, collection_id) -> OpportunityCollection | None:
+        return deepcopy(self._collections.get(collection_id))
+
+    def put_opportunity_collection(self, collection: OpportunityCollection) -> None:
+        if collection.id is None:
+            raise ValueError("collection must have an id")
+        self._collections[collection.id] = deepcopy(collection)
 
 
 class MyProductConstraints(BaseModel):

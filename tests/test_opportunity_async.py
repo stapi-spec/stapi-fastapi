@@ -1,65 +1,111 @@
+from datetime import datetime, timezone
+from typing import Any, Callable
+from uuid import uuid4
+
 import pytest
 from fastapi.testclient import TestClient
 
 from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
     OpportunitySearchRecord,
+    OpportunitySearchStatus,
+    OpportunitySearchStatusCode,
 )
+from stapi_fastapi.models.product import Product
+from stapi_fastapi.models.shared import Link
 
 from .shared import (
+    create_mock_opportunity,
+    find_link,
     product_test_spotlight,
     product_test_spotlight_async_opportunity,
     product_test_spotlight_sync_async_opportunity,
+    product_test_spotlight_sync_opportunity,
 )
 
 
 @pytest.mark.parametrize("mock_products", [[product_test_spotlight]])
-def test_no_opportunity_search(
-    stapi_client: TestClient, assert_link, mock_products
+def test_no_opportunity_search_advertised(
+    stapi_client: TestClient, mock_products: list[Product]
 ) -> None:
-    # TODO: Add checks for root async links
     product_id = "test-spotlight"
-    response = stapi_client.get(f"/products/{product_id}")
 
-    body = response.json()
-    url = "GET /products"
+    # the `/products/{productId}/opportunities link should not be advertised on the product
+    product_response = stapi_client.get(f"/products/{product_id}")
+    product_body = product_response.json()
+    assert find_link(product_body["links"], "opportunities") is None
 
-    with pytest.raises(AssertionError, match=".*should exist"):
-        assert_link(url, body, "opportunities", f"/products/{product_id}/opportunities")
+    # the `searches/opportunities` link should not be advertised on the root
+    root_response = stapi_client.get("/")
+    root_body = root_response.json()
+    assert find_link(root_body["links"], "opportunity-search-records") is None
 
 
-# handled in test_opportunity.py
-def test_sync_search() -> None:
+@pytest.mark.parametrize("mock_products", [[product_test_spotlight_sync_opportunity]])
+def test_only_sync_search_advertised(
+    stapi_client: TestClient, mock_products: list[Product]
+) -> None:
+    product_id = "test-spotlight"
+
+    # the `/products/{productId}/opportunities link should be advertised on the product
+    product_response = stapi_client.get(f"/products/{product_id}")
+    product_body = product_response.json()
+    assert find_link(product_body["links"], "opportunities")
+
+    # the `searches/opportunities` link should not be advertised on the root
+    root_response = stapi_client.get("/")
+    root_body = root_response.json()
+    assert find_link(root_body["links"], "opportunity-search-records") is None
+
+
+# test async search offered
+@pytest.mark.parametrize(
+    "mock_products",
+    [
+        [product_test_spotlight_async_opportunity],
+        [product_test_spotlight_sync_async_opportunity],
+    ],
+)
+def test_async_search_advertised(
+    stapi_client_async_opportunity: TestClient, mock_products: list[Product]
+) -> None:
+    product_id = "test-spotlight"
+
+    # the `/products/{productId}/opportunities link should be advertised on the product
+    product_response = stapi_client_async_opportunity.get(f"/products/{product_id}")
+    product_body = product_response.json()
+    assert find_link(product_body["links"], "opportunities")
+
+    # the `searches/opportunities` link should be advertised on the root
+    root_response = stapi_client_async_opportunity.get("/")
+    root_body = root_response.json()
+    assert find_link(root_body["links"], "opportunity-search-records")
+
+
+def test_sync_search_response() -> None:
+    # handled in test_opportunity.py
     pass
 
 
 @pytest.mark.parametrize("mock_products", [[product_test_spotlight_async_opportunity]])
 def test_async_search_response(
     stapi_client_async_opportunity: TestClient,
-    assert_link,
-    opportunity_search,
-    mock_products,
+    opportunity_search: dict[str, Any],
+    mock_products: list[Product],
 ) -> None:
     product_id = "test-spotlight"
     url = f"/products/{product_id}/opportunities"
 
     response = stapi_client_async_opportunity.post(url, json=opportunity_search)
+    assert response.status_code == 201
 
-    assert response.status_code == 201, f"Failed for product: {product_id}"
     body = response.json()
-
     try:
         _ = OpportunitySearchRecord(**body)
     except Exception as _:
         pytest.fail("response is not an opportunity search record")
 
-    assert_link(
-        f"GET /searches/opportunities/{body['id']}",
-        body,
-        "self",
-        f"/searches/opportunities/{body['id']}",
-        media_type="application/json",
-    )
+    assert find_link(body["links"], "self")
 
 
 @pytest.mark.parametrize(
@@ -67,18 +113,16 @@ def test_async_search_response(
 )
 def test_async_search_is_default(
     stapi_client_async_opportunity: TestClient,
-    assert_link,
-    mock_products,
-    opportunity_search,
+    opportunity_search: dict[str, Any],
+    mock_products: list[Product],
 ) -> None:
     product_id = "test-spotlight"
     url = f"/products/{product_id}/opportunities"
 
     response = stapi_client_async_opportunity.post(url, json=opportunity_search)
+    assert response.status_code == 201
 
-    assert response.status_code == 201, f"Failed for product: {product_id}"
     body = response.json()
-
     try:
         _ = OpportunitySearchRecord(**body)
     except Exception as _:
@@ -90,9 +134,8 @@ def test_async_search_is_default(
 )
 def test_prefer_header(
     stapi_client_async_opportunity: TestClient,
-    assert_link,
-    mock_products,
-    opportunity_search,
+    opportunity_search: dict[str, Any],
+    mock_products: list[Product],
 ) -> None:
     product_id = "test-spotlight"
     url = f"/products/{product_id}/opportunities"
@@ -101,11 +144,10 @@ def test_prefer_header(
     response = stapi_client_async_opportunity.post(
         url, json=opportunity_search, headers={"Prefer": "wait"}
     )
-
-    assert response.status_code == 200, f"Failed for product: {product_id}"
+    assert response.status_code == 200
     assert response.headers["Preference-Applied"] == "wait"
-    body = response.json()
 
+    body = response.json()
     try:
         OpportunityCollection(**body)
     except Exception as _:
@@ -115,26 +157,145 @@ def test_prefer_header(
     response = stapi_client_async_opportunity.post(
         url, json=opportunity_search, headers={"Prefer": "respond-async"}
     )
-
-    assert response.status_code == 201, f"Failed for product: {product_id}"
+    assert response.status_code == 201
     assert response.headers["Preference-Applied"] == "respond-async"
-    body = response.json()
 
+    body = response.json()
     try:
         OpportunitySearchRecord(**body)
     except Exception as _:
         pytest.fail("response is not an opportunity search record")
 
 
-# test than after an async request we can get the search record by id and that it exists
-# in the list returned from the searches/opportunities endpoint.
+@pytest.mark.parametrize("mock_products", [[product_test_spotlight_async_opportunity]])
+def test_async_search_record_retrieval(
+    stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
+    mock_products: list[Product],
+) -> None:
+    # post an async search
+    product_id = "test-spotlight"
+    url = f"/products/{product_id}/opportunities"
+    search_response = stapi_client_async_opportunity.post(url, json=opportunity_search)
+    assert search_response.status_code == 201
+    search_response_body = search_response.json()
+
+    # get the search record by id and verify it matches the original response
+    search_record_id = search_response_body["id"]
+    record_response = stapi_client_async_opportunity.get(
+        f"/searches/opportunities/{search_record_id}"
+    )
+    assert record_response.status_code == 200
+    record_response_body = record_response.json()
+    assert record_response_body == search_response_body
+
+    # verify the search record is in the list of all search records
+    records_response = stapi_client_async_opportunity.get("/searches/opportunities")
+    assert records_response.status_code == 200
+    records_response_body = records_response.json()
+    assert search_record_id in [
+        x["id"] for x in records_response_body["search_records"]
+    ]
 
 
-# test that we can get the completed opportunity collection from the
-# /products/{product_id}/opportunities//{oppportunity_collection_id} endpoint
+@pytest.mark.parametrize("mock_products", [[product_test_spotlight_async_opportunity]])
+def test_async_opportunity_search_to_completion(
+    stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
+    mock_products: list[Product],
+    url_for: Callable[[str], str],
+) -> None:
+    # Post a request for an async search
+    product_id = "test-spotlight"
+    url = f"/products/{product_id}/opportunities"
+    search_response = stapi_client_async_opportunity.post(url, json=opportunity_search)
+    assert search_response.status_code == 201
+    search_record = OpportunitySearchRecord(**search_response.json())
+
+    # Simulate the search being completed by some external process:
+    # - an OpportunityCollection is created and stored in the database
+    collection = OpportunityCollection(
+        id=str(uuid4()),
+        features=[create_mock_opportunity()],
+    )
+    collection.links.append(
+        Link(
+            rel="create-order",
+            href=url_for(f"/products/{product_id}/orders"),
+            body=search_record.opportunity_request.model_dump(),
+        )
+    )
+    collection.links.append(
+        Link(
+            rel="search-record",
+            href=url_for(f"/searches/opportunities/{search_record.id}"),
+        )
+    )
+
+    stapi_client_async_opportunity.app_state[
+        "_opportunities_db"
+    ].put_opportunity_collection(collection)
+
+    # - the OpportunitySearchRecord links and status are updated in the database
+    search_record.links.append(
+        Link(
+            rel="opportunities",
+            href=url_for(f"/products/{product_id}/opportunities/{collection.id}"),
+        )
+    )
+    search_record.status = OpportunitySearchStatus(
+        timestamp=datetime.now(timezone.utc),
+        status_code=OpportunitySearchStatusCode.completed,
+    )
+
+    stapi_client_async_opportunity.app_state["_opportunities_db"].put_search_record(
+        search_record
+    )
+
+    # Verify we can retrieve the OpportunitySearchRecord by its id and its status is
+    # `completed`
+    url = f"/searches/opportunities/{search_record.id}"
+    retrieved_search_response = stapi_client_async_opportunity.get(url)
+    assert retrieved_search_response.status_code == 200
+    retrieved_search_record = OpportunitySearchRecord(
+        **retrieved_search_response.json()
+    )
+    assert (
+        retrieved_search_record.status.status_code
+        == OpportunitySearchStatusCode.completed
+    )
+
+    # Verify we can retrieve the OpportunityCollection from the
+    # OpportunitySearchRecord's `opportunities` link, and the retrieved
+    # OpportunityCollection contains an order link and a link pointing back to the
+    # OpportunitySearchRecord
+    opportunities_link = next(
+        x for x in retrieved_search_record.links if x.rel == "opportunities"
+    )
+    url = str(opportunities_link.href)
+    retrieved_collection_response = stapi_client_async_opportunity.get(url)
+    assert retrieved_collection_response.status_code == 200
+    retrieved_collection = OpportunityCollection(**retrieved_collection_response.json())
+    assert any(x for x in retrieved_collection.links if x.rel == "create-order")
+    assert any(x for x in retrieved_collection.links if x.rel == "search-record")
 
 
-# will need some pagination testing in here
+@pytest.mark.parametrize("mock_products", [[product_test_spotlight_async_opportunity]])
+def test_new_search_location_header_matches_self_link(
+    stapi_client_async_opportunity: TestClient,
+    opportunity_search: dict[str, Any],
+    mock_products: list[Product],
+) -> None:
+    product_id = "test-spotlight"
+    url = f"/products/{product_id}/opportunities"
+    search_response = stapi_client_async_opportunity.post(url, json=opportunity_search)
+    assert search_response.status_code == 201
+
+    search_record = search_response.json()
+    link = find_link(search_record["links"], "self")
+    assert link
+    assert search_response.headers["Location"] == str(link["href"])
 
 
-# there's a location header to check for
+# Pagination test for the OpportunitySearchRecrods returned from the /searches/opportunities
+# endpoint on the root router
