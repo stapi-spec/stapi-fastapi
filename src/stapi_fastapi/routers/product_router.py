@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import logging
 import traceback
-from typing import TYPE_CHECKING, Annotated, Self
+from typing import TYPE_CHECKING, Self
 
-from fastapi import APIRouter, Body, HTTPException, Request, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from geojson_pydantic.geometries import Geometry
 from returns.maybe import Some
 from returns.result import Failure, Success
@@ -13,7 +13,7 @@ from stapi_fastapi.constants import TYPE_JSON
 from stapi_fastapi.exceptions import ConstraintsException
 from stapi_fastapi.models.opportunity import (
     OpportunityCollection,
-    OpportunityRequest,
+    OpportunityPayload,
 )
 from stapi_fastapi.models.order import Order, OrderPayload
 from stapi_fastapi.models.product import Product
@@ -163,28 +163,25 @@ class ProductRouter(APIRouter):
 
     async def search_opportunities(
         self,
-        search: OpportunityRequest,
+        search: OpportunityPayload,
         request: Request,
-        next: Annotated[str | None, Body()] = None,
-        limit: Annotated[int, Body()] = 10,
     ) -> OpportunityCollection:
         """
         Explore the opportunities available for a particular set of constraints
         """
         links: list[Link] = []
-        match await self.product.backend.search_opportunities(
-            self, search, request, next, limit
+        match await self.product._search_opportunities(
+            self,
+            search,
+            search.next,
+            search.limit,
+            request,
         ):
             case Success((features, Some(pagination_token))):
-                links.append(self.order_link(request))
-                body = {
-                    "search": search.model_dump(mode="json"),
-                    "next": pagination_token,
-                    "limit": limit,
-                }
-                links.append(self.pagination_link(request, body))
+                links.append(self.order_link(request, search))
+                links.append(self.pagination_link(request, search, pagination_token))
             case Success((features, Nothing)):  # noqa: F841
-                links.append(self.order_link(request))
+                links.append(self.order_link(request, search))
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):
@@ -218,13 +215,13 @@ class ProductRouter(APIRouter):
         """
         Create a new order.
         """
-        match await self.product.backend.create_order(
+        match await self.product.create_order(
             self,
             payload,
             request,
         ):
             case Success(order):
-                self.root_router.add_order_links(order, request)
+                order.links.extend(self.root_router.order_links(order, request))
                 location = str(self.root_router.generate_order_href(request, order.id))
                 response.headers["Location"] = location
                 return order
@@ -242,7 +239,7 @@ class ProductRouter(APIRouter):
             case x:
                 raise AssertionError(f"Expected code to be unreachable {x}")
 
-    def order_link(self, request: Request):
+    def order_link(self, request: Request, opp_req: OpportunityPayload):
         return Link(
             href=str(
                 request.url_for(
@@ -252,11 +249,16 @@ class ProductRouter(APIRouter):
             rel="create-order",
             type=TYPE_JSON,
             method="POST",
+            body=opp_req.search_body(),
         )
 
-    def pagination_link(self, request: Request, body: dict[str, str | dict]):
+    def pagination_link(
+        self, request: Request, opp_req: OpportunityPayload, pagination_token: str
+    ):
+        body = opp_req.body()
+        body["next"] = pagination_token
         return Link(
-            href=str(request.url.remove_query_params(keys=["next", "limit"])),
+            href=str(request.url),
             rel="next",
             type=TYPE_JSON,
             method="POST",

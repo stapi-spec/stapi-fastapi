@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Any, Callable, Coroutine, TypeVar
 
 from fastapi import Request
 from returns.maybe import Maybe
@@ -9,40 +9,63 @@ from stapi_fastapi.models.order import (
     OrderStatus,
 )
 
+GetOrders = Callable[
+    [str | None, int, Request],
+    Coroutine[Any, Any, ResultE[tuple[list[Order], Maybe[str]]]],
+]
+"""
+Type alias for an async function that returns a list of existing Orders.
 
-class RootBackend[T: OrderStatus](Protocol):  # pragma: nocover
-    async def get_orders(
-        self, request: Request, next: str | None, limit: int
-    ) -> ResultE[tuple[list[Order], Maybe[str]]]:
-        """
-        Return a list of existing orders and pagination token if applicable.
-        """
-        ...
+Args:
+    next (str | None): A pagination token.
+    limit (int): The maximum number of orders to return in a page.
+    request (Request): FastAPI's Request object.
 
-    async def get_order(self, order_id: str, request: Request) -> ResultE[Maybe[Order]]:
-        """
-        Get details for order with `order_id`.
+Returns:
+    A tuple containing a list of orders and a pagination token.
 
-        Should return returns.results.Success[Order] if order is found.
+    - Should return returns.result.Success[tuple[list[Order], returns.maybe.Some[str]]] if including a pagination token
+    - Should return returns.result.Success[tuple[list[Order], returns.maybe.Nothing]] if not including a pagination token
+    - Returning returns.result.Failure[Exception] will result in a 500.
+"""
 
-        Should return returns.results.Failure[returns.maybe.Nothing] if the
-        order is not found or if access is denied.
+GetOrder = Callable[[str, Request], Coroutine[Any, Any, ResultE[Maybe[Order]]]]
+"""
+Type alias for an async function that gets details for the order with `order_id`.
 
-        A Failure[Exception] will result in a 500.
-        """
-        ...
+Args:
+    order_id (str): The order ID.
+    request (Request): FastAPI's Request object.
 
-    async def get_order_statuses(
-        self, order_id: str, request: Request, next: str | None, limit: int
-    ) -> ResultE[tuple[list[T], Maybe[str]]]:
-        """
-        Get statuses for order with `order_id` and return pagination token if applicable
+Returns:
+    - Should return returns.result.Success[returns.maybe.Some[Order]] if order is found.
+    - Should return returns.result.Success[returns.maybe.Nothing] if the order is not
+    found or if access is denied.
+    - Returning returns.result.Failure[Exception] will result in a 500.
+"""
 
-        Should return returns.results.Success[list[OrderStatus]] if order is found.
 
-        Should return returns.results.Failure[Exception] if the order is
-        not found or if access is denied.
+T = TypeVar("T", bound=OrderStatus)
 
-        A Failure[Exception] will result in a 500.
-        """
-        ...
+
+GetOrderStatuses = Callable[
+    [str, str | None, int, Request],
+    Coroutine[Any, Any, ResultE[tuple[list[T], Maybe[str]]]],
+]
+"""
+Type alias for an async function that gets statuses for the order with `order_id`.
+
+Args:
+    order_id (str): The order ID.
+    next (str | None): A pagination token.
+    limit (int): The maximum number of statuses to return in a page.
+    request (Request): FastAPI's Request object.
+
+Returns:
+    A tuple containing a list of order statuses and a pagination token.
+
+    - Should return returns.result.Success[tuple[list[OrderStatus], returns.maybe.Some[str]] if order is found and including a pagination token.
+    - Should return returns.result.Success[tuple[list[OrderStatus], returns.maybe.Nothing]] if order is found and not including a pagination token.
+    - Should return returns.result.Failure[Exception] if the order is not found or if access is denied.
+    - Returning returns.result.Failure[Exception] will result in a 500.
+"""

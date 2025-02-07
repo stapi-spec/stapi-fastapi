@@ -1,29 +1,32 @@
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager
 from typing import Any, Callable
 from urllib.parse import urljoin
 
 import pytest
-from fastapi import FastAPI, status
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from httpx import Response
-from pytest import fail
 
+from stapi_fastapi.models.opportunity import (
+    Opportunity,
+)
 from stapi_fastapi.models.product import (
     Product,
-    Provider,
-    ProviderRole,
 )
 from stapi_fastapi.routers.root_router import RootRouter
 
-from .application import (
-    InMemoryOrderDB,
-    MockProductBackend,
-    MockRootBackend,
-    MyOpportunityProperties,
-    MyOrderParameters,
-    MyProductConstraints,
+from .backends import (
+    mock_get_order,
+    mock_get_order_statuses,
+    mock_get_orders,
 )
-from .shared import find_link
+from .shared import (
+    InMemoryOrderDB,
+    create_mock_opportunity,
+    find_link,
+    mock_product_test_satellite_provider,
+    mock_product_test_spotlight,
+)
 
 
 @pytest.fixture(scope="session")
@@ -32,71 +35,39 @@ def base_url() -> Iterator[str]:
 
 
 @pytest.fixture
-def order_db() -> InMemoryOrderDB:
-    return InMemoryOrderDB()
+def mock_products() -> list[Product]:
+    return [mock_product_test_spotlight, mock_product_test_satellite_provider]
 
 
 @pytest.fixture
-def product_backend(order_db: InMemoryOrderDB) -> MockProductBackend:
-    return MockProductBackend(order_db)
-
-
-@pytest.fixture
-def root_backend(order_db: InMemoryOrderDB) -> MockRootBackend:
-    return MockRootBackend(order_db)
-
-
-@pytest.fixture
-def mock_product_test_spotlight(
-    product_backend: MockProductBackend, mock_provider: Provider
-) -> Product:
-    """Fixture for a mock Test Spotlight product."""
-    return Product(
-        id="test-spotlight",
-        title="Test Spotlight Product",
-        description="Test product for test spotlight",
-        license="CC-BY-4.0",
-        keywords=["test", "satellite"],
-        providers=[mock_provider],
-        links=[],
-        constraints=MyProductConstraints,
-        opportunity_properties=MyOpportunityProperties,
-        order_parameters=MyOrderParameters,
-        backend=product_backend,
-    )
-
-
-@pytest.fixture
-def mock_product_test_satellite_provider(
-    product_backend: MockProductBackend, mock_provider: Provider
-) -> Product:
-    """Fixture for a mock satellite provider product."""
-    return Product(
-        id="test-satellite-provider",
-        title="Satellite Product",
-        description="A product by a satellite provider",
-        license="CC-BY-4.0",
-        keywords=["test", "satellite", "provider"],
-        providers=[mock_provider],
-        links=[],
-        constraints=MyProductConstraints,
-        opportunity_properties=MyOpportunityProperties,
-        order_parameters=MyOrderParameters,
-        backend=product_backend,
-    )
+def mock_opportunities() -> list[Opportunity]:
+    return [create_mock_opportunity()]
 
 
 @pytest.fixture
 def stapi_client(
-    root_backend,
-    mock_product_test_spotlight,
-    mock_product_test_satellite_provider,
+    mock_products: list[Product],
     base_url: str,
+    mock_opportunities: list[Opportunity],
 ) -> Iterator[TestClient]:
-    root_router = RootRouter(root_backend)
-    root_router.add_product(mock_product_test_spotlight)
-    root_router.add_product(mock_product_test_satellite_provider)
-    app = FastAPI()
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
+        try:
+            yield {
+                "_orders_db": InMemoryOrderDB(),
+                "_opportunities": mock_opportunities,
+            }
+        finally:
+            pass
+
+    root_router = RootRouter(
+        get_orders=mock_get_orders,
+        get_order=mock_get_order,
+        get_order_statuses=mock_get_order_statuses,
+    )
+    for mock_product in mock_products:
+        root_router.add_product(mock_product)
+    app = FastAPI(lifespan=lifespan)
     app.include_router(root_router, prefix="")
 
     with TestClient(app, base_url=f"{base_url}") as client:
@@ -104,8 +75,12 @@ def stapi_client(
 
 
 @pytest.fixture
-def empty_stapi_client(root_backend, base_url: str) -> Iterator[TestClient]:
-    root_router = RootRouter(root_backend)
+def empty_stapi_client(base_url: str) -> Iterator[TestClient]:
+    root_router = RootRouter(
+        get_orders=mock_get_orders,
+        get_order=mock_get_order,
+        get_order_statuses=mock_get_order_statuses,
+    )
     app = FastAPI()
     app.include_router(root_router, prefix="")
 
@@ -139,86 +114,3 @@ def assert_link(url_for) -> Callable:
         assert link["href"] == url_for(path)
 
     return _assert_link
-
-
-@pytest.fixture
-def products(mock_product_test_spotlight: Product) -> list[Product]:
-    return [mock_product_test_spotlight]
-
-
-@pytest.fixture
-def mock_provider() -> Provider:
-    return Provider(
-        name="Test Provider",
-        description="A provider for Test data",
-        roles=[ProviderRole.producer],  # Example role
-        url="https://test-provider.example.com",  # Must be a valid URL
-    )
-
-
-def pagination_tester(
-    stapi_client: TestClient,
-    endpoint: str,
-    method: str,
-    limit: int,
-    target: str,
-    expected_returns: list,
-    body: dict | None = None,
-) -> None:
-    retrieved = []
-
-    res = make_request(stapi_client, endpoint, method, body, None, limit)
-    assert res.status_code == status.HTTP_200_OK
-    resp_body = res.json()
-
-    assert len(resp_body[target]) <= limit
-    retrieved.extend(resp_body[target])
-    next_url = next((d["href"] for d in resp_body["links"] if d["rel"] == "next"), None)
-
-    while next_url:
-        url = next_url
-        if method == "POST":
-            body = next(
-                (d["body"] for d in resp_body["links"] if d["rel"] == "next"), None
-            )
-
-        res = make_request(stapi_client, url, method, body, next_url, limit)
-        assert res.status_code == status.HTTP_200_OK
-        assert len(resp_body[target]) <= limit
-        resp_body = res.json()
-        retrieved.extend(resp_body[target])
-
-        # get url w/ query params for next call if exists, and POST body if necessary
-        if resp_body["links"]:
-            next_url = next(
-                (d["href"] for d in resp_body["links"] if d["rel"] == "next"), None
-            )
-        else:
-            next_url = None
-
-    assert len(retrieved) == len(expected_returns)
-    assert retrieved == expected_returns
-
-
-def make_request(
-    stapi_client: TestClient,
-    endpoint: str,
-    method: str,
-    body: dict | None,
-    next_token: str | None,
-    limit: int,
-) -> Response:
-    """request wrapper for pagination tests"""
-
-    match method:
-        case "GET":
-            if next_token:  # extract pagination token
-                next_token = next_token.split("next=")[1]
-            params = {"next": next_token, "limit": limit}
-            res = stapi_client.get(endpoint, params=params)
-        case "POST":
-            res = stapi_client.post(endpoint, json=body)
-        case _:
-            fail(f"method {method} not supported in make request")
-
-    return res

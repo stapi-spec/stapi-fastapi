@@ -1,66 +1,22 @@
-from datetime import UTC, datetime, timedelta, timezone
-from typing import List
-from uuid import uuid4
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
-from geojson_pydantic import Point
-from geojson_pydantic.types import Position2D
 
 from stapi_fastapi.models.opportunity import (
-    Opportunity,
     OpportunityCollection,
 )
-from tests.application import MyOpportunityProperties
-from tests.conftest import pagination_tester
 
-from .backends import MockProductBackend
+from .shared import create_mock_opportunity, pagination_tester
 from .test_datetime_interval import rfc3339_strftime
-
-
-@pytest.fixture
-def mock_test_spotlight_opportunities() -> list[Opportunity]:
-    """Fixture to create mock data for Opportunities for `test-spotlight-1`."""
-    start = datetime.now(timezone.utc)  # Use timezone-aware datetime
-    end = start + timedelta(days=5)
-
-    # Create a list of mock opportunities for the given product
-    return [
-        Opportunity(
-            id=str(uuid4()),
-            type="Feature",
-            geometry=Point(
-                type="Point",
-                coordinates=Position2D(longitude=0.0, latitude=0.0),
-            ),
-            properties=MyOpportunityProperties(
-                product_id="xyz123",
-                datetime=(start, end),
-                off_nadir={"minimum": 20, "maximum": 22},
-                vehicle_id=[1],
-                platform="platform_id",
-            ),
-        ),
-    ]
-
-
-@pytest.fixture
-def mock_test_pagination_opportunities(
-    mock_test_spotlight_opportunities,
-) -> list[Opportunity]:
-    return [opp for opp in mock_test_spotlight_opportunities for __ in range(0, 3)]
 
 
 @pytest.mark.parametrize("product_id", ["test-spotlight"])
 def test_search_opportunities_response(
     product_id: str,
-    mock_test_spotlight_opportunities: List[Opportunity],
-    product_backend: MockProductBackend,
     stapi_client: TestClient,
     assert_link,
 ) -> None:
-    product_backend._opportunities = mock_test_spotlight_opportunities
-
     now = datetime.now(UTC)
     end = now + timedelta(days=5)
     format = "%Y-%m-%dT%H:%M:%S.%f%z"
@@ -68,19 +24,17 @@ def test_search_opportunities_response(
     end_string = rfc3339_strftime(end, format)
 
     request_payload = {
-        "search": {
-            "geometry": {
-                "type": "Point",
-                "coordinates": [0, 0],
-            },
-            "datetime": f"{start_string}/{end_string}",
-            "filter": {
-                "op": "and",
-                "args": [
-                    {"op": ">", "args": [{"property": "off_nadir"}, 0]},
-                    {"op": "<", "args": [{"property": "off_nadir"}, 45]},
-                ],
-            },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [0, 0],
+        },
+        "datetime": f"{start_string}/{end_string}",
+        "filter": {
+            "op": "and",
+            "args": [
+                {"op": ">", "args": [{"property": "off_nadir"}, 0]},
+                {"op": "<", "args": [{"property": "off_nadir"}, 45]},
+            ],
         },
         "limit": 10,
     }
@@ -91,6 +45,9 @@ def test_search_opportunities_response(
 
     assert response.status_code == 200, f"Failed for product: {product_id}"
     body = response.json()
+
+    # Validate the opportunity was returned
+    assert len(body["features"]) == 1
 
     try:
         _ = OpportunityCollection(**body)
@@ -104,15 +61,14 @@ def test_search_opportunities_response(
 def test_search_opportunities_pagination(
     limit: int,
     stapi_client: TestClient,
-    product_backend: MockProductBackend,
-    mock_test_pagination_opportunities: List[Opportunity],
 ) -> None:
+    mock_pagination_opportunities = [create_mock_opportunity() for __ in range(3)]
+    stapi_client.app_state["_opportunities"] = mock_pagination_opportunities
     product_id = "test-spotlight"
-    product_backend._opportunities = mock_test_pagination_opportunities
     expected_returns = []
     if limit != 0:
         expected_returns = [
-            x.model_dump(mode="json") for x in mock_test_pagination_opportunities
+            x.model_dump(mode="json") for x in mock_pagination_opportunities
         ]
 
     now = datetime.now(UTC)
@@ -123,26 +79,24 @@ def test_search_opportunities_pagination(
     end_string = rfc3339_strftime(end, format)
 
     request_payload = {
-        "search": {
-            "geometry": {
-                "type": "Point",
-                "coordinates": [0, 0],
-            },
-            "datetime": f"{start_string}/{end_string}",
-            "filter": {
-                "op": "and",
-                "args": [
-                    {"op": ">", "args": [{"property": "off_nadir"}, 0]},
-                    {"op": "<", "args": [{"property": "off_nadir"}, 45]},
-                ],
-            },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [0, 0],
+        },
+        "datetime": f"{start_string}/{end_string}",
+        "filter": {
+            "op": "and",
+            "args": [
+                {"op": ">", "args": [{"property": "off_nadir"}, 0]},
+                {"op": "<", "args": [{"property": "off_nadir"}, 45]},
+            ],
         },
         "limit": limit,
     }
 
     pagination_tester(
         stapi_client=stapi_client,
-        endpoint=f"/products/{product_id}/opportunities",
+        url=f"/products/{product_id}/opportunities",
         method="POST",
         limit=limit,
         target="features",

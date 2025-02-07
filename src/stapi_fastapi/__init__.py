@@ -1,4 +1,3 @@
-from .backends import ProductBackend, RootBackend
 from .models import (
     Link,
     OpportunityProperties,
@@ -12,10 +11,8 @@ __all__ = [
     "Link",
     "OpportunityProperties",
     "Product",
-    "ProductBackend",
     "ProductRouter",
     "Provider",
     "ProviderRole",
-    "RootBackend",
     "RootRouter",
 ]

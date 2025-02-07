@@ -5,12 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [unreleased]
 
 ### Added
 
+- Added token-based pagination to `GET /orders`, `GET /products`,
+  `GET /orders/{order_id}/statuses`, and `POST /products/{product_id}/opportunities`.
 - Optional and Extension STAPI Status Codes "scheduled", "held", "processing", "reserved", "tasked",
   and "user_cancelled"
+
+### Changed
+
+- Replaced the root and product backend Protocol classes with Callable type aliases to
+  enable future changes to make product opportunity searching, product ordering, and/or
+  asynchronous (stateful) product opportunity searching optional.
+- Backend methods that support pagination now return tuples to include the pagination
+  token.
+- Moved `OrderCollection` construction from the root backend to the `RootRouter`
+  `get_orders` method.
+- Renamed `OpportunityRequest` to `OpportunityPayload` so that would not be confused as
+  being a subclass of the Starlette/FastAPI Request class.
+
+### Fixed
+
+- Opportunities Search result now has the search body in the `create-order` link.
 
 ## [v0.5.0] - 2025-01-08
 
@@ -70,7 +88,6 @@ none
 
 none
 
-
 ## [v0.3.0] - 2024-12-6
 
 ### Added
@@ -81,7 +98,7 @@ none
 
 - OrderStatusCode and ProviderRole are now StrEnum instead of (str, Enum)
 - All types using `Result[A, Exception]` have been replace with the equivalent type `ResultE[A]`
-- Order and OrderCollection extend _GeoJsonBase instead of Feature and FeatureCollection, to allow for tighter
+- Order and OrderCollection extend \_GeoJsonBase instead of Feature and FeatureCollection, to allow for tighter
   constraints on fields
 
 ### Deprecated
@@ -146,7 +163,7 @@ Initial release
 - Add link `create-order` to OpportunityCollection
 
 [unreleased]: https://github.com/stapi-spec/stapi-fastapi/compare/v0.5.0...main
-[v0.4.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.5.0
+[v0.5.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.5.0
 [v0.4.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.4.0
 [v0.3.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.3.0
 [v0.2.0]: https://github.com/stapi-spec/stapi-fastapi/tree/v0.2.0

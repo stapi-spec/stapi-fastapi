@@ -9,11 +9,8 @@ from geojson_pydantic.types import Position2D
 from httpx import Response
 
 from stapi_fastapi.models.order import Order, OrderPayload, OrderStatus, OrderStatusCode
-from tests.conftest import pagination_tester
 
-from .application import InMemoryOrderDB, MyOrderParameters
-from .backends import MockProductBackend
-from .shared import find_link
+from .shared import MyOrderParameters, find_link, pagination_tester
 
 NOW = datetime.now(UTC)
 START = NOW
@@ -55,11 +52,9 @@ def create_order_payloads() -> list[OrderPayload]:
 @pytest.fixture
 def new_order_response(
     product_id: str,
-    product_backend: MockProductBackend,
     stapi_client: TestClient,
     create_order_payloads: list[OrderPayload],
 ) -> Response:
-    product_backend._allowed_payloads = create_order_payloads
     res = stapi_client.post(
         f"products/{product_id}/orders",
         json=create_order_payloads[0].model_dump(),
@@ -142,6 +137,7 @@ def test_order_status_after_create(
         f"GET /orders/{body['id']}", body, "monitor", f"/orders/{body['id']}/statuses"
     )
     link = find_link(body["links"], "monitor")
+    assert link is not None
 
     res = stapi_client.get(link["href"])
     assert res.status_code == status.HTTP_200_OK
@@ -174,16 +170,20 @@ def test_get_orders_pagination(
     limit, setup_orders_pagination, create_order_payloads, stapi_client: TestClient
 ) -> None:
     expected_returns = []
-    if limit != 0:
+    if limit > 0:
         for order in setup_orders_pagination:
-            json_link = copy.deepcopy(order["links"][0])
-            json_link["type"] = "application/json"
-            order["links"].append(json_link)
+            self_link = copy.deepcopy(order["links"][0])
+            order["links"].append(self_link)
+            monitor_link = copy.deepcopy(order["links"][0])
+            monitor_link["rel"] = "monitor"
+            monitor_link["type"] = "application/json"
+            monitor_link["href"] = monitor_link["href"] + "/statuses"
+            order["links"].append(monitor_link)
             expected_returns.append(order)
 
     pagination_tester(
         stapi_client=stapi_client,
-        endpoint="/orders",
+        url="/orders",
         method="GET",
         limit=limit,
         target="features",
@@ -226,10 +226,9 @@ def order_statuses() -> dict[str, list[OrderStatus]]:
 def test_get_order_status_pagination(
     limit: int,
     stapi_client: TestClient,
-    order_db: InMemoryOrderDB,
     order_statuses: dict[str, list[OrderStatus]],
 ) -> None:
-    order_db._statuses = order_statuses
+    stapi_client.app_state["_orders_db"]._statuses = order_statuses
 
     order_id = "test_order_id"
     expected_returns = []
@@ -238,7 +237,7 @@ def test_get_order_status_pagination(
 
     pagination_tester(
         stapi_client=stapi_client,
-        endpoint=f"/orders/{order_id}/statuses",
+        url=f"/orders/{order_id}/statuses",
         method="GET",
         limit=limit,
         target="statuses",
@@ -248,11 +247,10 @@ def test_get_order_status_pagination(
 
 def test_get_order_statuses_bad_token(
     stapi_client: TestClient,
-    order_db: InMemoryOrderDB,
     order_statuses: dict[str, list[OrderStatus]],
     limit: int = 2,
 ) -> None:
-    order_db._statuses = order_statuses
+    stapi_client.app_state["_orders_db"]._statuses = order_statuses
 
     order_id = "non_existing_order_id"
     res = stapi_client.get(f"/orders/{order_id}/statuses")
