@@ -299,12 +299,16 @@ class RootRouter(APIRouter):
     ) -> OrderStatuses:
         links: list[Link] = []
         match await self._get_order_statuses(order_id, next, limit, request):
-            case Success((statuses, Some(pagination_token))):
+            case Success(Some((statuses, maybe_pagination_token))):
                 links.append(self.order_statuses_link(request, order_id))
-                links.append(self.pagination_link(request, pagination_token, limit))
-            case Success((statuses, Nothing)):  # noqa: F841
-                links.append(self.order_statuses_link(request, order_id))
-            case Failure(KeyError()):
+                match maybe_pagination_token:
+                    case Some(x):
+                        links.append(self.pagination_link(request, x, limit))
+                    case Maybe.empty:
+                        pass
+            case Success(Maybe.empty):
+                raise NotFoundException("Order not found")
+            case Failure(ValueError()):
                 raise NotFoundException("Error finding pagination token")
             case Failure(e):
                 logger.error(
@@ -374,17 +378,16 @@ class RootRouter(APIRouter):
     ) -> OpportunitySearchRecords:
         links: list[Link] = []
         match await self._get_opportunity_search_records(next, limit, request):
-            case Success((records, Some(pagination_token))):
+            case Success((records, maybe_pagination_token)):
                 for record in records:
                     record.links.append(
                         self.opportunity_search_record_self_link(record, request)
                     )
-                links.append(self.pagination_link(request, pagination_token, limit))
-            case Success((records, Nothing)):  # noqa: F841
-                for record in records:
-                    record.links.append(
-                        self.opportunity_search_record_self_link(record, request)
-                    )
+                match maybe_pagination_token:
+                    case Some(x):
+                        links.append(self.pagination_link(request, x, limit))
+                    case Maybe.empty:
+                        pass
             case Failure(ValueError()):
                 raise NotFoundException(detail="Error finding pagination token")
             case Failure(e):

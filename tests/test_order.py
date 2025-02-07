@@ -1,4 +1,3 @@
-import copy
 from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
@@ -171,15 +170,7 @@ def test_get_orders_pagination(
 ) -> None:
     expected_returns = []
     if limit > 0:
-        for order in setup_orders_pagination:
-            self_link = copy.deepcopy(order["links"][0])
-            order["links"].append(self_link)
-            monitor_link = copy.deepcopy(order["links"][0])
-            monitor_link["rel"] = "monitor"
-            monitor_link["type"] = "application/json"
-            monitor_link["href"] = monitor_link["href"] + "/statuses"
-            order["links"].append(monitor_link)
-            expected_returns.append(order)
+        expected_returns = setup_orders_pagination
 
     pagination_tester(
         stapi_client=stapi_client,
@@ -228,7 +219,9 @@ def test_get_order_status_pagination(
     stapi_client: TestClient,
     order_statuses: dict[str, list[OrderStatus]],
 ) -> None:
-    stapi_client.app_state["_orders_db"]._statuses = order_statuses
+    for id, statuses in order_statuses.items():
+        for s in statuses:
+            stapi_client.app_state["_orders_db"].put_order_status(id, s)
 
     order_id = "test_order_id"
     expected_returns = []

@@ -39,7 +39,7 @@ async def mock_get_orders(
             start = order_ids.index(next)
         end = start + limit
         ids = order_ids[start:end]
-        orders = [request.state._orders_db._orders[order_id] for order_id in ids]
+        orders = [request.state._orders_db.get_order(order_id) for order_id in ids]
 
         if end > 0 and end < len(order_ids):
             return Success(
@@ -54,17 +54,23 @@ async def mock_get_order(order_id: str, request: Request) -> ResultE[Maybe[Order
     """
     Show details for order with `order_id`.
     """
-
-    return Success(Maybe.from_optional(request.state._orders_db._orders.get(order_id)))
+    try:
+        return Success(
+            Maybe.from_optional(request.state._orders_db.get_order(order_id))
+        )
+    except Exception as e:
+        return Failure(e)
 
 
 async def mock_get_order_statuses(
     order_id: str, next: str | None, limit: int, request: Request
-) -> ResultE[tuple[list[OrderStatus], Maybe[str]]]:
+) -> ResultE[Maybe[tuple[list[OrderStatus], Maybe[str]]]]:
     try:
         start = 0
         limit = min(limit, 100)
-        statuses = request.state._orders_db._statuses[order_id]
+        statuses = request.state._orders_db.get_order_statuses(order_id)
+        if statuses is None:
+            return Success(Nothing)
 
         if next:
             start = int(next)
@@ -72,8 +78,8 @@ async def mock_get_order_statuses(
         stati = statuses[start:end]
 
         if end > 0 and end < len(statuses):
-            return Success((stati, Some(str(end))))
-        return Success((stati, Nothing))
+            return Success(Some((stati, Some(str(end)))))
+        return Success(Some((stati, Nothing)))
     except Exception as e:
         return Failure(e)
 
@@ -110,8 +116,8 @@ async def mock_create_order(
             links=[],
         )
 
-        request.state._orders_db._orders[order.id] = order
-        request.state._orders_db._statuses[order.id].insert(0, status)
+        request.state._orders_db.put_order(order)
+        request.state._orders_db.put_order_status(order.id, status)
         return Success(order)
     except Exception as e:
         return Failure(e)

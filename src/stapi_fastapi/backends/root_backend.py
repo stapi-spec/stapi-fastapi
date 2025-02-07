@@ -50,7 +50,7 @@ T = TypeVar("T", bound=OrderStatus)
 
 GetOrderStatuses = Callable[
     [str, str | None, int, Request],
-    Coroutine[Any, Any, ResultE[tuple[list[T], Maybe[str]]]],
+    Coroutine[Any, Any, ResultE[Maybe[tuple[list[T], Maybe[str]]]]],
 ]
 """
 Type alias for an async function that gets statuses for the order with `order_id`.
@@ -64,9 +64,9 @@ Args:
 Returns:
     A tuple containing a list of order statuses and a pagination token.
 
-    - Should return returns.result.Success[tuple[list[OrderStatus], returns.maybe.Some[str]] if order is found and including a pagination token.
-    - Should return returns.result.Success[tuple[list[OrderStatus], returns.maybe.Nothing]] if order is found and not including a pagination token.
-    - Should return returns.result.Failure[Exception] if the order is not found or if access is denied.
+    - Should return returns.result.Success[returns.maybe.Some[tuple[list[OrderStatus], returns.maybe.Some[str]]] if order is found and including a pagination token.
+    - Should return returns.result.Success[returns.maybe.Some[tuple[list[OrderStatus], returns.maybe.Nothing]]] if order is found and not including a pagination token.
+    - Should return returns.result.Success[returns.maybe.Nothing] if the order is not found or if access is denied.
     - Returning returns.result.Failure[Exception] will result in a 500.
 """
 

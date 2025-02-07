@@ -49,6 +49,21 @@ class InMemoryOrderDB:
         self._orders: dict[str, Order] = {}
         self._statuses: dict[str, list[OrderStatus]] = defaultdict(list)
 
+    def get_order(self, order_id: str) -> Order | None:
+        return deepcopy(self._orders.get(order_id))
+
+    def get_orders(self) -> list[Order]:
+        return deepcopy(list(self._orders.values()))
+
+    def put_order(self, order: Order) -> None:
+        self._orders[order.id] = deepcopy(order)
+
+    def get_order_statuses(self, order_id: str) -> list[OrderStatus] | None:
+        return deepcopy(self._statuses.get(order_id))
+
+    def put_order_status(self, order_id: str, status: OrderStatus) -> None:
+        self._statuses[order_id].append(deepcopy(status))
+
 
 class InMemoryOpportunityDB:
     def __init__(self) -> None:
@@ -275,7 +290,7 @@ def make_request(
             o = urlparse(url)
             base_url = f"{o.scheme}://{o.netloc}{o.path}"
             parsed_qs = parse_qs(o.query)
-            params = {}
+            params: dict[str, Any] = {}
             if "next" in parsed_qs:
                 params["next"] = parsed_qs["next"][0]
             params["limit"] = int(parsed_qs.get("limit", [None])[0] or limit)
