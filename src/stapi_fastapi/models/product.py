@@ -56,6 +56,9 @@ class Product(BaseModel):
     _opportunity_properties: type[OpportunityProperties]
     _order_parameters: type[OrderParameters]
     _create_order: CreateOrder
+    _search_opportunities: SearchOpportunities | None
+    _search_opportunities_async: SearchOpportunitiesAsync | None
+    _get_opportunity_collection: GetOpportunityCollection | None
 
     def __init__(
         self,
@@ -81,40 +84,60 @@ class Product(BaseModel):
         self._opportunity_properties = opportunity_properties
         self._order_parameters = order_parameters
         self._create_order = create_order
-        if search_opportunities is not None:
-            self._search_opportunities = search_opportunities
-        if search_opportunities_async is not None:
-            self._search_opportunities_async = search_opportunities_async
-        if get_opportunity_collection is not None:
-            self._get_opportunity_collection = get_opportunity_collection
+        self._search_opportunities = search_opportunities
+        self._search_opportunities_async = search_opportunities_async
+        self._get_opportunity_collection = get_opportunity_collection
 
     @property
-    def create_order(self: Self) -> CreateOrder:
+    def create_order(self) -> CreateOrder:
         return self._create_order
 
     @property
-    def constraints(self: Self) -> type[Constraints]:
+    def search_opportunities(self) -> SearchOpportunities:
+        if not self._search_opportunities:
+            raise AttributeError("This product does not support opportunity search")
+        return self._search_opportunities
+
+    @property
+    def search_opportunities_async(self) -> SearchOpportunitiesAsync:
+        if not self._search_opportunities_async:
+            raise AttributeError(
+                "This product does not support async opportunity search"
+            )
+        return self._search_opportunities_async
+
+    @property
+    def get_opportunity_collection(self) -> GetOpportunityCollection:
+        if not self._get_opportunity_collection:
+            raise AttributeError(
+                "This product does not support async opportunity search"
+            )
+        return self._get_opportunity_collection
+
+    @property
+    def constraints(self) -> type[Constraints]:
         return self._constraints
 
     @property
-    def opportunity_properties(self: Self) -> type[OpportunityProperties]:
+    def opportunity_properties(self) -> type[OpportunityProperties]:
         return self._opportunity_properties
 
     @property
-    def order_parameters(self: Self) -> type[OrderParameters]:
+    def order_parameters(self) -> type[OrderParameters]:
         return self._order_parameters
 
     @property
-    def supports_opportunity_search(self: Self) -> bool:
-        return hasattr(self, "_search_opportunities")
+    def supports_opportunity_search(self) -> bool:
+        return self._search_opportunities is not None
 
     @property
-    def supports_async_opportunity_search(self: Self) -> bool:
-        return hasattr(self, "_search_opportunities_async") and hasattr(
-            self, "_get_opportunity_collection"
+    def supports_async_opportunity_search(self) -> bool:
+        return (
+            self._search_opportunities_async is not None
+            and self._get_opportunity_collection is not None
         )
 
-    def with_links(self: Self, links: list[Link] | None = None) -> Self:
+    def with_links(self, links: list[Link] | None = None) -> Self:
         if not links:
             return self
 

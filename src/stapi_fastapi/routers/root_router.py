@@ -1,6 +1,5 @@
 import logging
 import traceback
-from typing import Self
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.datastructures import URL
@@ -41,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 class RootRouter(APIRouter):
     def __init__(
-        self: Self,
+        self,
         get_orders: GetOrders,
         get_order: GetOrder,
         get_order_statuses: GetOrderStatuses,
@@ -67,10 +66,8 @@ class RootRouter(APIRouter):
         self._get_orders = get_orders
         self._get_order = get_order
         self._get_order_statuses = get_order_statuses
-        if get_opportunity_search_records is not None:
-            self._get_opportunity_search_records = get_opportunity_search_records
-        if get_opportunity_search_record is not None:
-            self._get_opportunity_search_record = get_opportunity_search_record
+        self.__get_opportunity_search_records = get_opportunity_search_records
+        self.__get_opportunity_search_record = get_opportunity_search_record
         self.conformances = conformances
         self.name = name
         self.openapi_endpoint_name = openapi_endpoint_name
@@ -152,7 +149,7 @@ class RootRouter(APIRouter):
                 tags=["Opportunities"],
             )
 
-    def get_root(self: Self, request: Request) -> RootResponse:
+    def get_root(self, request: Request) -> RootResponse:
         links = [
             Link(
                 href=str(request.url_for(f"{self.name}:root")),
@@ -204,11 +201,11 @@ class RootRouter(APIRouter):
             links=links,
         )
 
-    def get_conformance(self: Self) -> Conformance:
+    def get_conformance(self) -> Conformance:
         return Conformance(conforms_to=self.conformances)
 
     def get_products(
-        self: Self, request: Request, next: str | None = None, limit: int = 10
+        self, request: Request, next: str | None = None, limit: int = 10
     ) -> ProductsCollection:
         start = 0
         limit = min(limit, 100)
@@ -240,7 +237,7 @@ class RootRouter(APIRouter):
         )
 
     async def get_orders(
-        self: Self, request: Request, next: str | None = None, limit: int = 10
+        self, request: Request, next: str | None = None, limit: int = 10
     ) -> OrderCollection:
         links: list[Link] = []
         match await self._get_orders(next, limit, request):
@@ -267,7 +264,7 @@ class RootRouter(APIRouter):
                 raise AssertionError("Expected code to be unreachable")
         return OrderCollection(features=orders, links=links)
 
-    async def get_order(self: Self, order_id: str, request: Request) -> Order:
+    async def get_order(self, order_id: str, request: Request) -> Order:
         """
         Get details for order with `order_id`.
         """
@@ -291,7 +288,7 @@ class RootRouter(APIRouter):
                 raise AssertionError("Expected code to be unreachable")
 
     async def get_order_statuses(
-        self: Self,
+        self,
         order_id: str,
         request: Request,
         next: str | None = None,
@@ -323,22 +320,20 @@ class RootRouter(APIRouter):
                 raise AssertionError("Expected code to be unreachable")
         return OrderStatuses(statuses=statuses, links=links)
 
-    def add_product(self: Self, product: Product, *args, **kwargs) -> None:
+    def add_product(self, product: Product, *args, **kwargs) -> None:
         # Give the include a prefix from the product router
         product_router = ProductRouter(product, self, *args, **kwargs)
         self.include_router(product_router, prefix=f"/products/{product.id}")
         self.product_routers[product.id] = product_router
         self.product_ids = [*self.product_routers.keys()]
 
-    def generate_order_href(self: Self, request: Request, order_id: str) -> URL:
+    def generate_order_href(self, request: Request, order_id: str) -> URL:
         return request.url_for(f"{self.name}:get-order", order_id=order_id)
 
-    def generate_order_statuses_href(
-        self: Self, request: Request, order_id: str
-    ) -> URL:
+    def generate_order_statuses_href(self, request: Request, order_id: str) -> URL:
         return request.url_for(f"{self.name}:list-order-statuses", order_id=order_id)
 
-    def order_links(self: Self, order: Order, request: Request) -> list[Link]:
+    def order_links(self, order: Order, request: Request) -> list[Link]:
         return [
             Link(
                 href=str(self.generate_order_href(request, order.id)),
@@ -374,7 +369,7 @@ class RootRouter(APIRouter):
         )
 
     async def get_opportunity_search_records(
-        self: Self, request: Request, next: str | None = None, limit: int = 10
+        self, request: Request, next: str | None = None, limit: int = 10
     ) -> OpportunitySearchRecords:
         links: list[Link] = []
         match await self._get_opportunity_search_records(next, limit, request):
@@ -404,7 +399,7 @@ class RootRouter(APIRouter):
         return OpportunitySearchRecords(search_records=records, links=links)
 
     async def get_opportunity_search_record(
-        self: Self, search_record_id: str, request: Request
+        self, search_record_id: str, request: Request
     ) -> OpportunitySearchRecord:
         """
         Get the Opportunity Search Record with `search_record_id`.
@@ -431,7 +426,7 @@ class RootRouter(APIRouter):
                 raise AssertionError("Expected code to be unreachable")
 
     def generate_opportunity_search_record_href(
-        self: Self, request: Request, search_record_id: str
+        self, request: Request, search_record_id: str
     ) -> URL:
         return request.url_for(
             f"{self.name}:get-opportunity-search-record",
@@ -439,7 +434,7 @@ class RootRouter(APIRouter):
         )
 
     def opportunity_search_record_self_link(
-        self: Self, opportunity_search_record: OpportunitySearchRecord, request: Request
+        self, opportunity_search_record: OpportunitySearchRecord, request: Request
     ) -> Link:
         return Link(
             href=str(
@@ -452,9 +447,25 @@ class RootRouter(APIRouter):
         )
 
     @property
-    def supports_async_opportunity_search(self: Self) -> bool:
+    def _get_opportunity_search_records(self) -> GetOpportunitySearchRecords:
+        if not self.__get_opportunity_search_records:
+            raise AttributeError(
+                "Root router does not support async opportunity search"
+            )
+        return self.__get_opportunity_search_records
+
+    @property
+    def _get_opportunity_search_record(self) -> GetOpportunitySearchRecord:
+        if not self.__get_opportunity_search_record:
+            raise AttributeError(
+                "Root router does not support async opportunity search"
+            )
+        return self.__get_opportunity_search_record
+
+    @property
+    def supports_async_opportunity_search(self) -> bool:
         return (
             ASYNC_OPPORTUNITIES in self.conformances
-            and hasattr(self, "_get_opportunity_search_records")
-            and hasattr(self, "_get_opportunity_search_record")
+            and self._get_opportunity_search_records is not None
+            and self._get_opportunity_search_record is not None
         )
