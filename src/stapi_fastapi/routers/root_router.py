@@ -213,7 +213,7 @@ class RootRouter(APIRouter):
             if next:
                 start = self.product_ids.index(next)
         except ValueError:
-            logging.exception("An error occurred while retrieving products")
+            logger.exception("An error occurred while retrieving products")
             raise NotFoundException(
                 detail="Error finding pagination token for products"
             ) from None
