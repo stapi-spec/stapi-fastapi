@@ -252,7 +252,7 @@ class RootRouter(APIRouter):
             case Failure(ValueError()):
                 raise NotFoundException(detail="Error finding pagination token")
             case Failure(e):
-                logger.error(
+                logger.exception(
                     "An error occurred while retrieving orders: %s",
                     traceback.format_exception(e),
                 )
@@ -275,7 +275,7 @@ class RootRouter(APIRouter):
             case Success(Maybe.empty):
                 raise NotFoundException("Order not found")
             case Failure(e):
-                logger.error(
+                logger.exception(
                     "An error occurred while retrieving order '%s': %s",
                     order_id,
                     traceback.format_exception(e),
@@ -308,7 +308,7 @@ class RootRouter(APIRouter):
             case Failure(ValueError()):
                 raise NotFoundException("Error finding pagination token")
             case Failure(e):
-                logger.error(
+                logger.exception(
                     "An error occurred while retrieving order statuses: %s",
                     traceback.format_exception(e),
                 )
@@ -386,7 +386,7 @@ class RootRouter(APIRouter):
             case Failure(ValueError()):
                 raise NotFoundException(detail="Error finding pagination token")
             case Failure(e):
-                logger.error(
+                logger.exception(
                     "An error occurred while retrieving opportunity search records: %s",
                     traceback.format_exception(e),
                 )
@@ -413,7 +413,7 @@ class RootRouter(APIRouter):
             case Success(Maybe.empty):
                 raise NotFoundException("Opportunity Search Record not found")
             case Failure(e):
-                logger.error(
+                logger.exception(
                     "An error occurred while retrieving opportunity search record '%s': %s",
                     search_record_id,
                     traceback.format_exception(e),
