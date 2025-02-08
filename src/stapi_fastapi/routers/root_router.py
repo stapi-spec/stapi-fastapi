@@ -169,7 +169,7 @@ class RootRouter(APIRouter):
             Link(
                 href=str(request.url_for(f"{self.name}:list-orders")),
                 rel="orders",
-                type=TYPE_JSON,
+                type=TYPE_GEOJSON,
             ),
             Link(
                 href=str(request.url_for(self.openapi_endpoint_name)),
