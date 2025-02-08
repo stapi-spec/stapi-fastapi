@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def get_preference(prefer: str | None = Header(None)) -> str | None:
+def get_prefer(prefer: str | None = Header(None)) -> str | None:
     if prefer is None:
         return None
 
@@ -228,7 +228,7 @@ class ProductRouter(APIRouter):
         search: OpportunityPayload,
         request: Request,
         response: Response,
-        prefer: Prefer | None = Depends(get_preference),
+        prefer: Prefer | None = Depends(get_prefer),
     ) -> OpportunityCollection | Response:
         """
         Explore the opportunities available for a particular set of constraints
