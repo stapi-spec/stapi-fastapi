@@ -157,6 +157,16 @@ class RootRouter(APIRouter):
                 type=TYPE_JSON,
             ),
             Link(
+                href=str(request.url_for(self.openapi_endpoint_name)),
+                rel="service-description",
+                type=TYPE_JSON,
+            ),
+            Link(
+                href=str(request.url_for(self.docs_endpoint_name)),
+                rel="service-docs",
+                type="text/html",
+            ),
+            Link(
                 href=str(request.url_for(f"{self.name}:conformance")),
                 rel="conformance",
                 type=TYPE_JSON,
@@ -171,21 +181,10 @@ class RootRouter(APIRouter):
                 rel="orders",
                 type=TYPE_GEOJSON,
             ),
-            Link(
-                href=str(request.url_for(self.openapi_endpoint_name)),
-                rel="service-description",
-                type=TYPE_JSON,
-            ),
-            Link(
-                href=str(request.url_for(self.docs_endpoint_name)),
-                rel="service-docs",
-                type="text/html",
-            ),
         ]
 
         if self.supports_async_opportunity_search:
-            links.insert(
-                -2,
+            links.append(
                 Link(
                     href=str(
                         request.url_for(f"{self.name}:list-opportunity-search-records")
