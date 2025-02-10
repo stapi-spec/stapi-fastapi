@@ -5,12 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [unreleased]
 
 ### Added
 
 - Added token-based pagination to `GET /orders`, `GET /products`,
   `GET /orders/{order_id}/statuses`, and `POST /products/{product_id}/opportunities`.
+- Optional and Extension STAPI Status Codes "scheduled", "held", "processing",
+  "reserved", "tasked", and "user_cancelled"
 - Asynchronous opportunity search. If the root router supports asynchronous opportunity
   search, all products must support it. If asynchronouse opportunity search is
   supported, `POST` requests to the `/products/{productId}/opportunities` endpoint will
