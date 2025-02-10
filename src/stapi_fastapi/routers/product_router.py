@@ -279,7 +279,7 @@ class ProductRouter(APIRouter):
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):
-                logger.exception(
+                logger.error(
                     "An error occurred while searching opportunities: %s",
                     traceback.format_exception(e),
                 )
@@ -324,7 +324,7 @@ class ProductRouter(APIRouter):
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):
-                logger.exception(
+                logger.error(
                     "An error occurred while initiating an asynchronous opportunity search: %s",
                     traceback.format_exception(e),
                 )
@@ -366,7 +366,7 @@ class ProductRouter(APIRouter):
             case Failure(e) if isinstance(e, ConstraintsException):
                 raise e
             case Failure(e):
-                logger.exception(
+                logger.error(
                     "An error occurred while creating order: %s",
                     traceback.format_exception(e),
                 )
@@ -431,7 +431,7 @@ class ProductRouter(APIRouter):
             case Success(Maybe.empty):
                 raise NotFoundException("Opportunity Collection not found")
             case Failure(e):
-                logger.exception(
+                logger.error(
                     "An error occurred while fetching opportunity collection: '%s': %s",
                     opportunity_collection_id,
                     traceback.format_exception(e),
