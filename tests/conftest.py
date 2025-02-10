@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Generator, Iterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from typing import Any, Callable
@@ -60,7 +60,7 @@ def stapi_client(
     mock_products: list[Product],
     base_url: str,
     mock_opportunities: list[Opportunity],
-) -> Iterator[TestClient]:
+) -> Generator[TestClient, None, None]:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
         try:
@@ -93,7 +93,7 @@ def stapi_client_async_opportunity(
     mock_products: list[Product],
     base_url: str,
     mock_opportunities: list[Opportunity],
-) -> Iterator[TestClient]:
+) -> Generator[TestClient, None, None]:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, Any]]:
         try:
