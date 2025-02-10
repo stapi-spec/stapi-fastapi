@@ -1,4 +1,5 @@
 from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal, Self
 from urllib.parse import parse_qs, urlparse
@@ -14,7 +15,9 @@ from pytest import fail
 
 from stapi_fastapi.models.opportunity import (
     Opportunity,
+    OpportunityCollection,
     OpportunityProperties,
+    OpportunitySearchRecord,
 )
 from stapi_fastapi.models.order import (
     Order,
@@ -29,7 +32,9 @@ from stapi_fastapi.models.product import (
 
 from .backends import (
     mock_create_order,
+    mock_get_opportunity_collection,
     mock_search_opportunities,
+    mock_search_opportunities_async,
 )
 
 type link_dict = dict[str, Any]
@@ -43,6 +48,44 @@ class InMemoryOrderDB:
     def __init__(self) -> None:
         self._orders: dict[str, Order] = {}
         self._statuses: dict[str, list[OrderStatus]] = defaultdict(list)
+
+    def get_order(self, order_id: str) -> Order | None:
+        return deepcopy(self._orders.get(order_id))
+
+    def get_orders(self) -> list[Order]:
+        return deepcopy(list(self._orders.values()))
+
+    def put_order(self, order: Order) -> None:
+        self._orders[order.id] = deepcopy(order)
+
+    def get_order_statuses(self, order_id: str) -> list[OrderStatus] | None:
+        return deepcopy(self._statuses.get(order_id))
+
+    def put_order_status(self, order_id: str, status: OrderStatus) -> None:
+        self._statuses[order_id].append(deepcopy(status))
+
+
+class InMemoryOpportunityDB:
+    def __init__(self) -> None:
+        self._search_records: dict[str, OpportunitySearchRecord] = {}
+        self._collections: dict[str, OpportunityCollection] = {}
+
+    def get_search_record(self, search_id: str) -> OpportunitySearchRecord | None:
+        return deepcopy(self._search_records.get(search_id))
+
+    def get_search_records(self) -> list[OpportunitySearchRecord]:
+        return deepcopy(list(self._search_records.values()))
+
+    def put_search_record(self, search_record: OpportunitySearchRecord) -> None:
+        self._search_records[search_record.id] = deepcopy(search_record)
+
+    def get_opportunity_collection(self, collection_id) -> OpportunityCollection | None:
+        return deepcopy(self._collections.get(collection_id))
+
+    def put_opportunity_collection(self, collection: OpportunityCollection) -> None:
+        if collection.id is None:
+            raise ValueError("collection must have an id")
+        self._collections[collection.id] = deepcopy(collection)
 
 
 class MyProductConstraints(BaseModel):
@@ -77,7 +120,24 @@ provider = Provider(
     url="https://test-provider.example.com",  # Must be a valid URL
 )
 
-mock_product_test_spotlight = Product(
+product_test_spotlight = Product(
+    id="test-spotlight",
+    title="Test Spotlight Product",
+    description="Test product for test spotlight",
+    license="CC-BY-4.0",
+    keywords=["test", "satellite"],
+    providers=[provider],
+    links=[],
+    create_order=mock_create_order,
+    search_opportunities=None,
+    search_opportunities_async=None,
+    get_opportunity_collection=None,
+    constraints=MyProductConstraints,
+    opportunity_properties=MyOpportunityProperties,
+    order_parameters=MyOrderParameters,
+)
+
+product_test_spotlight_sync_opportunity = Product(
     id="test-spotlight",
     title="Test Spotlight Product",
     description="Test product for test spotlight",
@@ -87,12 +147,49 @@ mock_product_test_spotlight = Product(
     links=[],
     create_order=mock_create_order,
     search_opportunities=mock_search_opportunities,
+    search_opportunities_async=None,
+    get_opportunity_collection=None,
     constraints=MyProductConstraints,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
 )
 
-mock_product_test_satellite_provider = Product(
+
+product_test_spotlight_async_opportunity = Product(
+    id="test-spotlight",
+    title="Test Spotlight Product",
+    description="Test product for test spotlight",
+    license="CC-BY-4.0",
+    keywords=["test", "satellite"],
+    providers=[provider],
+    links=[],
+    create_order=mock_create_order,
+    search_opportunities=None,
+    search_opportunities_async=mock_search_opportunities_async,
+    get_opportunity_collection=mock_get_opportunity_collection,
+    constraints=MyProductConstraints,
+    opportunity_properties=MyOpportunityProperties,
+    order_parameters=MyOrderParameters,
+)
+
+product_test_spotlight_sync_async_opportunity = Product(
+    id="test-spotlight",
+    title="Test Spotlight Product",
+    description="Test product for test spotlight",
+    license="CC-BY-4.0",
+    keywords=["test", "satellite"],
+    providers=[provider],
+    links=[],
+    create_order=mock_create_order,
+    search_opportunities=mock_search_opportunities,
+    search_opportunities_async=mock_search_opportunities_async,
+    get_opportunity_collection=mock_get_opportunity_collection,
+    constraints=MyProductConstraints,
+    opportunity_properties=MyOpportunityProperties,
+    order_parameters=MyOrderParameters,
+)
+
+product_test_satellite_provider_sync_opportunity = Product(
     id="test-satellite-provider",
     title="Satellite Product",
     description="A product by a satellite provider",
@@ -102,6 +199,8 @@ mock_product_test_satellite_provider = Product(
     links=[],
     create_order=mock_create_order,
     search_opportunities=mock_search_opportunities,
+    search_opportunities_async=None,
+    get_opportunity_collection=None,
     constraints=MyProductConstraints,
     opportunity_properties=MyOpportunityProperties,
     order_parameters=MyOrderParameters,
@@ -191,7 +290,7 @@ def make_request(
             o = urlparse(url)
             base_url = f"{o.scheme}://{o.netloc}{o.path}"
             parsed_qs = parse_qs(o.query)
-            params = {}
+            params: dict[str, Any] = {}
             if "next" in parsed_qs:
                 params["next"] = parsed_qs["next"][0]
             params["limit"] = int(parsed_qs.get("limit", [None])[0] or limit)

@@ -1,4 +1,4 @@
-from typing import Any, Self
+from typing import Any
 
 from pydantic import (
     AnyUrl,
@@ -28,5 +28,5 @@ class Link(BaseModel):
     # overriding the default serialization to filter None field values from
     # dumped json
     @model_serializer(mode="wrap", when_used="json")
-    def serialize(self: Self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+    def serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         return {k: v for k, v in handler(self).items() if v is not None}
