@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added token-based pagination to `GET /orders`, `GET /products`,
   `GET /orders/{order_id}/statuses`, and `POST /products/{product_id}/opportunities`.
 - Optional and Extension STAPI Status Codes "scheduled", "held", "processing", "reserved", "tasked",
-  and "user_cancelled"
+  and "user_canceled"
 
 ### Changed
 

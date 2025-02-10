@@ -40,7 +40,7 @@ class OrderStatusCode(StrEnum):
     processing = "processing"
     reserved = "reserved"
     tasked = "tasked"
-    user_cancelled = "user_cancelled"
+    user_canceled = "user_canceled"
 
 
 class OrderStatus(BaseModel):
