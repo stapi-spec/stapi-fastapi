@@ -1,8 +1,9 @@
+from enum import StrEnum
 from typing import Any, Literal, TypeVar
 
 from geojson_pydantic import Feature, FeatureCollection
 from geojson_pydantic.geometries import Geometry
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.types.datetime_interval import DatetimeInterval
@@ -45,3 +46,38 @@ class Opportunity(Feature[G, P]):
 class OpportunityCollection(FeatureCollection[Opportunity[G, P]]):
     type: Literal["FeatureCollection"] = "FeatureCollection"
     links: list[Link] = Field(default_factory=list)
+    id: str | None = None
+
+
+class OpportunitySearchStatusCode(StrEnum):
+    received = "received"
+    in_progress = "in_progress"
+    failed = "failed"
+    canceled = "canceled"
+    completed = "completed"
+
+
+class OpportunitySearchStatus(BaseModel):
+    timestamp: AwareDatetime
+    status_code: OpportunitySearchStatusCode
+    reason_code: str | None = None
+    reason_text: str | None = None
+    links: list[Link] = Field(default_factory=list)
+
+
+class OpportunitySearchRecord(BaseModel):
+    id: str
+    product_id: str
+    opportunity_request: OpportunityPayload
+    status: OpportunitySearchStatus
+    links: list[Link] = Field(default_factory=list)
+
+
+class OpportunitySearchRecords(BaseModel):
+    search_records: list[OpportunitySearchRecord]
+    links: list[Link] = Field(default_factory=list)
+
+
+class Prefer(StrEnum):
+    respond_async = "respond-async"
+    wait = "wait"

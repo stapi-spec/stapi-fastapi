@@ -97,13 +97,13 @@ def test_get_products_pagination(
                     "type": "application/json",
                 },
                 {
-                    "href": f"http://stapiserver/products/{product_id}/opportunities",
-                    "rel": "opportunities",
+                    "href": f"http://stapiserver/products/{product_id}/orders",
+                    "rel": "create-order",
                     "type": "application/json",
                 },
                 {
-                    "href": f"http://stapiserver/products/{product_id}/orders",
-                    "rel": "create-order",
+                    "href": f"http://stapiserver/products/{product_id}/opportunities",
+                    "rel": "opportunities",
                     "type": "application/json",
                 },
             ]
@@ -124,8 +124,9 @@ def test_token_not_found(stapi_client: TestClient) -> None:
     assert res.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_no_products(empty_stapi_client: TestClient):
-    res = empty_stapi_client.get("/products")
+@pytest.mark.mock_products([])
+def test_no_products(stapi_client: TestClient):
+    res = stapi_client.get("/products")
     body = res.json()
     print("hold")
     assert res.status_code == status.HTTP_200_OK

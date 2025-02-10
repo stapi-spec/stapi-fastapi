@@ -19,4 +19,4 @@ def test_root(stapi_client: TestClient, assert_link) -> None:
     assert_link("GET /", body, "service-docs", "/docs", media_type="text/html")
     assert_link("GET /", body, "conformance", "/conformance")
     assert_link("GET /", body, "products", "/products")
-    assert_link("GET /", body, "orders", "/orders")
+    assert_link("GET /", body, "orders", "/orders", media_type="application/geo+json")
