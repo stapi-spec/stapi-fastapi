@@ -462,18 +462,19 @@ files = [
 
 [[package]]
 name = "lark"
-version = "0.12.0"
+version = "1.2.2"
 description = "a modern parsing library"
 optional = false
-python-versions = "*"
+python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "lark-0.12.0-py2.py3-none-any.whl", hash = "sha256:ed1d891cbcf5151ead1c1d14663bf542443e579e63a76ae175b01b899bd854ca"},
-    {file = "lark-0.12.0.tar.gz", hash = "sha256:7da76fcfddadabbbbfd949bbae221efd33938451d90b1fefbbc423c3cccf48ef"},
+    {file = "lark-1.2.2-py3-none-any.whl", hash = "sha256:c2276486b02f0f1b90be155f2c8ba4a8e194d42775786db622faccd652d8e80c"},
+    {file = "lark-1.2.2.tar.gz", hash = "sha256:ca807d0162cd16cef15a8feecb862d7319e7a09bdb13aef927968e45040fed80"},
 ]
 
 [package.extras]
 atomic-cache = ["atomicwrites"]
+interegular = ["interegular (>=0.3.1,<0.4.0)"]
 nearley = ["js2py"]
 regex = ["regex"]
 
@@ -814,25 +815,26 @@ yaml = ["pyyaml (>=6.0.1)"]
 
 [[package]]
 name = "pygeofilter"
-version = "0.2.4"
+version = "0.3.1"
 description = "pygeofilter is a pure Python parser implementation of OGC filtering standards"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "pygeofilter-0.2.4-py2.py3-none-any.whl", hash = "sha256:3462e7d6d08e27da281b3de6f360bb6cf09b6dedafd2c630474d4900c1d89abf"},
-    {file = "pygeofilter-0.2.4.tar.gz", hash = "sha256:265a0a5d47e8421b7f07710d66422e94c4ee2590ce3fad6bd4b61a248e4e816b"},
+    {file = "pygeofilter-0.3.1-py2.py3-none-any.whl", hash = "sha256:f13dcdd685bdca32cf9e6665bf2938522276bee140abff321ab04abb12f5761d"},
+    {file = "pygeofilter-0.3.1.tar.gz", hash = "sha256:f92bc0622099f87fe8b36de7abdd86059d615a89ed60822737082223a578e150"},
 ]
 
 [package.dependencies]
 dateparser = "*"
-lark = "<1.0"
+lark = "*"
 pygeoif = ">=1.0.0"
 
 [package.extras]
 backend-django = ["django"]
 backend-elasticsearch = ["elasticsearch", "elasticsearch-dsl"]
 backend-native = ["shapely"]
+backend-opensearch = ["opensearch-dsl", "opensearch-py"]
 backend-sqlalchemy = ["geoalchemy2", "sqlalchemy"]
 fes = ["pygml (>=0.2)"]
 
@@ -1169,14 +1171,14 @@ files = [
 
 [[package]]
 name = "returns"
-version = "0.23.0"
+version = "0.24.0"
 description = "Make your functions return something meaningful, typed, and safe!"
 optional = false
-python-versions = "<4.0,>=3.9"
+python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "returns-0.23.0-py3-none-any.whl", hash = "sha256:278aa6168072b24574ad14be32f7123d1b835928473dd40bc506f47c8b25859a"},
-    {file = "returns-0.23.0.tar.gz", hash = "sha256:27594c28e5fc338e052d27ddf77fe1da82db4472f6d59901e7e9165be35a5256"},
+    {file = "returns-0.24.0-py3-none-any.whl", hash = "sha256:de82455a76b9fcd86810a49099fa7645eb20920105bc78b942b2f4923c829624"},
+    {file = "returns-0.24.0.tar.gz", hash = "sha256:735091cc798cac3f7cf8566b171922119f7796f2e49d6f65939f3e5a9c7c97f7"},
 ]
 
 [package.dependencies]
@@ -1184,7 +1186,7 @@ typing-extensions = ">=4.0,<5.0"
 
 [package.extras]
 check-laws = ["hypothesis (>=6.98,<7.0)", "pytest (>=8.0,<9.0)"]
-compatible-mypy = ["mypy (>=1.10,<1.11)"]
+compatible-mypy = ["mypy (>=1.12,<1.14)"]
 
 [[package]]
 name = "ruamel-yaml"
@@ -1495,5 +1497,5 @@ files = [
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.12.0"
-content-hash = "e5296a30d2d8d62cbedaeef3f312013e00f070b36eb19de54bba7ce1e02c01e4"
+python-versions = ">=3.12,<4.0"
+content-hash = "9663d05f14602d7aaa211b956aec7053dab1cfe622f8135ebad089b278f6031d"
