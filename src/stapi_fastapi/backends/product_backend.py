@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Coroutine
+from collections.abc import Coroutine
+from typing import Any, Callable
 
 from fastapi import Request
 from returns.maybe import Maybe

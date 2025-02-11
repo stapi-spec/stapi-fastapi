@@ -1,10 +1,10 @@
 from datetime import UTC, datetime, timedelta
 from itertools import product
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ValidationError
-from pyrfc3339.utils import timedelta_seconds, timezone
+from pyrfc3339.utils import format_timezone
 from pytest import mark, raises
-from zoneinfo import ZoneInfo
 
 from stapi_fastapi.types.datetime_interval import DatetimeInterval
 
@@ -16,8 +16,8 @@ class Model(BaseModel):
 
 
 def rfc3339_strftime(dt: datetime, format: str) -> str:
-    tds = timedelta_seconds(dt.tzinfo.utcoffset(dt))  # type: ignore
-    long = timezone(tds)
+    tds = int(round(dt.tzinfo.utcoffset(dt).total_seconds()))  # type: ignore
+    long = format_timezone(tds)
     short = "Z"
 
     format = format.replace("%z", long).replace("%Z", short if tds == 0 else long)
