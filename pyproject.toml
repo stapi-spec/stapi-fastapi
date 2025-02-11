@@ -10,7 +10,7 @@ packages = [{include = "stapi_fastapi", from="src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
-fastapi = "^0.115.0"
+fastapi = ">=0.115.0"
 pydantic = ">=2.10"
 geojson-pydantic = ">=1.1"
 pygeofilter = ">=0.2"
