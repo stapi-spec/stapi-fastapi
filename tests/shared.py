@@ -226,7 +226,7 @@ def create_mock_opportunity() -> Opportunity:
             off_nadir=OffNadirRange(minimum=20, maximum=22),
             vehicle_id=[1],
             platform="platform_id",
-            other_thing="abcd1234",
+            other_thing="abcd1234",  # type: ignore
         ),
     )
 
