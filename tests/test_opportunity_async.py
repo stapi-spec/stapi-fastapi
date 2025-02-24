@@ -205,6 +205,7 @@ def test_async_opportunity_search_to_completion(
             rel="create-order",
             href=url_for(f"/products/{product_id}/orders"),
             body=search_record.opportunity_request.model_dump(),
+            method="POST",
         )
     )
     collection.links.append(

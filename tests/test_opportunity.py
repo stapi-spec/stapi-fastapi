@@ -27,7 +27,13 @@ def test_search_opportunities_response(
     except Exception as _:
         pytest.fail("response is not an opportunity collection")
 
-    assert_link(f"POST {url}", body, "create-order", f"/products/{product_id}/orders")
+    assert_link(
+        f"POST {url}",
+        body,
+        "create-order",
+        f"/products/{product_id}/orders",
+        method="POST",
+    )
 
 
 @pytest.mark.parametrize("limit", [0, 1, 2, 4])

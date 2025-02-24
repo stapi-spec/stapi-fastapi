@@ -143,11 +143,14 @@ def assert_link(url_for) -> Callable:
         rel: str,
         path: str,
         media_type: str = "application/json",
+        method: str | None = None,
     ):
         link = find_link(body["links"], rel)
         assert link, f"{req} Link[rel={rel}] should exist"
         assert link["type"] == media_type
         assert link["href"] == url_for(path)
+        if method:
+            assert link["method"] == method
 
     return _assert_link
 
