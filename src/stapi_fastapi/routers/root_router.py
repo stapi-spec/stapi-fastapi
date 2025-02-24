@@ -34,6 +34,16 @@ from stapi_fastapi.models.root import RootResponse
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.responses import GeoJSONResponse
 from stapi_fastapi.routers.product_router import ProductRouter
+from stapi_fastapi.routers.route_names import (
+    CONFORMANCE,
+    GET_OPPORTUNITY_SEARCH_RECORD,
+    GET_ORDER,
+    LIST_OPPORTUNITY_SEARCH_RECORDS,
+    LIST_ORDER_STATUSES,
+    LIST_ORDERS,
+    LIST_PRODUCTS,
+    ROOT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +94,7 @@ class RootRouter(APIRouter):
             "/",
             self.get_root,
             methods=["GET"],
-            name=f"{self.name}:root",
+            name=f"{self.name}:{ROOT}",
             tags=["Root"],
         )
 
@@ -92,7 +102,7 @@ class RootRouter(APIRouter):
             "/conformance",
             self.get_conformance,
             methods=["GET"],
-            name=f"{self.name}:conformance",
+            name=f"{self.name}:{CONFORMANCE}",
             tags=["Conformance"],
         )
 
@@ -100,7 +110,7 @@ class RootRouter(APIRouter):
             "/products",
             self.get_products,
             methods=["GET"],
-            name=f"{self.name}:list-products",
+            name=f"{self.name}:{LIST_PRODUCTS}",
             tags=["Products"],
         )
 
@@ -108,7 +118,7 @@ class RootRouter(APIRouter):
             "/orders",
             self.get_orders,
             methods=["GET"],
-            name=f"{self.name}:list-orders",
+            name=f"{self.name}:{LIST_ORDERS}",
             response_class=GeoJSONResponse,
             tags=["Orders"],
         )
@@ -117,7 +127,7 @@ class RootRouter(APIRouter):
             "/orders/{order_id}",
             self.get_order,
             methods=["GET"],
-            name=f"{self.name}:get-order",
+            name=f"{self.name}:{GET_ORDER}",
             response_class=GeoJSONResponse,
             tags=["Orders"],
         )
@@ -126,7 +136,7 @@ class RootRouter(APIRouter):
             "/orders/{order_id}/statuses",
             self.get_order_statuses,
             methods=["GET"],
-            name=f"{self.name}:list-order-statuses",
+            name=f"{self.name}:{LIST_ORDER_STATUSES}",
             tags=["Orders"],
         )
 
@@ -135,7 +145,7 @@ class RootRouter(APIRouter):
                 "/searches/opportunities",
                 self.get_opportunity_search_records,
                 methods=["GET"],
-                name=f"{self.name}:list-opportunity-search-records",
+                name=f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORDS}",
                 summary="List all Opportunity Search Records",
                 tags=["Opportunities"],
             )
@@ -144,7 +154,7 @@ class RootRouter(APIRouter):
                 "/searches/opportunities/{search_record_id}",
                 self.get_opportunity_search_record,
                 methods=["GET"],
-                name=f"{self.name}:get-opportunity-search-record",
+                name=f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD}",
                 summary="Get an Opportunity Search Record by ID",
                 tags=["Opportunities"],
             )
@@ -152,7 +162,7 @@ class RootRouter(APIRouter):
     def get_root(self, request: Request) -> RootResponse:
         links = [
             Link(
-                href=str(request.url_for(f"{self.name}:root")),
+                href=str(request.url_for(f"{self.name}:{ROOT}")),
                 rel="self",
                 type=TYPE_JSON,
             ),
@@ -167,17 +177,17 @@ class RootRouter(APIRouter):
                 type="text/html",
             ),
             Link(
-                href=str(request.url_for(f"{self.name}:conformance")),
+                href=str(request.url_for(f"{self.name}:{CONFORMANCE}")),
                 rel="conformance",
                 type=TYPE_JSON,
             ),
             Link(
-                href=str(request.url_for(f"{self.name}:list-products")),
+                href=str(request.url_for(f"{self.name}:{LIST_PRODUCTS}")),
                 rel="products",
                 type=TYPE_JSON,
             ),
             Link(
-                href=str(request.url_for(f"{self.name}:list-orders")),
+                href=str(request.url_for(f"{self.name}:{LIST_ORDERS}")),
                 rel="orders",
                 type=TYPE_GEOJSON,
             ),
@@ -187,7 +197,9 @@ class RootRouter(APIRouter):
             links.append(
                 Link(
                     href=str(
-                        request.url_for(f"{self.name}:list-opportunity-search-records")
+                        request.url_for(
+                            f"{self.name}:{LIST_OPPORTUNITY_SEARCH_RECORDS}"
+                        )
                     ),
                     rel="opportunity-search-records",
                     type=TYPE_JSON,
@@ -220,7 +232,7 @@ class RootRouter(APIRouter):
         ids = self.product_ids[start:end]
         links = [
             Link(
-                href=str(request.url_for(f"{self.name}:list-products")),
+                href=str(request.url_for(f"{self.name}:{LIST_PRODUCTS}")),
                 rel="self",
                 type=TYPE_JSON,
             ),
@@ -327,10 +339,10 @@ class RootRouter(APIRouter):
         self.product_ids = [*self.product_routers.keys()]
 
     def generate_order_href(self, request: Request, order_id: str) -> URL:
-        return request.url_for(f"{self.name}:get-order", order_id=order_id)
+        return request.url_for(f"{self.name}:{GET_ORDER}", order_id=order_id)
 
     def generate_order_statuses_href(self, request: Request, order_id: str) -> URL:
-        return request.url_for(f"{self.name}:list-order-statuses", order_id=order_id)
+        return request.url_for(f"{self.name}:{LIST_ORDER_STATUSES}", order_id=order_id)
 
     def order_links(self, order: Order, request: Request) -> list[Link]:
         return [
@@ -350,7 +362,7 @@ class RootRouter(APIRouter):
         return Link(
             href=str(
                 request.url_for(
-                    f"{self.name}:list-order-statuses",
+                    f"{self.name}:{LIST_ORDER_STATUSES}",
                     order_id=order_id,
                 )
             ),
@@ -428,7 +440,7 @@ class RootRouter(APIRouter):
         self, request: Request, search_record_id: str
     ) -> URL:
         return request.url_for(
-            f"{self.name}:get-opportunity-search-record",
+            f"{self.name}:{GET_OPPORTUNITY_SEARCH_RECORD}",
             search_record_id=search_record_id,
         )
 
