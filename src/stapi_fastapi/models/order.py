@@ -1,5 +1,6 @@
+from collections.abc import Iterator
 from enum import StrEnum
-from typing import Any, Dict, Generic, Iterator, Literal, Optional, TypeVar, Union
+from typing import Any, Generic, Literal, Optional, TypeVar, Union
 
 from geojson_pydantic.base import _GeoJsonBase
 from geojson_pydantic.geometries import Geometry
@@ -17,7 +18,7 @@ from stapi_fastapi.models.shared import Link
 from stapi_fastapi.types.datetime_interval import DatetimeInterval
 from stapi_fastapi.types.filter import CQL2Filter
 
-Props = TypeVar("Props", bound=Union[Dict[str, Any], BaseModel])
+Props = TypeVar("Props", bound=Union[dict[str, Any], BaseModel])
 Geom = TypeVar("Geom", bound=Geometry)
 
 
