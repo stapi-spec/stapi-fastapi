@@ -1,4 +1,5 @@
-from typing import Any, Callable, Coroutine, TypeVar
+from collections.abc import Coroutine
+from typing import Any, Callable, TypeVar
 
 from fastapi import Request
 from returns.maybe import Maybe
