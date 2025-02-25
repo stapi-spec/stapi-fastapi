@@ -30,6 +30,14 @@ from stapi_fastapi.models.order import Order, OrderPayload
 from stapi_fastapi.models.product import Product
 from stapi_fastapi.models.shared import Link
 from stapi_fastapi.responses import GeoJSONResponse
+from stapi_fastapi.routers.route_names import (
+    CREATE_ORDER,
+    GET_CONSTRAINTS,
+    GET_OPPORTUNITY_COLLECTION,
+    GET_ORDER_PARAMETERS,
+    GET_PRODUCT,
+    SEARCH_OPPORTUNITIES,
+)
 from stapi_fastapi.types.json_schema_model import JsonSchemaModel
 
 if TYPE_CHECKING:
@@ -76,7 +84,7 @@ class ProductRouter(APIRouter):
         self.add_api_route(
             path="",
             endpoint=self.get_product,
-            name=f"{self.root_router.name}:{self.product.id}:get-product",
+            name=f"{self.root_router.name}:{self.product.id}:{GET_PRODUCT}",
             methods=["GET"],
             summary="Retrieve this product",
             tags=["Products"],
@@ -85,7 +93,7 @@ class ProductRouter(APIRouter):
         self.add_api_route(
             path="/constraints",
             endpoint=self.get_product_constraints,
-            name=f"{self.root_router.name}:{self.product.id}:get-constraints",
+            name=f"{self.root_router.name}:{self.product.id}:{GET_CONSTRAINTS}",
             methods=["GET"],
             summary="Get constraints for the product",
             tags=["Products"],
@@ -94,7 +102,7 @@ class ProductRouter(APIRouter):
         self.add_api_route(
             path="/order-parameters",
             endpoint=self.get_product_order_parameters,
-            name=f"{self.root_router.name}:{self.product.id}:get-order-parameters",
+            name=f"{self.root_router.name}:{self.product.id}:{GET_ORDER_PARAMETERS}",
             methods=["GET"],
             summary="Get order parameters for the product",
             tags=["Products"],
@@ -121,7 +129,7 @@ class ProductRouter(APIRouter):
         self.add_api_route(
             path="/orders",
             endpoint=_create_order,
-            name=f"{self.root_router.name}:{self.product.id}:create-order",
+            name=f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}",
             methods=["POST"],
             response_class=GeoJSONResponse,
             status_code=status.HTTP_201_CREATED,
@@ -136,7 +144,7 @@ class ProductRouter(APIRouter):
             self.add_api_route(
                 path="/opportunities",
                 endpoint=self.search_opportunities,
-                name=f"{self.root_router.name}:{self.product.id}:search-opportunities",
+                name=f"{self.root_router.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}",
                 methods=["POST"],
                 response_class=GeoJSONResponse,
                 # unknown why mypy can't see the constraints property on Product, ignoring
@@ -158,7 +166,7 @@ class ProductRouter(APIRouter):
             self.add_api_route(
                 path="/opportunities/{opportunity_collection_id}",
                 endpoint=self.get_opportunity_collection,
-                name=f"{self.root_router.name}:{self.product.id}:get-opportunity-collection",
+                name=f"{self.root_router.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
                 methods=["GET"],
                 response_class=GeoJSONResponse,
                 summary="Get an Opportunity Collection by ID",
@@ -170,7 +178,7 @@ class ProductRouter(APIRouter):
             Link(
                 href=str(
                     request.url_for(
-                        f"{self.root_router.name}:{self.product.id}:get-product",
+                        f"{self.root_router.name}:{self.product.id}:{GET_PRODUCT}",
                     ),
                 ),
                 rel="self",
@@ -179,7 +187,7 @@ class ProductRouter(APIRouter):
             Link(
                 href=str(
                     request.url_for(
-                        f"{self.root_router.name}:{self.product.id}:get-constraints",
+                        f"{self.root_router.name}:{self.product.id}:{GET_CONSTRAINTS}",
                     ),
                 ),
                 rel="constraints",
@@ -188,7 +196,7 @@ class ProductRouter(APIRouter):
             Link(
                 href=str(
                     request.url_for(
-                        f"{self.root_router.name}:{self.product.id}:get-order-parameters",
+                        f"{self.root_router.name}:{self.product.id}:{GET_ORDER_PARAMETERS}",
                     ),
                 ),
                 rel="order-parameters",
@@ -197,7 +205,7 @@ class ProductRouter(APIRouter):
             Link(
                 href=str(
                     request.url_for(
-                        f"{self.root_router.name}:{self.product.id}:create-order",
+                        f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}",
                     ),
                 ),
                 rel="create-order",
@@ -214,7 +222,7 @@ class ProductRouter(APIRouter):
                 Link(
                     href=str(
                         request.url_for(
-                            f"{self.root_router.name}:{self.product.id}:search-opportunities",
+                            f"{self.root_router.name}:{self.product.id}:{SEARCH_OPPORTUNITIES}",
                         ),
                     ),
                     rel="opportunities",
@@ -382,7 +390,7 @@ class ProductRouter(APIRouter):
         return Link(
             href=str(
                 request.url_for(
-                    f"{self.root_router.name}:{self.product.id}:create-order",
+                    f"{self.root_router.name}:{self.product.id}:{CREATE_ORDER}",
                 ),
             ),
             rel="create-order",
@@ -420,7 +428,7 @@ class ProductRouter(APIRouter):
                     Link(
                         href=str(
                             request.url_for(
-                                f"{self.root_router.name}:{self.product.id}:get-opportunity-collection",
+                                f"{self.root_router.name}:{self.product.id}:{GET_OPPORTUNITY_COLLECTION}",
                                 opportunity_collection_id=opportunity_collection_id,
                             ),
                         ),

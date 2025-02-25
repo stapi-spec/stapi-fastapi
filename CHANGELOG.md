@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Add parameter method as "POST" to create-order link
 
+## Added
+
+- Add constants for route names to be used in link href generation
+
 ## [v0.6.0] - 2025-02-11
 
 ### Added
