@@ -1,6 +1,10 @@
 # STAPI FastAPI - Sensor Tasking API with FastAPI
 
-WARNING: The whole [STAPI spec] is very much a work in progress, so things are
+> [!NOTE]
+> This repository has been archived, and the code has been moved to https://github.com/stapi-spec/pystapi/tree/main/stapi-fastapi.
+
+> [!WARNING]
+> The whole [STAPI spec] is very much a work in progress, so things are
 guaranteed to be not correct.
 
 ## Usage
